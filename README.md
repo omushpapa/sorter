@@ -29,7 +29,9 @@ Developed for python3.4 but should work on any version
 ```
 ./sorter.py --source /home/User/Downloads
 ```
+```
 python sorter.py --source D:\User\folder -d E:\newfolder
+```
 ```
 ./sorter.py --source /home/User/Downloads --sort-folders
 ```

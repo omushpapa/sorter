@@ -10,11 +10,15 @@ cd sorter
 
 then 
 
+```
 python sorter.py (source folder path)
+```
 
 or
 
+```
 ./sorter.py (source folder path)
+```
 
 ### Prerequisites
 
@@ -25,17 +29,17 @@ Developed for python3.4 but should work on any version
 ```
 ./sorter.py --source /home/User/Downloads
 ```
-./sorter.py --source D:\User\folder -d E:\newfolder
+python sorter.py --source D:\User\folder -d E:\newfolder
 ```
 ./sorter.py --source /home/User/Downloads --sort-folders
+```
 
-
-## Authors
+### Authors
 
 * **Aswa Paul** 
 
 
-## License
+### License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
 

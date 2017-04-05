@@ -27,13 +27,13 @@ Developed for python3.4 but should work on any version
 
 ### Examples
 ```
-./sorter.py --source /home/User/Downloads
+./sorter.py /home/User/Downloads
 ```
 ```
-python sorter.py --source D:\User\folder -d E:\newfolder
+python sorter.py D:\User\folder -d E:\newfolder
 ```
 ```
-./sorter.py --source /home/User/Downloads --sort-folders
+./sorter.py /home/User/Downloads --sort-folders
 ```
 
 ### Authors
@@ -43,6 +43,6 @@ python sorter.py --source D:\User\folder -d E:\newfolder
 
 ### License
 
-This project is licensed under the BSD 3-clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details
+* This project is licensed under the BSD 3-clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details
 
 

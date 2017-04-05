@@ -24,6 +24,10 @@ or
 
 Developed for python3.4 but should work on any version
 
+### WARNING
+
+* Do **NOT** use on folder that has your precious hidden files, the likes of local git repositories. 
+
 
 ### Examples
 ```

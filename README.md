@@ -43,6 +43,6 @@ python sorter.py --source D:\User\folder -d E:\newfolder
 
 ### License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the BSD 3-clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details
 
 

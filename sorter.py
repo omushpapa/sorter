@@ -45,31 +45,48 @@ def get_extension_path(destination_path, extension):
 
 def sort_folders(path, found_extensions):
     for key in fileGroups.keys():
-        ans = set(found_extensions) & set(fileGroups[key])
-        if ans:
-            new_ans = list(ans)
+        common = set(found_extensions) & set(fileGroups[key])
+        if common:
+            common_list = list(common)
             key_folder = os.path.join(path, key)
             if not os.path.isdir(key_folder):
                 os.makedirs(key_folder)
+
             if is_writable(key_folder):
-                for item in new_ans:
-                    shutil.move(os.path.join(path, item), key_folder)
+                for extension in common_list:
+                    extension_path = os.path.join(path, extension)
+                    try:
+                        shutil.move(extension_path, key_folder)
+
+                    except shutil.Error:
+                        for _file in os.listdir(extension_path):
+                            src = os.path.join(extension_path, _file)
+                            dst = os.path.join(os.path.join(key, extension), _file)
+                            shutil.move(src, dst)
+                        os.rmdir(extension_path)
+
+
+def move_folders_in_source(path):
+    sorter_folders = list(fileGroups.keys())
+    folders = [folder for folder in os.listdir(
+        path) if folder not in sorter_folders and os.path.isdir(folder)]
+    if folders:
+        destination_folder = os.path.join(path, 'FOLDERS')
+        for folder in folders:
+            shutil.move(os.path.join(path, folder), destination_folder)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--source', help='Source directory', nargs=1)
+parser.add_argument('source', help='Source directory', nargs=1)
 parser.add_argument('-d', '--destination',
                     help='Destination directory. Full path required.', nargs=1)
 parser.add_argument(
     '--sort-folders', help='Sort folders into categories', action='store_true')
 options = vars(parser.parse_args())
 
+source_path = options['source'][0]
 found_extensions = []
 proceed = True
-if options['source']:
-    source_path = options['source'][0]
-else:
-    source_path = os.getcwd()
 
 if options['destination']:
     destination_path = options['destination'][0]
@@ -105,8 +122,6 @@ if proceed:
                     found_extensions.append(extension)
 
                 extension_dir = get_extension_path(destination_path, extension)
-                # print(extension_dir)
-
                 move_file(source_path, extension_dir, _file)
 
             else:
@@ -115,6 +130,16 @@ if proceed:
                 move_file(source_path, extension_dir, _file)
         if options['sort_folders']:
             sort_folders(source_path, found_extensions)
+            move_folders_in_source(source_path)
+            print('Done.')
+
+    elif options['sort_folders']:
+        found_extensions = [folder_name for folder_name in os.listdir(
+            source_path) if folder_name.isupper() and len(folder_name.split()) == 1]
+        sort_folders(source_path, found_extensions)
+        move_folders_in_source(source_path)
+        print('Done.')
+
     else:
         print('No files found.')
 

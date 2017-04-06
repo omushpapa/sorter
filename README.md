@@ -4,8 +4,12 @@ A Python script that sorts file in a folder into folders which are named by type
 
 ## Getting Started
 
-sorter.py is already executable
+sorter.py is already executable (if not, make it executable :P )
+
+*Do*
+
 git clone https://github.com/giantas/sorter.git
+
 cd sorter
 
 then 

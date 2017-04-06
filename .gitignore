@@ -1,0 +1,6 @@
+*.pyc
+.*
+testsorter.py
+testfilegroups.py
+__pycache__/
+testfolder/

@@ -7,6 +7,7 @@ import ntpath
 import shutil
 import argparse
 import sys
+import glob
 from filegroups import fileGroups
 
 
@@ -17,7 +18,8 @@ def move_file(source_path, destination_path, extension_dir, filename):
     else:
         extension_destination = os.path.join(source_path, extension_dir)
 
-    destination_file = os.path.join(extension_destination, filename)
+    destination_file = os.path.join(
+        extension_destination, os.path.basename(filename))
 
     if os.path.isdir(extension_destination):
         shutil.move(source_file, destination_file)
@@ -63,10 +65,13 @@ def group_folders(path, found_extensions):
                     if not os.path.isdir(new_extension_path):
                         os.makedirs(new_extension_path)
 
-                    dirs = os.listdir(extension_path)
+                    dirs = [dir_ for dir_ in glob.glob(
+                        os.path.join(extension_path, '*'))]
                     for file_ in dirs:
-                        source_path = os.path.join(extension_path, file_)
-                        dst = os.path.join(new_extension_path, file_)
+                        source_path = os.path.join(
+                            extension_path, os.path.basename(file_))
+                        dst = os.path.join(
+                            new_extension_path, os.path.basename(file_))
                         suitable_name = find_suitable_name(dst)
                         final_dst = os.path.join(
                             new_extension_path, suitable_name)
@@ -76,7 +81,7 @@ def group_folders(path, found_extensions):
 
 
 def find_suitable_name(file_path):
-    file_path = os.path.abspath(file_path)
+    #file_path = os.path.abspath(file_path)
     filename = os.path.basename(file_path)
     if os.path.exists(file_path):
         new_filename = 'copy - ' + filename
@@ -87,12 +92,16 @@ def find_suitable_name(file_path):
 
 def group_misc_folders(path):
     sorter_folders = list(fileGroups.keys())
-    folders = [folder for folder in os.listdir(
-        path) if folder not in sorter_folders and os.path.isdir(os.path.join(path, folder)) and is_writable(folder)]
+    folders = [folder for folder in glob.glob(os.path.join(path, '*')) if os.path.basename(
+        folder) not in sorter_folders and os.path.isdir(folder) and is_writable(folder)]
     if folders:
         destination_folder = os.path.join(path, 'FOLDERS')
         for folder in folders:
-            shutil.move(os.path.join(path, folder), destination_folder)
+            try:
+                shutil.move(os.path.join(path, folder), destination_folder)
+            except shutil.Error:
+                print('Could not move "{0}". A folder with the same name already exists in the destination "{1}". Rename then try again.'.format(
+                    folder, destination_folder))
 
 
 def get_grouping_variables(source, destination):
@@ -102,8 +111,8 @@ def get_grouping_variables(source, destination):
     else:
         variables['path'] = source
 
-    variables['extensions'] = [folder_name for folder_name in os.listdir(
-        variables['path']) if folder_name.isupper() and len(folder_name.split()) == 1]
+    variables['extensions'] = [os.path.basename(folder_name) for folder_name in glob.glob(os.path.join(
+        variables['path'], '*')) if os.path.basename(folder_name).isupper() and len(os.path.basename(folder_name).split()) == 1 and os.path.isdir(folder_name)]
     return variables
 
 
@@ -141,8 +150,8 @@ if destination_path:
 
 
 if proceed:
-    files = [file_ for file_ in os.listdir(
-        source_path) if os.path.isfile(os.path.join(source_path, file_))]
+    files = [file_ for file_ in glob.glob(os.path.join(
+        source_path, '*')) if os.path.isfile(os.path.join(source_path, file_))]
 
     if files:
         for file_ in files:

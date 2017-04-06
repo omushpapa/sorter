@@ -1,6 +1,6 @@
 # sorter
 
-A Python script that checks file types in a folder and sorts them into folders named by type. It (optionally) sorts the folders created in the first sorting into categories as defines by the dictionary in filegroups.py
+A Python script that sorts file in a folder into folders which are named by type. It (optionally) sorts the folders created in the first sorting into categories as defines by the dictionary in [filegroups.py](https://github.com/giantas/sorter/blob/master/filegroups.py)
 
 ## Getting Started
 
@@ -24,10 +24,9 @@ or
 
 Developed for python3.4 but should work on any version
 
-### WARNING
+### ~~WARNING~~
 
-* Do **NOT** use on folder that has your precious hidden files, the likes of local git repositories. 
-
+* ~~Do **NOT** use on folder that has your precious hidden files, the likes of local git repositories.~~ Fixed.
 
 ### Examples
 ```

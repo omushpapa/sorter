@@ -1,6 +1,6 @@
 #! /usr/bin/python3
-# sorter.py - A Python script which checks file types in a folder and
-# sorts them into folders named by type
+# sorter.py - A Python script that sorts files in a folder
+# into folders which are named by type.
 
 import os
 import ntpath
@@ -91,7 +91,7 @@ def find_suitable_name(file_path):
 
 
 def group_misc_folders(path):
-    sorter_folders = list(fileGroups.keys())
+    sorter_folders = list(fileGroups.keys()) + ['UNDEFINED']
     folders = [folder for folder in glob.glob(os.path.join(path, '*')) if os.path.basename(
         folder) not in sorter_folders and os.path.isdir(folder) and is_writable(folder)]
     if folders:

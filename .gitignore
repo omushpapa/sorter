@@ -2,5 +2,6 @@
 .*
 testsorter.py
 testfilegroups.py
+*.sublime-*
 __pycache__/
 testfolder/

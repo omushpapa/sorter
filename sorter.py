@@ -3,7 +3,6 @@
 # into folders which are named by type.
 
 import os
-import ntpath
 import shutil
 import argparse
 import sys

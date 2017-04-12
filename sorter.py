@@ -18,11 +18,12 @@ def move_file(source_path, destination_path, extension_dir, filename):
     else:
         extension_destination = os.path.join(source_path, extension_dir)
 
-    destination_file = os.path.join(
-        extension_destination, os.path.basename(filename))
-
     if os.path.isdir(extension_destination):
-        shutil.move(source_file, destination_file)
+        destination_file = os.path.join(
+            extension_destination, os.path.basename(filename))
+        suitable_name = find_suitable_name(destination_file)
+        new_destination = os.path.join(extension_destination, suitable_name)
+        shutil.move(source_file, new_destination)
     else:
         os.makedirs(extension_destination)
         move_file(source_path, destination_path, extension_dir, filename)
@@ -81,7 +82,6 @@ def group_folders(path, found_extensions):
 
 
 def find_suitable_name(file_path):
-    #file_path = os.path.abspath(file_path)
     filename = os.path.basename(file_path)
     if os.path.exists(file_path):
         new_filename = 'copy - ' + filename
@@ -116,16 +116,52 @@ def get_grouping_variables(source, destination):
     return variables
 
 
+def in_hidden_path(path):
+    if not os.path.basename(path):
+        return False
+    else:
+        hidden_path = False
+        path_base = os.path.basename(path)
+        if path_base.startswith('.') or path_base.startswith('__'):
+            return True
+        else:
+            hidden_path = in_hidden_path(
+                os.path.abspath(os.path.dirname(path)))
+        return hidden_path
+
+
+def initiate_transfer(source_path, destination_path):
+    found_extensions = []
+    files = [file_ for file_ in glob.glob(os.path.join(
+        source_path, '*')) if os.path.isfile(os.path.join(source_path, file_)) and not in_hidden_path(file_)]
+
+    if files:
+        for file_ in files:
+            extension = os.path.splitext(file_)[1][1:].upper()
+
+            if extension:
+                if extension not in found_extensions:
+                    found_extensions.append(extension)
+
+                extension_dir = get_extension_path(destination_path, extension)
+                move_file(source_path, destination_path, extension_dir, file_)
+
+            else:
+                extension_dir = get_extension_path(
+                    destination_path, 'UNDEFINED')
+                move_file(source_path, destination_path, extension_dir, file_)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('source', help='Source directory', nargs=1)
 parser.add_argument('-d', '--destination',
                     help='Destination directory. Full path required.', nargs=1)
 parser.add_argument(
     '--sort-folders', help='Sort folders into categories', action='store_true')
+parser.add_argument('-r', '--recursive',
+                    help='Recursively look into folders in the specified source directory.', action='store_true')
 options = vars(parser.parse_args())
 
 source_path = os.path.abspath(options['source'][0])
-found_extensions = []
 proceed = True
 
 if options['destination']:
@@ -150,32 +186,20 @@ if destination_path:
 
 
 if proceed:
-    files = [file_ for file_ in glob.glob(os.path.join(
-        source_path, '*')) if os.path.isfile(os.path.join(source_path, file_))]
+    if options['recursive']:
+        for root, dirs, files in os.walk(source_path):
+            if files:
+                dir_path = os.path.abspath(root)
+                if not in_hidden_path(dir_path):
+                    initiate_transfer(root, source_path)
 
-    if files:
-        for file_ in files:
-            extension = os.path.splitext(file_)[1][1:].upper()
-
-            if extension:
-                if extension not in found_extensions:
-                    found_extensions.append(extension)
-
-                extension_dir = get_extension_path(destination_path, extension)
-                move_file(source_path, destination_path, extension_dir, file_)
-
-            else:
-                extension_dir = get_extension_path(
-                    destination_path, 'UNDEFINED')
-                move_file(source_path, destination_path, extension_dir, file_)
+    else:
+        initiate_transfer(source_path, destination_path)
 
     if options['sort_folders']:
         group_variables = get_grouping_variables(source_path, destination_path)
         group_folders(group_variables['path'], group_variables['extensions'])
         group_misc_folders(group_variables['path'])
-
-    if not files:
-        print('No files found.')
 
     print('Done.')
 

@@ -8,7 +8,7 @@ import argparse
 import sys
 import glob
 import re
-from filegroups import fileGroups
+from filegroups import fileGroups, typeList
 
 
 def move_file(source_path, destination_path, extension_dir, filename):
@@ -27,6 +27,22 @@ def move_file(source_path, destination_path, extension_dir, filename):
     else:
         os.makedirs(extension_destination)
         move_file(source_path, destination_path, extension_dir, filename)
+
+
+def move_dir(source_path, destination_path):
+    source_dir = os.path.basename(source_path)
+    destination_dir = os.path.join(destination_path, source_dir)
+    folders = [os.path.abspath(folder_name) for folder_name in glob.glob(os.path.join(
+        source_path, '*')) if os.path.basename(folder_name) in typeList and os.path.isdir(folder_name)]
+
+    for folder in folders:
+        for file_ in glob.glob(os.path.join(folder, '*')):
+            extension_dir = os.path.basename(folder)
+            move_file(source_path, destination_path, extension_dir, file_)
+        try:
+            os.rmdir(folder)
+        except OSError:
+            print('The directory "%s" contains some files and cannot be moved.' % folder)
 
 
 def is_writable(folder_path):
@@ -136,26 +152,44 @@ def in_hidden_path(path):
         return hidden_path
 
 
-def initiate_transfer(source_path, destination_path):
-    found_extensions = []
-    files = [file_ for file_ in glob.glob(os.path.join(
-        source_path, '*')) if os.path.isfile(os.path.join(source_path, file_)) and not in_hidden_path(file_)]
+def initiate_transfer(source_path, destination_path, file_types=[]):
+    if file_types:
+        choose = lambda x: glob.glob(os.path.join(source_path, '*.' + x))
+        files = []
+        for item in map(choose, file_types):
+            files += item
 
-    if files:
-        for file_ in files:
-            extension = os.path.splitext(file_)[1][1:].upper()
-
-            if extension:
-                if extension not in found_extensions:
-                    found_extensions.append(extension)
-
-                extension_dir = get_extension_path(destination_path, extension)
-                move_file(source_path, destination_path, extension_dir, file_)
-
-            else:
+        if files:
+            for file_ in files:
+                extension = os.path.splitext(file_)[1][1:].upper()
                 extension_dir = get_extension_path(
-                    destination_path, 'UNDEFINED')
-                move_file(source_path, destination_path, extension_dir, file_)
+                    destination_path, extension)
+                move_file(source_path, destination_path,
+                          extension_dir, file_)
+
+    else:
+        found_extensions = []
+        files = [file_ for file_ in glob.glob(os.path.join(
+            source_path, '*')) if os.path.isfile(os.path.join(source_path, file_)) and not in_hidden_path(file_)]
+
+        if files:
+            for file_ in files:
+                extension = os.path.splitext(file_)[1][1:].upper()
+
+                if extension:
+                    if extension not in found_extensions and not file_types:
+                        found_extensions.append(extension)
+
+                    extension_dir = get_extension_path(
+                        destination_path, extension)
+                    move_file(source_path, destination_path,
+                              extension_dir, file_)
+
+                else:
+                    extension_dir = get_extension_path(
+                        destination_path, 'UNDEFINED')
+                    move_file(source_path, destination_path,
+                              extension_dir, file_)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -166,6 +200,8 @@ if __name__ == '__main__':
         '--sort-folders', help='Sort folders into categories', action='store_true')
     parser.add_argument('-r', '--recursive',
                         help='Recursively look into folders in the specified source directory.', action='store_true')
+    parser.add_argument(
+        '-t', '--types', help='File formats to sort.', nargs='+')
     options = vars(parser.parse_args())
 
     source_path = os.path.abspath(options['source'][0])
@@ -176,6 +212,12 @@ if __name__ == '__main__':
         destination_path = os.path.abspath(options['destination'][0])
     else:
         destination_path = ''
+
+    print(destination_path)
+    if options['types']:
+        file_types = options['types']
+    else:
+        file_types = []
 
     if not os.path.isdir(source_path):
         proceed = False
@@ -193,15 +235,20 @@ if __name__ == '__main__':
                 proceed = False
 
     if proceed:
+        print('\n{:-^80}\n'.format('START'))
         if options['recursive']:
             for root, dirs, files in os.walk(source_path):
                 if files:
                     dir_path = os.path.abspath(root)
                     if not in_hidden_path(dir_path):
-                        initiate_transfer(root, source_path)
+                        initiate_transfer(root, source_path, file_types)
+                        move_file(source_path, destination_path,
+                                  extension_dir, filename)
 
         else:
-            initiate_transfer(source_path, destination_path)
+            initiate_transfer(source_path, destination_path, file_types)
+
+        move_dir(source_path, destination_path)
 
         if options['sort_folders']:
             group_variables = get_grouping_variables(
@@ -211,6 +258,7 @@ if __name__ == '__main__':
             group_misc_folders(group_variables['path'])
 
         print('Done.')
+        print('\n{:-^80}\n'.format('END'))
 
     else:
         parser.print_help()

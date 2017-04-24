@@ -195,19 +195,16 @@ class Folder(Directory):
 
     def _get_category_folder(self):
         # category folder is not full path
-        if not self._category_folder:
-            if self.for_sorter:
-                if self.name.upper() in typeList:
-                    # folder is file type folder
-                    category = [key for key in typeGroups.keys() if set(typeGroups[key]) & set([self.name])][0]
-                    self._category_folder = category
-                if self.name in typeGroups.keys():
-                    # folder is category folder
-                    self._category_folder = os.path.basename(self.parent)
-            else:
-                self._category_folder = 'FOLDERS'
+        if self.for_sorter:
+            if self.name.upper() in typeList:
+                # folder is file type folder
+                category = [key for key in typeGroups.keys() if set(typeGroups[key]) & set([self.name])][0]
+                return os.path.join(category, self.name.upper())
+            if self.name in typeGroups.keys():
+                # folder is category folder
+                return os.path.basename(self.parent)
         
-        return self._category_folder
+        return 'FOLDERS'
 
     def create(self):
         try:
@@ -240,8 +237,6 @@ class Folder(Directory):
         if src is None:
             src = self.path
 
-        # what happens if src has contents
-        # shutil.move will work
         if os.path.isdir(dst):
             # if destination exists
             self._move_contents(src, dst, root_path, group_content)

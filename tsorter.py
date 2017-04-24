@@ -1,10 +1,11 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 
 import argparse
 import os
 from glob import glob
 from classsorter import File, Folder
 from filegroups import typeGroups
+
 
 def is_writable(folder_path):
     try:
@@ -25,7 +26,7 @@ parser.add_argument('-d', '--destination',
 parser.add_argument(
     '--sort-folders', help='Sort folders into categories', action='store_true')
 parser.add_argument('-r', '--recursive',
-                    help='Recursively look into folders in the specified source directory.', action='store_true')
+                    help='Recursively check into folders in the specified source directory.', action='store_true')
 parser.add_argument(
     '-t', '--types', help='File formats to sort.', nargs='+')
 options = vars(parser.parse_args())
@@ -42,8 +43,12 @@ else:
 
 if options['types']:
     file_types = options['types']
+    glob_pattern = '*.'
 else:
-    file_types = []
+    file_types = ['*']
+    glob_pattern = ''
+
+print('file_types:', file_types)
 
 if not os.path.isdir(source_path):
     proceed = False
@@ -62,23 +67,28 @@ if destination_path:
 
 if proceed:
     print('\n{:-^80}\n'.format('START'))
-    
-    files = [file_ for file_ in glob(os.path.join(source_path, '*')) if os.path.isfile(file_)]
+
+    files = []
+    for item in file_types:
+        for i in  glob(os.path.join(source_path, glob_pattern + item)):
+            if os.path.isfile(i):
+                files.append(i)
 
     if files:
+        print('files:', files)
         for file_ in files:
             file_class = File(os.path.join(source_path, file_))
             file_class.move_to(destination_path, options['sort_folders'])
 
     if options['sort_folders']:
-        folders = [folder for folder in glob(os.path.join(source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys()]
+        folders = [folder for folder in glob(os.path.join(
+            source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys()]
         print('folders:', folders)
         if folders:
             for folder in folders:
                 folder_instance = Folder(os.path.join(source_path, folder))
                 print('source_path:', source_path)
                 folder_instance.group(source_path)
-
 
     print('Done.')
     print('\n{:-^80}\n'.format('END'))

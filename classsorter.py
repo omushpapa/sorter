@@ -3,7 +3,7 @@
 import os
 import shutil
 import re
-from filegroups import fileGroups, typeList
+from filegroups import typeGroups, typeList
 from glob import glob
 
 
@@ -94,8 +94,8 @@ class File(Directory):
     def get_category(self, extension):
         if extension:
             file_extension = extension.upper()
-            for key in fileGroups.keys():
-                common = set(fileGroups[key]) & set([file_extension])
+            for key in typeGroups.keys():
+                common = set(typeGroups[key]) & set([file_extension])
                 if common:
                     return key
         return 'UNDEFINED'
@@ -188,7 +188,7 @@ class Folder(Directory):
                 if dirname in typeList or dirname == 'FOLDERS':
                     return True
             else:
-                if dirname in fileGroups.keys():
+                if dirname in typeGroups.keys():
                     return True
 
         return False
@@ -199,9 +199,9 @@ class Folder(Directory):
             if self.for_sorter:
                 if self.name.upper() in typeList:
                     # folder is file type folder
-                    category = [key for key in fileGroups.keys() if set(fileGroups[key]) & set([self.name])][0]
+                    category = [key for key in typeGroups.keys() if set(typeGroups[key]) & set([self.name])][0]
                     self._category_folder = category
-                if self.name in fileGroups.keys():
+                if self.name in typeGroups.keys():
                     # folder is category folder
                     self._category_folder = os.path.basename(self.parent)
             else:

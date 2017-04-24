@@ -1,4 +1,4 @@
-fileGroups = {'archive': ['7Z',
+typeGroups = {'archive': ['7Z',
              'BZ2',
              'CRX',
              'GZ',

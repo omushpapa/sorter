@@ -4,7 +4,7 @@ import argparse
 import os
 from glob import glob
 from classsorter import File, Folder
-from filegroups import fileGroups
+from filegroups import typeGroups
 
 def is_writable(folder_path):
     try:
@@ -71,7 +71,7 @@ if proceed:
             file_class.move_to(destination_path, options['sort_folders'])
 
     if options['sort_folders']:
-        folders = [folder for folder in glob(os.path.join(source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in fileGroups.keys()]
+        folders = [folder for folder in glob(os.path.join(source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys()]
         print('folders:', folders)
         if folders:
             for folder in folders:

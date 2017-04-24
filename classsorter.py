@@ -10,33 +10,33 @@ from glob import glob
 class Directory(object):
 
     def __init__(self, path):
-        self.__path = os.path.abspath(path)
-        self.__name = os.path.basename(self.path)
-        self.__parent = os.path.dirname(self.path)
-        self.__hidden_path = self.in_hidden_path(self.path)
+        self._path = os.path.abspath(path)
+        self._name = os.path.basename(self.path)
+        self._parent = os.path.dirname(self.path)
+        self._hidden_path = self.in_hidden_path(self.path)
 
     @property
     def path(self):
-        return self.__path
+        return self._path
 
     @path.setter
     def path(self, value):
-        self.__path = value
-        self.__name = os.path.basename(self.path)
-        self.__parent = os.path.dirname(self.path)
-        self.__hidden_path = self.in_hidden_path(self.path)
+        self._path = value
+        self._name = os.path.basename(self.path)
+        self._parent = os.path.dirname(self.path)
+        self._hidden_path = self.in_hidden_path(self.path)
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @property
     def parent(self):
-        return self.__parent
+        return self._parent
 
     @property
     def hidden_path(self):
-        return self.__hidden_path
+        return self._hidden_path
 
     def in_hidden_path(self, path):
         if not os.path.basename(path):
@@ -57,21 +57,21 @@ class File(Directory):
 
     def __init__(self, path):
         super(File, self).__init__(path)
-        self.__extension = self._get_extension()
-        self.__category = self.get_category(self.extension)
-        self.__exists = os.path.isfile(self.path)
+        self._extension = self._get_extension()
+        self._category = self.get_category(self.extension)
+        self._exists = os.path.isfile(self.path)
 
     @property
     def extension(self):
-        return self.__extension
+        return self._extension
 
     @property
     def category(self):
-        return self.__category
+        return self._category
 
     @property
     def exists(self):
-        return self.__exists
+        return self._exists
 
     @property
     def path(self):
@@ -80,9 +80,9 @@ class File(Directory):
     @path.setter
     def path(self, value):
         super(File, self.__class__).path.fset(self, value)
-        self.__extension = self._get_extension()
-        self.__category = self.get_category(self.extension)
-        self.__exists = os.path.isfile(self.path)
+        self._extension = self._get_extension()
+        self._category = self.get_category(self.extension)
+        self._exists = os.path.isfile(self.path)
 
     def _get_extension(self):
         extension = 'undefined'

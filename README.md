@@ -52,5 +52,6 @@ python sorter.py D:\User\folder -d E:\newfolder
 
 ### TODO
 
-1. Add GUI
-2. Add sorting by user provided parameter(s)
+1. Add GUI.
+2. Add sorting by user provided parameter(s).
+3. Add support for reversing actions.

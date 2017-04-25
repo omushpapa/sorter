@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#! /usr/bin/env python3
 
 import os
 import shutil
@@ -198,12 +198,13 @@ class Folder(Directory):
         if self.for_sorter:
             if self.name.upper() in typeList:
                 # folder is file type folder
-                category = [key for key in typeGroups.keys() if set(typeGroups[key]) & set([self.name])][0]
+                category = [key for key in typeGroups.keys() if set(
+                    typeGroups[key]) & set([self.name])][0]
                 return os.path.join(category, self.name.upper())
             if self.name in typeGroups.keys():
                 # folder is category folder
                 return os.path.basename(self.parent)
-        
+
         return 'FOLDERS'
 
     def create(self):
@@ -220,11 +221,11 @@ class Folder(Directory):
     def group(self, root_path):
         # root_path is provided by user
         # groups according to root path ie source_path
-        # if folder is not a sorter folder 
+        # if folder is not a sorter folder
         # eg developer, PDF
         # move to category folder == FOLDERS
         #
-        # if folder is a sorter folder 
+        # if folder is a sorter folder
         # eg developer, PDF
         # move to category folder
         #print('self._get_category_folder(): ',self._get_category_folder())
@@ -249,15 +250,16 @@ class Folder(Directory):
             # if destination does not exists
             shutil.move(src, dst)
 
-
     def _move_contents(self, src, dst, root_path, group_content=False):
         # move contents of src to dst
         # ignore folders
-        files = [content for content in glob(os.path.join(src, '*')) if os.path.isfile(content)]
+        files = [content for content in glob(
+            os.path.join(src, '*')) if os.path.isfile(content)]
         #print('files: ', files)
         if files:
             for file_ in files:
                 print('src file:', src)
                 print('dst file:', dst)
                 file_instance = File(os.path.join(src, file_))
-                file_instance.move_to(dst_root_path=root_path, group=group_content)
+                file_instance.move_to(
+                    dst_root_path=root_path, group=group_content)

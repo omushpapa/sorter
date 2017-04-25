@@ -32,14 +32,12 @@ parser.add_argument(
 options = vars(parser.parse_args())
 
 source_path = os.path.abspath(options['source'][0])
-#filename_pattern = re.compile(r'\-\sdup[\s\(\d\)]+')
 proceed = True
 
 if options['destination']:
     destination_path = os.path.abspath(options['destination'][0])
 else:
     destination_path = source_path
-    #destination_path = ''
 
 if options['types']:
     file_types = options['types']
@@ -68,17 +66,34 @@ if destination_path:
 if proceed:
     print('\n{:-^80}\n'.format('START'))
 
-    files = []
-    for item in file_types:
-        for i in  glob(os.path.join(source_path, glob_pattern + item)):
-            if os.path.isfile(i):
-                files.append(i)
+    if options['recursive']:
+        for root, dirs, files in os.walk(source_path):
+            glob_files = []
+            for item in file_types:
+                for i in glob(os.path.join(root, glob_pattern + item)):
+                    if os.path.isfile(i):
+                        print('i:', i)
+                        glob_files.append(i)
 
-    if files:
-        print('files:', files)
-        for file_ in files:
-            file_class = File(os.path.join(source_path, file_))
-            file_class.move_to(destination_path, options['sort_folders'])
+            if glob_files:
+                for file_ in glob_files:
+                    print('file_:', file_)
+                    file_instance = File(os.path.join(root, file_))
+                    file_instance.move_to(
+                        destination_path, options['sort_folders'])
+
+    else:
+        files = []
+        for item in file_types:
+            for i in glob(os.path.join(source_path, glob_pattern + item)):
+                if os.path.isfile(i):
+                    files.append(i)
+
+        if files:
+            print('files:', files)
+            for file_ in files:
+                file_class = File(os.path.join(source_path, file_))
+                file_class.move_to(destination_path, options['sort_folders'])
 
     if options['sort_folders']:
         folders = [folder for folder in glob(os.path.join(

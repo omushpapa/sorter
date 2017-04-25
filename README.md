@@ -42,7 +42,7 @@ python sorter.py D:\User\folder -d E:\newfolder
 
 ### Authors
 
-* **Aswa Paul** 
+* **[Giantas](https://github.com/giantas)** 
 
 
 ### License
@@ -50,3 +50,7 @@ python sorter.py D:\User\folder -d E:\newfolder
 * This project is licensed under the BSD 3-clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details
 
 
+### TODO
+
+1. Add GUI
+2. Add sorting by user provided parameter(s)

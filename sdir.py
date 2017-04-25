@@ -102,6 +102,10 @@ class File(Directory):
 
     def find_suitable_name(self, file_path, count=1):
         filename = os.path.basename(file_path)
+        # Fix when renaming errors occusr
+        # fix_filename = re.sub(r'[\-\s]*dup[\s\(\d\)\-]+', '', filename)
+        # filename = fix_filename
+        # Things happen :P
         if os.path.exists(file_path):
             split_data = os.path.splitext(filename)
             new_filename = ''
@@ -145,8 +149,12 @@ class File(Directory):
         # dst_root_path should be root, no file name
         final_destination = self._set_extension_destination(
             dst_root_path, group)
-        shutil.move(self.path, final_destination)
-        self.path = final_destination
+        if not os.path.dirname(self.path) == os.path.dirname(final_destination):
+            try:
+                shutil.move(self.path, final_destination)
+            except PermissionError as e:
+                print('Could not move "{0}": {1}'.format(self.path, e))
+            self.path = final_destination
 
 
 class Folder(Directory):

@@ -81,6 +81,11 @@ if proceed:
     if options['recursive']:
         for root, dirs, files in os.walk(source_path):
             sort_files(root, destination_path, file_types, glob_pattern)
+            if not dirs and not files:
+                try:
+                    os.rmdir(root)
+                except PermissionError as e:
+                    print('Could not move "{0}": {1}'.format(root, e))
 
     else:
         sort_files(source_path, destination_path, file_types, glob_pattern)

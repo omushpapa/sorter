@@ -24,6 +24,13 @@ or
 ./sorter.py (source folder path)
 ```
 
+Alternatively, do
+```
+./sorter.py -h 
+```
+for more usage info.
+
+
 ### Prerequisites
 
 Developed for python3.4 but should work on any version

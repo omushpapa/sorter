@@ -3,6 +3,7 @@
 import os
 import shutil
 import re
+import hashlib
 from filegroups import typeGroups, typeList
 from glob import glob
 
@@ -123,7 +124,7 @@ class File(Directory):
             try:
                 filename = self.find_suitable_name(new_file_path, count)
             except RuntimeError:
-                filename += '$$LASTFILE'
+                filename = hashlib.md5(filename.encode('utf-8')).hexdigest()
         return filename
 
     def _set_extension_destination(self, root_path, group):
@@ -142,7 +143,7 @@ class File(Directory):
         suitable_name = self.find_suitable_name(new_dst)
         final_dst = os.path.join(os.path.dirname(new_dst),
                                  suitable_name)
-        
+
         return final_dst
 
     def move_to(self, dst_root_path, group=False):
@@ -257,7 +258,7 @@ class Folder(Directory):
         files = [content for content in glob(
             os.path.join(src, '*')) if os.path.isfile(content)]
         if files:
-            for file_ in files:    
+            for file_ in files:
                 file_instance = File(os.path.join(src, file_))
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)

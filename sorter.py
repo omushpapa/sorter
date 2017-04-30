@@ -60,7 +60,8 @@ class HomeWidget(QtGui.QWidget):
                            sort=self.sort,
                            recur=self.recursive,
                            types=None,
-                           status=self.status_bar)
+                           status=self.status_bar,
+                           gui='qt')
 
     def check_box(self, state, box=None):
         if box == 'sort':
@@ -191,4 +192,11 @@ if __name__ == '__main__':
                            status=None,
                            parser=parser)
     else:
-        run()
+        try:
+            import PyQt4
+            run()
+        except ImportError:
+            from tkgui import TkGui
+            app = TkGui()
+            app.tk_run()
+        

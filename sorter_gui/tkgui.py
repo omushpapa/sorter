@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import base64
+from .sorter_icon import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from operations import initiate_operation
@@ -10,7 +12,8 @@ class TkGui(Tk):
     def __init__(self):
         super(TkGui, self).__init__()
         self.title('Sorter')
-        icon = PhotoImage(file='./sorter_icons/sorter.gif')
+        icondata= base64.b64decode(icon_string) # utf-8 encoded 
+        icon = PhotoImage(data=icondata)
         self.tk.call('wm', 'iconphoto', self._w, icon)
         self.resizable(width=False, height=True)
         self.maxsize(550, 300)

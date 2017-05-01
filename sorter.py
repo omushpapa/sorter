@@ -61,9 +61,9 @@ if __name__ == '__main__':
     else:
         try:
             import PyQt4
-            from qtgui import qt_run
+            from sorter_gui.qtgui import qt_run
             qt_run()
         except ImportError:
-            from tkgui import TkGui
+            from sorter_gui.tkgui import TkGui
             app = TkGui()
             app.tk_run()

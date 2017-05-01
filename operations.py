@@ -36,10 +36,12 @@ def sort_files(source_path, destination_path, file_types, glob_pattern, sort_fol
 def display_message(text, status, gui):
     if gui is None:
         print(text)
-    if gui == 'qt':
-        status.showMessage(text)
-    if gui == 'tkinter':
-        status.config(text=text)
+    else:
+        text = text.replace('\n', '')
+        if gui == 'qt':
+            status.showMessage(text)
+        if gui == 'tkinter':
+            status.config(text=text)
 
 
 def initiate_operation(src='', dst='', sort=False, recur=False, types=None, status=None, parser=None, gui=None):

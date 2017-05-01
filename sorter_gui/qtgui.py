@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import sys
 from PyQt4 import QtCore
 from PyQt4 import QtGui
 from glob import glob
@@ -136,3 +137,6 @@ def qt_run():
     app = QtGui.QApplication(sys.argv)
     GUI = Window()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    qt_run()

@@ -59,11 +59,11 @@ if __name__ == '__main__':
                            status=None,
                            parser=parser)
     else:
-        try:
-            import PyQt4
-            from sorter_gui.qtgui import qt_run
-            qt_run()
-        except ImportError:
-            from sorter_gui.tkgui import TkGui
-            app = TkGui()
-            app.tk_run()
+        #try:
+        #    import PyQt4
+        #    from sorter_gui.qtgui import qt_run
+        #    qt_run()
+        #except ImportError:
+        from sorter_gui.tkgui import TkGui
+        app = TkGui()
+        app.tk_run()

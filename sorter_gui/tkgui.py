@@ -10,6 +10,8 @@ class TkGui(Tk):
     def __init__(self):
         super(TkGui, self).__init__()
         self.title('Sorter')
+        icon = PhotoImage(file='./sorter_icons/sorter.gif')
+        self.tk.call('wm', 'iconphoto', self._w, icon)
         self.resizable(width=False, height=True)
         self.maxsize(550, 300)
         self.minsize(550, 200)

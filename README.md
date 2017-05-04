@@ -12,7 +12,7 @@ Launch GUI with
 python sorter.py
 ```
 
-Or better yet, install program using the latest [package](https://github.com/giantas/sorter/releases)
+Or better yet, install program using the [latest package](https://github.com/giantas/sorter/releases/latest)
 
 ### ~~Terminal/CMD~~ (since 1.0.5)
 
@@ -38,11 +38,11 @@ or
 
 or 
 
-Use [GUI](https://github.com/giantas/sorter/releases)
+Use [GUI](https://github.com/giantas/sorter/releases/latest)
 
 
 ### Prerequisites 
-#### None (for the installer [packages](https://github.com/giantas/sorter/releases))
+#### None (for the installer [packages](https://github.com/giantas/sorter/releases/latest))
 
 #### For repo clone
 Python 3.x (3.4 recommended)

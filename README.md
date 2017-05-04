@@ -1,6 +1,6 @@
 # sorter
 
-A Python program that sorts files in a folder into folders which are named by type. It (optionally) sorts the folders created in the first sorting into categories as defined by the dictionary in [filegroups.py](https://github.com/giantas/sorter/blob/master/filegroups.py)
+A Python application that sorts files in a folder into folders which are named by type. It (optionally) sorts the folders created in the first sorting into categories as defined by the dictionary in [filegroups.py](https://github.com/giantas/sorter/blob/master/filegroups.py)
 
 ## Getting Started
 
@@ -12,7 +12,9 @@ Launch GUI with
 python sorter.py
 ```
 
-### Terminal/CMD
+Or better yet, install program using the latest [package](https://github.com/giantas/sorter/releases)
+
+### ~~Terminal/CMD~~ (since 1.0.5)
 
 sorter.py is already executable (if not, make it executable :P )
 
@@ -34,35 +36,21 @@ or
 ./sorter.py (source folder path)
 ```
 
-Alternatively, do
-```
-./sorter.py -h 
-```
-for more usage info.
+or 
+
+Use [GUI](https://github.com/giantas/sorter/releases)
 
 
-### Prerequisites
+### Prerequisites 
+#### None (for the installer [packages](https://github.com/giantas/sorter/releases))
 
+#### For repo clone
 Python 3.x (3.4 recommended)
 
 
-### Examples
-```
-./sorter.py /home/User/Downloads
-```
-```
-python sorter.py D:\User\folder -d E:\newfolder
-```
-```
-./sorter.py /home/User/Downloads --sort-folders
-```
-```
-python sorter.py D:\User\folder --types pdf docx
-```
-
 #### Note
 
-Option --types only supported for terminal/CMD (for now).
+~~Option --types only supported for terminal/CMD (for now)~~ Working.
 
 ### Authors
 

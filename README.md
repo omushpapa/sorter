@@ -1,22 +1,38 @@
 # sorter
 
-A Python application that sorts files in a folder into folders which are named by type. It (optionally) sorts the folders created in the first sorting into categories as defined by the dictionary in [filegroups.py](filegroups.py)
+An application that organises/sorts files in a folder into folders which are named by type. It (optionally) groups the folders created in the first sorting into categories as defined by the dictionary in [filegroups](filegroups.py)
 
-## Getting Started
+## Usage
 
-### New - GUI
+Launch [Sorter GUI](releases/latest)
 
-Launch GUI with 
+![main screen](screenshots/Screenshot_20170505_081019.png)
 
-```
-python sorter.py
-```
 
-Or better yet, install program using the [latest package](releases/latest)
+Choose source folder - folder in which files should be organised
 
-### ~~Terminal/CMD~~ (since 1.0.5)
+![Choose source folder](screenshots/Screenshot_20170505_081200.png)
 
-sorter.py is already executable (if not, make it executable :P )
+
+Choose destination folder - where the files will be moved to - not required.
+
+
+Select any option - sort folders or recursive or types
+
+![Choose source folder](screenshots/Screenshot_20170505_081200.png)
+
+![Types screen](screenshots/Screenshot_20170505_081054.png)
+
+##### Note
+If option 'types' is not checked, by default, all files will be organised/sorted.
+
+Click Run
+
+![Resulting groups of folders](screenshots/Screenshot_20170505_081300.png)
+
+![Resulting folders organised by file type](screenshots/Screenshot_20170505_081329.png)
+
+#### Alternatively
 
 *Do*
 
@@ -27,22 +43,20 @@ cd sorter
 then 
 
 ```
-python sorter.py (source folder path)
-```
-
-or
-
-```
-./sorter.py (source folder path)
+python sorter.py
 ```
 
 or 
 
-Use [GUI](releases/latest)
+```
+python3 sorter.py
+```
 
+Then follow the GUI steps listed above.
 
 ### Prerequisites 
-#### None (for the installer [packages](releases/latest))
+#### For the installer/binary [packages](releases/latest)
+None
 
 #### For repo clone
 Python 3.x (3.4 recommended)

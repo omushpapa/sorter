@@ -17,22 +17,28 @@ Choose source folder - folder in which files should be organised
 Choose destination folder - where the files will be moved to - not required.
 
 
-Select any option - sort folders or recursive or types
+Select any (or all) option(s) - sort folders; recursive; types:
 
-![Choose source folder](screenshots/Screenshot_20170505_081200.png)
+	* Sort folder - groups the file type folders into categories of audio, video, etc.
+
+	* Recursive - checks inside folders and their subfolders for any files and organises them relative to the source folder.
+
+	* Type - allows a user to select specific file types/format to be organised/sorted.
+
+![Choose option(s)](screenshots/Screenshot_20170505_081200.png)
 
 ![Types screen](screenshots/Screenshot_20170505_081054.png)
 
 ##### Note
 If option 'types' is not checked, by default, all files will be organised/sorted.
 
-Click Run
+##### Click Run
 
 ![Resulting groups of folders](screenshots/Screenshot_20170505_081300.png)
 
 ![Resulting folders organised by file type](screenshots/Screenshot_20170505_081329.png)
 
-#### Alternatively
+#### Alternatively - clone repo
 
 *Do*
 
@@ -56,10 +62,10 @@ Then follow the GUI steps listed above.
 
 ### Prerequisites 
 #### For the installer/binary [packages](releases/latest)
-None
+* None
 
 #### For repo clone
-Python 3.x (3.4 recommended)
+* Python 3.x (3.4 recommended)
 
 
 ### Authors

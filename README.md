@@ -60,6 +60,10 @@ python3 sorter.py
 
 Then follow the GUI steps listed above.
 
+## Warning
+You should have access (read) and *write* permissions on the source and destination folders.
+*Be careful* not to use sorter on application folders. Sorter actions are *NOT* reversible (for now).
+
 ### Prerequisites 
 #### For the installer/binary [packages](releases/latest)
 * None

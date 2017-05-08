@@ -61,7 +61,7 @@ def initiate_operation(src='', dst='', sort=False, recur=False, types=None, stat
 
     if proceed:
         if types is not None:
-            file_types = types  # types should be list
+            file_types = types or ['*']  # types should be list
             glob_pattern = '*.'
         else:
             file_types = ['*']

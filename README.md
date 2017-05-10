@@ -4,6 +4,7 @@ An application that organises/sorts files in a folder into folder-groups named b
 
 ## Download
 Download from [Sorter - SourceForge](http://file-sorter.sourceforge.io)
+
 For specific OS versions, go to [Sorter - Official Releases](https://github.com/giantas/sorter/releases/latest)
 
 ## Usage

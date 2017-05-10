@@ -3,7 +3,7 @@
 import argparse
 import os
 from glob import glob
-from sdir import File, Folder
+from sdir import File, Folder, CustomFolder, CustomFile
 from filegroups import typeGroups
 
 
@@ -19,18 +19,37 @@ def is_writable(folder_path):
     return True
 
 
-def sort_files(source_path, destination_path, file_types, glob_pattern, sort_folders):
+def sort_files(source_path, destination_path, search_string,string_pattern,file_types, glob_pattern, sort_folders):
     glob_files = []
+    if search_string:
+        string_pattern = '*' + string_pattern
     for item in file_types:
-        for i in glob(os.path.join(source_path, glob_pattern + item)):
+        for i in glob(os.path.join(source_path, string_pattern + glob_pattern + item)):
             if os.path.isfile(i):
                 glob_files.append(i)
 
     if glob_files:
         for file_ in glob_files:
-            file_instance = File(os.path.join(source_path, file_))
-            file_instance.move_to(
-                destination_path, sort_folders)
+            if search_string:
+                file_instance = CustomFile(os.path.join(source_path, file_), search_string)
+                file_instance.move_to(
+                    destination_path, sort_folders)
+            else:
+                file_instance = File(os.path.join(source_path, file_))
+                file_instance.move_to(
+                    destination_path, sort_folders)
+
+def insensitize(string):
+    def either(c):
+        return '[{0}{1}]'.format(c.lower(), c.upper()) if c.isalpha() else c
+    return ''.join(map(either, string))
+
+def form_search_pattern(search_string):
+    if search_string:
+        insensitive_string = insensitize(search_string)
+        return '?'.join(insensitive_string.split()) 
+    else:
+        return search_string
 
 
 def display_message(text, status, gui):
@@ -44,8 +63,9 @@ def display_message(text, status, gui):
             status.config(text=text)
 
 
-def initiate_operation(src='', dst='', sort=False, recur=False, types=None, status=None, parser=None, gui=None):
+def initiate_operation(src='', dst='', search_string='',sort=False, recur=False, types=None, status=None, parser=None, gui=None):
     proceed = True
+    search_string_pattern = form_search_pattern(search_string)
 
     if src:
         source_path = os.path.abspath(src)
@@ -91,7 +111,7 @@ def initiate_operation(src='', dst='', sort=False, recur=False, types=None, stat
 
         if recur:
             for root, dirs, files in os.walk(source_path):
-                sort_files(root, destination_path,
+                sort_files(root, destination_path, search_string,search_string_pattern,
                            file_types, glob_pattern, sort)
                 if not dirs and not files:
                     try:
@@ -101,7 +121,7 @@ def initiate_operation(src='', dst='', sort=False, recur=False, types=None, stat
                             root, e), status=status, gui=gui)
 
         else:
-            sort_files(source_path, destination_path,
+            sort_files(source_path, destination_path, search_string,search_string_pattern,
                        file_types, glob_pattern, sort)
 
         if sort:
@@ -110,8 +130,12 @@ def initiate_operation(src='', dst='', sort=False, recur=False, types=None, stat
 
             if folders:
                 for folder in folders:
-                    folder_instance = Folder(os.path.join(source_path, folder))
-                    folder_instance.group(source_path)
+                    if search_string:
+                        folder_instance = CustomFolder(os.path.join(source_path, folder), search_string)
+                        folder_instance.group(source_path)
+                    else:
+                        folder_instance = Folder(os.path.join(source_path, folder))
+                        folder_instance.group(source_path)
 
         display_message('Done.', status=status, gui=gui)
         display_message('\n{:-^80}\n'.format('FINISH'), status=status, gui=gui)

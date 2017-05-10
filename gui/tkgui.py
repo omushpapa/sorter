@@ -30,6 +30,7 @@ class TkGui(Tk):
         # Configure default theme
         style = ttk.Style(self)
         style.theme_use('clam')
+        style.map("TEntry",fieldbackground=[("active", "white"), ("disabled", "#DCDCDC")])
         bg = self.cget('bg')
         style.configure('My.TFrame', background=bg)
 
@@ -78,9 +79,8 @@ class TkGui(Tk):
         entry_frame.pack(side=LEFT, fill=Y, expand=YES)
         self.source_entry = ttk.Entry(entry_frame, width=50)
         self.source_entry.pack(ipady=2.5, pady=5, side=TOP, expand=YES)
-        self.dst_entry = ttk.Entry(entry_frame, width=50)
+        self.dst_entry = ttk.Entry(entry_frame, width=50, state='disabled')
         self.dst_entry.pack(ipady=2.5, pady=5, side=BOTTOM, expand=YES)
-        self.dst_entry.insert(0, 'optional')
 
         # Configure frame for dialog buttons
         diag_frame = ttk.Frame(self.top_frame, style='My.TFrame')
@@ -107,11 +107,23 @@ class TkGui(Tk):
         recursive_option = Checkbutton(
             options_frame, text='recursive', variable=self.recursive)
         recursive_option.pack(side=LEFT)
+
         self.types_window = None
         self.items_option = Checkbutton(options_frame, text='types',
                                         variable=types_value,
                                         command=lambda: self._show_types_window(types_value))
         self.items_option.pack(side=LEFT)
+
+        # Configure search string option
+        self.search_option_value = IntVar()
+        search_option = Checkbutton(
+            options_frame, text='search', 
+            variable=self.search_option_value,
+            command=lambda: self._enable_search_entry(self.search_option_value))
+        search_option.pack(side=LEFT)
+
+        self.search_entry = ttk.Entry(options_frame, width=15, state='disabled')
+        self.search_entry.pack(side=LEFT)
 
         # Configure action buttons
         self.run_button = ttk.Button(self.bottom_frame,
@@ -127,6 +139,12 @@ class TkGui(Tk):
         self.status_bar = ttk.Label(self, text='Ready',
                                     relief=SUNKEN, anchor=W)
         self.status_bar.pack(side=BOTTOM, fill=X)
+
+    def _enable_search_entry(self, value):
+        if bool(value.get()):
+            self.search_entry.config(state='normal')
+        else:
+            self.search_entry.config(state='disabled')
 
     def _set_types(self, types, item):
         type_obj = types.get(item)
@@ -202,7 +220,7 @@ class TkGui(Tk):
 
     def _show_help(self, info=None):
         self.option_add('*Dialog.msg.font', 'Helvetica 9')
-        help_message = "A Python program that sorts files in a folder into folders which are named by type e.g pdf, docx. It (optionally) sorts the folders created in the first sorting into categories e.g audio, video.\nThe 'Source' folder defines the folder in which the sorting should be done.\nThe 'Destination' folder is an optional destination where the user would want the sorted files/folders to be moved to.\n'Sort folders' option sets the program to sort the folders created after sorting files into categories as aforementioned.\n'Recursive option' checks into every subfolder, starting from the source, and sorts files accordingly."
+        help_message = "A Python program that organises/sorts files in a folder into folders which are grouped by type e.g pdf, docx. It (optionally) groups/sorts the folders created in the first sorting into categories e.g audio, video.\nThe 'Source' folder defines the folder in which the sorting should be done.\nThe 'Destination' folder is an optional destination where the user would want the sorted files/folders to be moved to.\n'Sort folders' option sets the program to sort the folders created after sorting files into categories as aforementioned.\n'Recursive option' checks into every subfolder, starting from the source, and sorts files accordingly."
         messagebox.showinfo(title='Help', message=help_message)
 
     def _show_exit_dialog(self):
@@ -213,12 +231,20 @@ class TkGui(Tk):
 
     def run_sorter(self):
         dst = self.dst_entry.get()
+        search_string = ''
+        sort_value = bool(self.sort_folders.get())
+
         if dst == 'optional':
             dst = None
 
+        if bool(self.search_option_value.get()):
+            search_string = self.search_entry.get()
+            sort_value = True
+
         initiate_operation(src=self.source_entry.get(),
                            dst=dst,
-                           sort=bool(self.sort_folders.get()),
+                           search_string=search_string,
+                           sort=sort_value,
                            recur=bool(self.recursive.get()),
                            types=self.file_types,
                            status=self.status_bar,
@@ -231,6 +257,7 @@ class TkGui(Tk):
             self.source_entry.insert(0, dir_)
         if text == 'destination':
             self.dst_entry.delete(0, END)
+            self.dst_entry.config(state='normal')
             self.dst_entry.insert(0, dir_)
 
     def tk_run(self):

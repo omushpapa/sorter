@@ -262,3 +262,47 @@ class Folder(Directory):
                 file_instance = File(os.path.join(src, file_))
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
+
+
+class CustomFolder(Folder):
+
+    def __init__(self, path, group_folder_name):
+        self._group_folder = group_folder_name.title()
+        super(CustomFolder, self).__init__(path)
+
+    @property
+    def group_folder(self):
+        return self._group_folder
+
+    def _get_category_folder(self):
+        # category folder is not full path
+        return self._group_folder
+
+    def _move_contents(self, src, dst, root_path, group_content=False):
+        # move contents of src to dst
+        # ignore folders
+        files = [content for content in glob(
+            os.path.join(src, '*')) if os.path.isfile(content)]
+        if files:
+            for file_ in files:
+                file_instance = CustomFile(os.path.join(src, file_), self._group_folder)
+                file_instance.move_to(
+                    dst_root_path=root_path, group=group_content)
+
+
+class CustomFile(File):
+
+    def __init__(self, path, group_folder_name):
+        self._group_folder = group_folder_name.title()
+        super(CustomFile, self).__init__(path)
+
+    @property
+    def category(self):
+        return self._category
+
+    @category.setter
+    def category(self, value):
+        self._category = value
+
+    def get_category(self, extension):
+        return self._group_folder

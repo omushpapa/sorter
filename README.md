@@ -1,6 +1,10 @@
 # sorter
 
-An application that organises/sorts files in a folder into folders which are named by type. It (optionally) groups the folders created in the first sorting into categories as defined by the dictionary in [filegroups](filegroups.py)
+An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined by the dictionary in [filegroups](filegroups.py)
+
+## Download
+Download from [Sorter - SourceForge](http://file-sorter.sourceforge.io)
+For specific OS versions, go to [Sorter - releases](releases/latest)
 
 ## Usage
 

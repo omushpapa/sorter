@@ -2,8 +2,8 @@
 
 import argparse
 import os
-from glob import glob
-from sdir import File, Folder, CustomFolder, CustomFile
+from glob import glob, iglob
+from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
 from filegroups import typeGroups
 
 
@@ -19,7 +19,7 @@ def is_writable(folder_path):
     return True
 
 
-def sort_files(source_path, destination_path, search_string,string_pattern,file_types, glob_pattern, sort_folders):
+def sort_files(source_path, destination_path, search_string, string_pattern, file_types, glob_pattern, sort_folders):
     glob_files = []
     if search_string:
         string_pattern = '*' + string_pattern
@@ -31,7 +31,8 @@ def sort_files(source_path, destination_path, search_string,string_pattern,file_
     if glob_files:
         for file_ in glob_files:
             if search_string:
-                file_instance = CustomFile(os.path.join(source_path, file_), search_string)
+                file_instance = CustomFile(os.path.join(
+                    source_path, file_), search_string)
                 file_instance.move_to(
                     destination_path, sort_folders)
             else:
@@ -39,15 +40,17 @@ def sort_files(source_path, destination_path, search_string,string_pattern,file_
                 file_instance.move_to(
                     destination_path, sort_folders)
 
+
 def insensitize(string):
     def either(c):
         return '[{0}{1}]'.format(c.lower(), c.upper()) if c.isalpha() else c
     return ''.join(map(either, string))
 
+
 def form_search_pattern(search_string):
     if search_string:
         insensitive_string = insensitize(search_string)
-        return '?'.join(insensitive_string.split()) 
+        return '?'.join(insensitive_string.split())
     else:
         return search_string
 
@@ -63,7 +66,7 @@ def display_message(text, status, gui):
             status.config(text=text)
 
 
-def initiate_operation(src='', dst='', search_string='',sort=False, recur=False, types=None, status=None, parser=None, gui=None):
+def initiate_operation(src='', dst='', search_string='', sort=False, recur=False, types=None, status=None, parser=None, gui=None):
     proceed = True
     search_string_pattern = form_search_pattern(search_string)
 
@@ -111,7 +114,7 @@ def initiate_operation(src='', dst='', search_string='',sort=False, recur=False,
 
         if recur:
             for root, dirs, files in os.walk(source_path):
-                sort_files(root, destination_path, search_string,search_string_pattern,
+                sort_files(root, destination_path, search_string, search_string_pattern,
                            file_types, glob_pattern, sort)
                 if not dirs and not files:
                     try:
@@ -121,20 +124,22 @@ def initiate_operation(src='', dst='', search_string='',sort=False, recur=False,
                             root, e), status=status, gui=gui)
 
         else:
-            sort_files(source_path, destination_path, search_string,search_string_pattern,
+            sort_files(source_path, destination_path, search_string, search_string_pattern,
                        file_types, glob_pattern, sort)
 
         if sort:
             folders = [folder for folder in glob(os.path.join(
-                source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys()]
+                source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys() and not has_signore_file(folder)]
 
             if folders:
                 for folder in folders:
-                    if search_string:
-                        folder_instance = CustomFolder(os.path.join(source_path, folder), search_string)
+                    folder_path = os.path.join(source_path, folder)
+                    if list(iglob(os.path.join(source_path, '*' + search_string_pattern + '*'))):
+                        folder_instance = CustomFolder(
+                            folder_path, search_string)
                         folder_instance.group(source_path)
                     else:
-                        folder_instance = Folder(os.path.join(source_path, folder))
+                        folder_instance = Folder(folder_path)
                         folder_instance.group(source_path)
 
         display_message('Done.', status=status, gui=gui)

@@ -7,6 +7,14 @@ import hashlib
 from filegroups import typeGroups, typeList
 from glob import glob
 
+def has_signore_file(path, filename='.signore'):
+    try:
+        open(os.path.join(path, filename), 'r').close()
+    except FileNotFoundError:
+        return False
+    else:
+        return True
+
 
 class Directory(object):
 
@@ -288,6 +296,26 @@ class CustomFolder(Folder):
                 file_instance = CustomFile(os.path.join(src, file_), self._group_folder)
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
+                
+    def move_to(self, dst, root_path, src=None, group_content=False):
+        # dst, src should be absolute paths
+        if src is None:
+            src = self.path
+
+        if os.path.isdir(dst):
+            # if destination exists
+            self._move_contents(src, dst, root_path, group_content)
+            if not has_signore_file(dst):
+                open(os.path.join(dst,'.signore'), 'w+').close()
+            try:
+                os.rmdir(src)
+            except OSError:
+                # TODO: Check if has empty subfolders, then delete
+                print('Could not delete "%s". May contain hidden files.' % src)
+
+        else:
+            # if destination does not exists
+            shutil.move(src, dst)
 
 
 class CustomFile(File):

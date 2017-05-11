@@ -7,6 +7,17 @@ import hashlib
 from filegroups import typeGroups, typeList
 from glob import glob
 
+SORTER_IGNORE_FILENAME = '.signore'
+
+
+def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
+    try:
+        open(os.path.join(path, filename), 'r').close()
+    except FileNotFoundError:
+        return False
+    else:
+        return True
+
 
 class Directory(object):
 
@@ -262,3 +273,68 @@ class Folder(Directory):
                 file_instance = File(os.path.join(src, file_))
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
+
+
+class CustomFolder(Folder):
+
+    def __init__(self, path, group_folder_name):
+        self._group_folder = group_folder_name.title()
+        super(CustomFolder, self).__init__(path)
+
+    @property
+    def group_folder(self):
+        return self._group_folder
+
+    def _get_category_folder(self):
+        # category folder is not full path
+        return self._group_folder
+
+    def _move_contents(self, src, dst, root_path, group_content=False):
+        # move contents of src to dst
+        # ignore folders
+        files = [content for content in glob(
+            os.path.join(src, '*')) if os.path.isfile(content)]
+        if files:
+            for file_ in files:
+                file_instance = CustomFile(
+                    os.path.join(src, file_), self._group_folder)
+                file_instance.move_to(
+                    dst_root_path=root_path, group=group_content)
+
+    def move_to(self, dst, root_path, src=None, group_content=False):
+        # dst, src should be absolute paths
+        if src is None:
+            src = self.path
+
+        if os.path.isdir(dst):
+            # if destination exists
+            self._move_contents(src, dst, root_path, group_content)
+            if not has_signore_file(dst):
+                open(os.path.join(dst, SORTER_IGNORE_FILENAME), 'w+').close()
+            try:
+                os.rmdir(src)
+            except OSError:
+                # TODO: Check if has empty subfolders, then delete
+                print('Could not delete "%s". May contain hidden files.' % src)
+
+        else:
+            # if destination does not exists
+            shutil.move(src, dst)
+
+
+class CustomFile(File):
+
+    def __init__(self, path, group_folder_name):
+        self._group_folder = group_folder_name.title()
+        super(CustomFile, self).__init__(path)
+
+    @property
+    def category(self):
+        return self._category
+
+    @category.setter
+    def category(self, value):
+        self._category = value
+
+    def get_category(self, extension):
+        return self._group_folder

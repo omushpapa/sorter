@@ -7,14 +7,16 @@ from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
 from filegroups import typeGroups
 
 
-def is_writable(folder_path):
+def is_writable(folder_path, status, gui, mtype):
     try:
         permissions_dir = os.path.join(folder_path, 'sorter_dir')
         os.makedirs(permissions_dir)
         os.rmdir(permissions_dir)
     except PermissionError:
-        print(
-            'Could not write to the folder "%s". Check folder and try again.' % folder_path)
+        display_message(
+            '"{0}" is not writable. Check folder and try again.'.format(
+                os.path.basename(folder_path)),
+            status=status, gui=gui, mtype=mtype)
         return False
     return True
 
@@ -55,7 +57,7 @@ def form_search_pattern(search_string):
         return search_string
 
 
-def display_message(text, status, gui):
+def display_message(text, status, gui, mtype='info'):
     if gui is None:
         print(text)
     else:
@@ -63,6 +65,10 @@ def display_message(text, status, gui):
         if gui == 'qt':
             status.showMessage(text)
         if gui == 'tkinter':
+            if mtype == 'warning':
+                status.config(foreground="red")
+            else:
+                status.config(foreground="black")
             status.config(text=text)
 
 
@@ -74,7 +80,8 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
         source_path = os.path.abspath(src)
     else:
         proceed = False
-        display_message('Source folder is required.', status=status, gui=gui)
+        display_message('Source folder is REQUIRED.',
+                        status=status, gui=gui, mtype='warning')
 
     if proceed:
         if dst:
@@ -94,9 +101,9 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
         if not os.path.isdir(source_path):
             proceed = False
             display_message(
-                'Given source folder is NOT a folder.', status=status, gui=gui)
+                'Given Source folder is NOT a folder.', status=status, gui=gui, mtype='warning')
         else:
-            if not is_writable(source_path):
+            if not is_writable(source_path, status=status, gui=gui, mtype='warning'):
                 proceed = False
 
     if proceed:
@@ -104,9 +111,9 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
             if not os.path.isdir(destination_path):
                 proceed = False
                 display_message(
-                    'Given destination folder is NOT a folder.', status=status, gui=gui)
+                    'Given Destination folder is NOT a folder.', status=status, gui=gui, mtype='warning')
             else:
-                if not is_writable(destination_path):
+                if not is_writable(destination_path, status=status, gui=gui, mtype='warning'):
                     proceed = False
 
     if proceed:
@@ -121,7 +128,7 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
                         os.rmdir(root)
                     except PermissionError as e:
                         display_message('Could not move "{0}": {1}'.format(
-                            root, e), status=status, gui=gui)
+                            root, e), status=status, gui=gui, mtype='warning')
 
         else:
             sort_files(source_path, destination_path, search_string, search_string_pattern,

@@ -7,7 +7,10 @@ import hashlib
 from filegroups import typeGroups, typeList
 from glob import glob
 
-def has_signore_file(path, filename='.signore'):
+SORTER_IGNORE_FILENAME = '.signore'
+
+
+def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
     try:
         open(os.path.join(path, filename), 'r').close()
     except FileNotFoundError:
@@ -293,10 +296,11 @@ class CustomFolder(Folder):
             os.path.join(src, '*')) if os.path.isfile(content)]
         if files:
             for file_ in files:
-                file_instance = CustomFile(os.path.join(src, file_), self._group_folder)
+                file_instance = CustomFile(
+                    os.path.join(src, file_), self._group_folder)
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
-                
+
     def move_to(self, dst, root_path, src=None, group_content=False):
         # dst, src should be absolute paths
         if src is None:
@@ -306,7 +310,7 @@ class CustomFolder(Folder):
             # if destination exists
             self._move_contents(src, dst, root_path, group_content)
             if not has_signore_file(dst):
-                open(os.path.join(dst,'.signore'), 'w+').close()
+                open(os.path.join(dst, SORTER_IGNORE_FILENAME), 'w+').close()
             try:
                 os.rmdir(src)
             except OSError:

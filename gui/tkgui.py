@@ -9,6 +9,17 @@ from filegroups import typeGroups
 
 
 class TkGui(Tk):
+    SHORT_DESCRIPTION = "Sorter organises/sorts files in a folder into folders which are grouped by type e.g pdf, docx. It (optionally) groups/sorts the folders created in the first sorting into categories e.g audio, video."
+    SOURCE_DESCRIPTION = "SOURCE (required)\nThis is the folder in which the sorting should be done i.e the folder containing the disorganised files."
+    DESTINATION_DESCRIPTION = "DESTINATION (optional)\nAn optional destination (a folder) where the user would want the sorted files/folders to be moved to."
+    SORT_FOLDER_DESCRIPTION = "SORT FOLDERS (optional)\nInstructs Sorter to group the folders created after the first sorting into categories, such as documents, videos, etc."
+    RECURSIVE_DESCRIPTION = "RECURSIVE (optional)\nChecks into every subfolder,starting from the source, and groups/sorts the files accordingly."
+    TYPES_DESCRIPTION = "TYPES (optional)\nSelect the specific file types/formats to be sorted."
+    SEARCH_DESCRIPTION = "SEARCH (optional)\nDirects Sorter to group files containing this value. If this is enabled then, by default, Sort Folders option is enabled to enable the sorted files to be moved to a folder whose name will be the value provided here."
+    HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
+        "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
+        "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
+    COPYRIGHT_MESSAGE = "Copyright (c) 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
 
     def __init__(self):
         super(TkGui, self).__init__()
@@ -30,7 +41,8 @@ class TkGui(Tk):
         # Configure default theme
         style = ttk.Style(self)
         style.theme_use('clam')
-        style.map("TEntry",fieldbackground=[("active", "white"), ("disabled", "#DCDCDC")])
+        style.map("TEntry", fieldbackground=[
+                  ("active", "white"), ("disabled", "#DCDCDC")])
         bg = self.cget('bg')
         style.configure('My.TFrame', background=bg)
 
@@ -117,12 +129,13 @@ class TkGui(Tk):
         # Configure search string option
         self.search_option_value = IntVar()
         search_option = Checkbutton(
-            options_frame, text='search', 
+            options_frame, text='search',
             variable=self.search_option_value,
             command=lambda: self._enable_search_entry(self.search_option_value))
         search_option.pack(side=LEFT)
 
-        self.search_entry = ttk.Entry(options_frame, width=15, state='disabled')
+        self.search_entry = ttk.Entry(
+            options_frame, width=15, state='disabled')
         self.search_entry.pack(side=LEFT)
 
         # Configure action buttons
@@ -213,15 +226,32 @@ class TkGui(Tk):
         else:
             self._on_closing()
 
+    def _create_window(self, title):
+        toplevel_window = Toplevel(self)
+        toplevel_window.wm_title(title)
+        toplevel_window.tk.call(
+            'wm', 'iconphoto', toplevel_window._w, self.icon)
+        return toplevel_window
+
     def _show_about(self):
-        self.option_add('*Dialog.msg.font', 'Helvetica 9')
-        about_message = "Copyright (c) 2017, Aswa Paul.\nAll rights reserved.\nMore information at https://github.com/giantas/sorter"
-        messagebox.showinfo(title='About', message=about_message)
+        about_window = self._create_window('About')
+        about_window.resizable(height=False, width=False)
+        about_window.geometry('+{0}+{1}'.format(200, 200))
+        about_message = self.COPYRIGHT_MESSAGE
+        msg = Message(about_window, justify=CENTER,
+                      text=about_message, relief=SUNKEN)
+        msg.config(pady=10, padx=10, font='Helvetica 9')
+        msg.pack(fill=Y)
 
     def _show_help(self, info=None):
-        self.option_add('*Dialog.msg.font', 'Helvetica 9')
-        help_message = "A Python program that organises/sorts files in a folder into folders which are grouped by type e.g pdf, docx. It (optionally) groups/sorts the folders created in the first sorting into categories e.g audio, video.\nThe 'Source' folder defines the folder in which the sorting should be done.\nThe 'Destination' folder is an optional destination where the user would want the sorted files/folders to be moved to.\n'Sort folders' option sets the program to sort the folders created after sorting files into categories as aforementioned.\n'Recursive option' checks into every subfolder, starting from the source, and sorts files accordingly."
-        messagebox.showinfo(title='Help', message=help_message)
+        help_window = self._create_window('Help')
+        help_window.resizable(height=False, width=False)
+        help_window.geometry('+{0}+{1}'.format(200, 200))
+        help_message = self.HELP_MESSAGE
+        msg = Message(help_window, text=help_message,
+                      justify=LEFT, relief=RIDGE)
+        msg.config(pady=10, padx=10, font='Helvetica 10')
+        msg.pack(fill=BOTH)
 
     def _show_exit_dialog(self):
         answer = messagebox.askyesno(title='Leave',

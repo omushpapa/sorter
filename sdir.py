@@ -4,6 +4,7 @@ import os
 import shutil
 import re
 import hashlib
+import ctypes
 from filegroups import typeGroups, typeList
 from glob import glob
 
@@ -56,12 +57,29 @@ class Directory(object):
         else:
             hidden_path = False
             path_base = os.path.basename(path)
-            if path_base.startswith('.') or path_base.startswith('__'):
-                return True
+            if os.name == 'nt':
+                if self.has_hidden_attribute(path):
+                    return True
+                else:
+                    hidden_path = self.has_hidden_attribute(
+                        os.path.abspath(os.path.dirname(path)))
             else:
-                hidden_path = self.in_hidden_path(
-                    os.path.abspath(os.path.dirname(path)))
+                if path_base.startswith('.') or path_base.startswith('__'):
+                    return True
+                else:
+                    hidden_path = self.in_hidden_path(
+                        os.path.abspath(os.path.dirname(path)))
             return hidden_path
+
+    def has_hidden_attribute(self, filepath):
+        try:
+            attrs = ctypes.windll.kernel32.GetFileAttributesW(str(filepath))
+            assert attrs != -1
+            result = bool(attrs & 2)
+        except (AttributeError, AssertionError):
+            result = False
+
+        return result
 
 
 class File(Directory):
@@ -310,7 +328,13 @@ class CustomFolder(Folder):
             # if destination exists
             self._move_contents(src, dst, root_path, group_content)
             if not has_signore_file(dst):
-                open(os.path.join(dst, SORTER_IGNORE_FILENAME), 'w+').close()
+                sorter_ignore_filepath = os.path.join(
+                    dst, SORTER_IGNORE_FILENAME)
+                open(sorter_ignore_filepath, 'w+').close()
+                if os.name == 'nt':
+                    # Hide file - Windows
+                    ctypes.windll.kernel32.SetFileAttributesW(
+                        sorter_ignore_filepath, 2)
             try:
                 os.rmdir(src)
             except OSError:

@@ -1,6 +1,11 @@
 # sorter
 
-An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined by the dictionary in [filegroups](filegroups.py)
+An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined in [filegroups](filegroups.py)
+
+[![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
+[![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592000)](https://github.com/giantas/sorter/releases/latest)
+[![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
+[![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-blue.svg)](https://saythanks.io/to/giantas)
 
 ## Download
 Download from [Sorter - SourceForge](http://file-sorter.sourceforge.io)

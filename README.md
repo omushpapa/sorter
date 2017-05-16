@@ -1,16 +1,22 @@
-# sorter
+# Sorter
 
-An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined in [filegroups](filegroups.py)
-
-[![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
 [![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592000)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
 [![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-blue.svg)](https://saythanks.io/to/giantas)
 
+
+An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined in [filegroups](filegroups.py)
+
+
 ## Download
+[![SourceForge](https://img.shields.io/sourceforge/dm/file-sorter.svg)](http://file-sorter.sourceforge.io)
+[![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
+
+
 Download from [Sorter - SourceForge](http://file-sorter.sourceforge.io)
 
 For specific OS versions, go to [Sorter - Official Releases](https://github.com/giantas/sorter/releases/latest)
+
 
 ## Usage
 

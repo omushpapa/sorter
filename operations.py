@@ -33,9 +33,12 @@ PATH_ID_FIELD_NAME = 'path_id'
 PATH_ID_FIELD_CONF = 'INTEGER PRIMARY KEY'
 PATH_ID_FIELD = PATH_ID_FIELD_NAME + ' ' + PATH_ID_FIELD_CONF
 #FILE_ID_FIELD_NAME = FILE_ID_FIELD_NAME
-ABS_PATH_FIELD_NAME = 'abs_path'
-ABS_PATH_FIELD_CONF = 'TEXT NOT NULL'
-ABS_PATH_FIELD = ABS_PATH_FIELD_NAME + ' ' + ABS_PATH_FIELD_CONF
+SRC_FIELD_NAME = 'src_path'
+SRC_FIELD_CONF = 'TEXT NOT NULL'
+SRC_FIELD = SRC_FIELD_NAME + ' ' + SRC_FIELD_CONF
+DST_FIELD_NAME = 'dst_path'
+DST_FIELD_CONF = 'TEXT NOT NULL'
+DST_FIELD = DST_FIELD_NAME + ' ' + DST_FIELD_CONF
 TIMESTAMP_FIELD_NAME = 'time'
 TIMESTAMP_FIELD_CONF = 'DATE DEFAULT (datetime(\'now\',\'localtime\')),'
 TIMESTAMP_FIELD = TIMESTAMP_FIELD_NAME + ' ' + TIMESTAMP_FIELD_CONF
@@ -47,10 +50,15 @@ def initialise_db(db_cursor, db_connect):
         FILES_TABLE, FILE_ID_FIELD, FILENAME_FIELD,
         FILEPATH_HASH_FIELD, FILE_LAST_MODIFIED_FIELD)
     db_cursor.execute(query)
-    query = 'CREATE TABLE IF NOT EXISTS {0} ({1}, {2}, {3}, {4} {5}) '.format(
-        PATHS_TABLE, PATH_ID_FIELD, FILE_ID_FIELD_NAME + ' INTEGER ', ABS_PATH_FIELD,
-        TIMESTAMP_FIELD, 'FOREIGN KEY(' + FILE_ID_FIELD_NAME + ') REFERENCES ' +
-            FILES_TABLE + '(%s)' % FILE_ID_FIELD_NAME)
+    query = 'CREATE TABLE IF NOT EXISTS {tn} ({pif}, {fif}, {sf}, {df}, {tf} {fk})'.format(
+        tn=PATHS_TABLE,
+        pif=PATH_ID_FIELD,
+        fif=(FILE_ID_FIELD_NAME + ' INTEGER '),
+        sf=SRC_FIELD,
+        df=DST_FIELD,
+        tf=TIMESTAMP_FIELD,
+        fk=('FOREIGN KEY(' + FILE_ID_FIELD_NAME + ') REFERENCES ' +
+            FILES_TABLE + '(%s)' % FILE_ID_FIELD_NAME))
     db_cursor.execute(query)
     db_connect.commit()
 
@@ -101,16 +109,26 @@ def sort_files(source_path, destination_path, search_string, string_pattern, fil
                 hash_path = hashlib.md5(
                     initial_path.encode('utf-8')).hexdigest()
                 query = 'INSERT INTO {tn} ({fn}, {fp}, {lm}) VALUES ({fnv}, {fpv}, {lmv}) '.format(
-                    tn=FILES_TABLE, fn=FILENAME_FIELD_NAME, fp=FILEPATH_HASH_FIELD_NAME,
-                    lm=FILE_LAST_MODIFIED_FIELD_NAME, fnv=quote(initial_name),
-                    fpv=quote(hash_path), lmv=quote(last_modified))
+                    tn=FILES_TABLE,
+                    fn=FILENAME_FIELD_NAME,
+                    fp=FILEPATH_HASH_FIELD_NAME,
+                    lm=FILE_LAST_MODIFIED_FIELD_NAME,
+                    fnv=quote(initial_name),
+                    fpv=quote(hash_path),
+                    lmv=quote(last_modified))
                 db_cursor.execute(query)
 
                 num = db_cursor.lastrowid
-                query = 'INSERT INTO {0} ({1}) VALUES ({2})'.format(
-                    PATHS_TABLE, FILE_ID_FIELD_NAME + ',' +
-                        ABS_PATH_FIELD_NAME + ',' + TIMESTAMP_FIELD_NAME,
-                    quote(num) + ',' + quote(new_path) + ',' + 'DATETIME("NOW")')
+                query = 'INSERT INTO {tn} ({fif}, {sfn}, {dfn}, {tfn}) VALUES ({fifv}, {sfnv}, {dfnv}, {tfnv})'.format(
+                    tn=PATHS_TABLE,
+                    fif=FILE_ID_FIELD_NAME,
+                    sfn=SRC_FIELD_NAME,
+                    dfn=DST_FIELD_NAME,
+                    tfn=TIMESTAMP_FIELD_NAME,
+                    fifv=quote(num),
+                    sfnv=quote(initial_path),
+                    dfnv=quote(new_path),
+                    tfnv='DATETIME("NOW")')
                 db_cursor.execute(query)
 
 
@@ -222,15 +240,20 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
         # Generate report
         if start_value is None:
             start_value = 0
-        query = 'SELECT {ftn}.{ffn},{ptn}.{pap} FROM {ftn} INNER JOIN {ptn} ON {ftn}.{ffi} = {ptn}.{ffi} WHERE {ftn}.{ffi} > {sv}'.format(
-            ftn=FILES_TABLE, ffn=FILENAME_FIELD_NAME, ptn=PATHS_TABLE, pap=ABS_PATH_FIELD_NAME,
-            ffi=FILE_ID_FIELD_NAME, sv=str(start_value))
+        query = 'SELECT {ftn}.{ffn},{ptn}.{pap},{ptn}.{sfn} FROM {ftn} INNER JOIN {ptn} ON {ftn}.{ffi} = {ptn}.{ffi} WHERE {ftn}.{ffi} > {sv}'.format(
+            ftn=FILES_TABLE,
+            ffn=FILENAME_FIELD_NAME,
+            ptn=PATHS_TABLE,
+            sfn=SRC_FIELD_NAME,
+            pap=DST_FIELD_NAME,
+            ffi=FILE_ID_FIELD_NAME,
+            sv=str(start_value))
         result = CURSOR.execute(query)
         rows = result.fetchall()
         report = ''
         for row in rows:
-            report += str(row['filename']) + \
-                ' was moved to ' + row['abs_path'] + '\n\n'
+            report += '{0} was moved from {1} to {2}\n\n'.format(
+                row['filename'], row['src_path'], row['dst_path'])
 
         CONN.commit()
         CONN.close()

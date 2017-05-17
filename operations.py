@@ -9,7 +9,7 @@ from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
 from filegroups import typeGroups
 
 # Database variables
-DB_NAME = 'sorter_operations.db'
+DB_NAME = 'operations.db'
 
 # Configure files table
 FILES_TABLE = 'file'

@@ -271,14 +271,20 @@ class TkGui(Tk):
             search_string = self.search_entry.get()
             sort_value = True
 
-        initiate_operation(src=self.source_entry.get(),
-                           dst=dst,
-                           search_string=search_string,
-                           sort=sort_value,
-                           recur=bool(self.recursive.get()),
-                           types=self.file_types,
-                           status=self.status_bar,
-                           gui='tkinter')
+        report = initiate_operation(src=self.source_entry.get(),
+                                    dst=dst,
+                                    search_string=search_string,
+                                    sort=sort_value,
+                                    recur=bool(self.recursive.get()),
+                                    types=self.file_types,
+                                    status=self.status_bar)
+
+        if report:
+            window = self._create_window('Sorter Report')
+            window.geometry('+{0}+{1}'.format(200, 200))
+            text = Text(window)
+            text.insert(INSERT, report)
+            text.pack(fill=BOTH)
 
     def _show_diag(self, text):
         dir_ = filedialog.askdirectory()

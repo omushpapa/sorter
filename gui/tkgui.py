@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
 import base64
+import os
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
-from operations import initiate_operation
+from operations import initiate_operation, DB_NAME
 from filegroups import typeGroups
 
 
@@ -65,6 +66,7 @@ class TkGui(Tk):
         menu.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(
             label='Help', command=self._show_help, accelerator='F1')
+        help_menu.add_command(label='Refresh', command=self._delete_db)
         help_menu.add_command(label='About', command=self._show_about)
         self.bind_all('<F1>', self._show_help)
 
@@ -152,6 +154,14 @@ class TkGui(Tk):
         self.status_bar = ttk.Label(self, text='Ready',
                                     relief=SUNKEN, anchor=W)
         self.status_bar.pack(side=BOTTOM, fill=X)
+
+    def _delete_db(self):
+        try:
+            os.remove(os.path.join(os.getcwd(), DB_NAME))
+        except FileNotFoundError:
+            error_msg = 'Could not locate "{0}". Check application folder and delete "{0}"'.format(
+                DB_NAME)
+            messagebox.showwarning(title='Error', message=error_msg)
 
     def _enable_search_entry(self, value):
         if bool(value.get()):

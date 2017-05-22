@@ -39,10 +39,25 @@ SRC_FIELD = SRC_FIELD_NAME + ' ' + SRC_FIELD_CONF
 DST_FIELD_NAME = 'dst_path'
 DST_FIELD_CONF = 'TEXT NOT NULL'
 DST_FIELD = DST_FIELD_NAME + ' ' + DST_FIELD_CONF
+IS_OKAY_FIELD_NAME = 'is_okay'
+IS_OKAY_FIELD_CONF = 'INTEGER DEFAULT 1'
+IS_OKAY_FIELD = IS_OKAY_FIELD_NAME + ' ' + IS_OKAY_FIELD_CONF
 TIMESTAMP_FIELD_NAME = 'time'
 TIMESTAMP_FIELD_CONF = 'DATE DEFAULT (datetime(\'now\',\'localtime\')),'
 TIMESTAMP_FIELD = TIMESTAMP_FIELD_NAME + ' ' + TIMESTAMP_FIELD_CONF
 
+
+def recreate_path(full_path):
+    paths = []
+    def get_paths(full_path):
+        dir_path = os.path.dirname(full_path)
+        if dir_path != full_path:
+            paths.append(dir_path)
+            get_paths(dir_path)
+    get_paths(full_path)
+    for path in paths[::-1]:
+        if not os.path.isdir(path):
+            os.mkdir(path)
 
 def initialise_db(db_cursor, db_connect):
     # Create table
@@ -50,12 +65,13 @@ def initialise_db(db_cursor, db_connect):
         FILES_TABLE, FILE_ID_FIELD, FILENAME_FIELD,
         FILEPATH_HASH_FIELD, FILE_LAST_MODIFIED_FIELD)
     db_cursor.execute(query)
-    query = 'CREATE TABLE IF NOT EXISTS {tn} ({pif}, {fif}, {sf}, {df}, {tf} {fk})'.format(
+    query = 'CREATE TABLE IF NOT EXISTS {tn} ({pif}, {fif}, {sf}, {df}, {ok}, {tf} {fk})'.format(
         tn=PATHS_TABLE,
         pif=PATH_ID_FIELD,
         fif=(FILE_ID_FIELD_NAME + ' INTEGER '),
         sf=SRC_FIELD,
         df=DST_FIELD,
+        ok=IS_OKAY_FIELD,
         tf=TIMESTAMP_FIELD,
         fk=('FOREIGN KEY(' + FILE_ID_FIELD_NAME + ') REFERENCES ' +
             FILES_TABLE + '(%s)' % FILE_ID_FIELD_NAME))
@@ -250,10 +266,11 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
             sv=str(start_value))
         result = CURSOR.execute(query)
         rows = result.fetchall()
-        report = ''
+        report = []
         for row in rows:
-            report += '{0} was moved from {1} to {2}\n\n'.format(
-                row['filename'], row['src_path'], row['dst_path'])
+            row_tup = (row['filename'], row['src_path'],
+                       row['dst_path'], 'Moved')
+            report.append(row_tup)
 
         CONN.commit()
         CONN.close()

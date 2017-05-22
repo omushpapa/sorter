@@ -22,7 +22,8 @@ class TkGui(Tk):
     HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
-    COPYRIGHT_MESSAGE = "Copyright (c) 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
+    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
+    VERSION = "Sorter v2.0.0"
 
     def __init__(self):
         super(TkGui, self).__init__()
@@ -191,32 +192,11 @@ class TkGui(Tk):
         if bool(button_value.get()):
             self.file_types = []
             # Create new window
-            types_window = Toplevel(self)
-            types_window.wm_title('Types')
-            types_window.tk.call('wm', 'iconphoto', types_window._w, self.icon)
-            types_window.resizable(height=False, width=False)
+            types_window = self._create_window('Types')
+            types_window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
             types_window.bind('<Destroy>', self._on_closing)
 
-            # Configure x-axis scrollbar
-            xscrollbar = Scrollbar(types_window, orient=HORIZONTAL)
-            xscrollbar.grid(row=1, column=0, sticky=E + W)
-
-            # Configure y-axis scrollbar
-            yscrollbar = Scrollbar(types_window, orient=VERTICAL)
-            yscrollbar.grid(row=0, column=1, sticky=N + S)
-
-            # Configure canvas
-            canvas = Canvas(types_window,
-                            width=900,
-                            height=600,
-                            scrollregion=(0, 0, 2500, 1000),
-                            xscrollcommand=xscrollbar.set,
-                            yscrollcommand=yscrollbar.set)
-
-            canvas.grid(row=0, column=0)
-            canvas.config(scrollregion=canvas.bbox("all"))
-            yscrollbar.config(command=canvas.yview)
-            xscrollbar.config(command=canvas.xview)
+            canvas = self._create_canvas(types_window)
 
             frame = Frame(canvas)
 
@@ -238,6 +218,10 @@ class TkGui(Tk):
                                               command=lambda types=types, key=item: self._set_types(types, key))
                     item_button.pack(side=LEFT)
 
+                # Hack: Alter height to refit contents to canvas
+                h = canvas.winfo_height()
+                canvas.configure(height=h+1)
+
         else:
             self._on_closing()
 
@@ -251,8 +235,8 @@ class TkGui(Tk):
     def _show_about(self):
         about_window = self._create_window('About')
         about_window.resizable(height=False, width=False)
-        about_window.geometry('+{0}+{1}'.format(200, 200))
-        about_message = self.COPYRIGHT_MESSAGE
+        about_window.geometry('+{0}+{1}'.format(300, 150))
+        about_message = self.VERSION + '\n' + self.COPYRIGHT_MESSAGE
         msg = Message(about_window, justify=CENTER,
                       text=about_message, relief=SUNKEN)
         msg.config(pady=10, padx=10, font='Helvetica 9')
@@ -298,43 +282,45 @@ class TkGui(Tk):
         if report:
             self._show_report(report)
 
+    def _create_canvas(self, window):
+
+        def resize(self, event=None):
+            """Resize canvas to fit all contents"""
+            canvas.configure(scrollregion = canvas.bbox('all'))
+
+        # Configure canvas
+        canvas = Canvas(window)
+        hsb = ttk.Scrollbar(window, orient="h", command=canvas.xview)
+        vsb = ttk.Scrollbar(window, orient="v", command=canvas.yview)
+        canvas.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+        canvas.grid(sticky="nsew")
+        hsb.grid(row=1, column=0, stick="ew")
+        vsb.grid(row=0, column=1, sticky="ns")
+
+        window.grid_rowconfigure(0, weight=1)
+        window.grid_columnconfigure(0, weight=1)
+
+        canvas.configure(scrollregion = (0, 0, 1250, 10000))
+        canvas.bind('<Configure>', resize)
+
+        return canvas
+
     def _show_report(self, report):
         def quit(window):
             window.destroy()
 
+        # Configure Report window
         window = self._create_window('Sorter Report')
         window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
-        window.resizable(width=False, height=False)
 
-        # Configure x-axis scrollbar
-        xscrollbar = Scrollbar(window, orient=HORIZONTAL)
-        xscrollbar.grid(row=1, column=0, sticky=E + W)
-
-        # Configure y-axis scrollbar
-        yscrollbar = Scrollbar(window, orient=VERTICAL)
-        yscrollbar.grid(row=0, column=1, sticky=N + S)
-
-        # Configure canvas
-        canvas = Canvas(window,
-                        width=880,
-                        height=580,
-                        scrollregion=(0, 0, 1250, 1000),
-                        xscrollcommand=xscrollbar.set,
-                        yscrollcommand=yscrollbar.set)
-
-        canvas.grid(row=0, column=0)
-        canvas.config(scrollregion=canvas.bbox("all"))
-        yscrollbar.config(command=canvas.yview)
-        xscrollbar.config(command=canvas.xview)
+        canvas = self._create_canvas(window)
 
         frame = Frame(canvas)
         frame.pack(side=LEFT)
 
         canvas.create_window(0, 0, anchor=NW, window=frame)
-        PADX = 1
-        PADY = 5
-        IPADX = 5
-        IPADY = 5
+        PADX, PADY, IPADX, IPADY = 1, 5, 5, 5
 
         # Add items to canvas
         llabel = ttk.Label(frame, text='Undo', anchor=N,
@@ -354,6 +340,7 @@ class TkGui(Tk):
         llabel.grid(row=0, column=4, sticky="nsew", padx=PADX)
 
         buttons = {}
+        ROW_COUNT = 2
 
         def reverse_action(origin, current_path, button_index, commit=True):
             recreate_path(os.path.dirname(origin))
@@ -367,19 +354,19 @@ class TkGui(Tk):
                 self.connection.commit()
 
         def reverse_all(report):
-            for count, value in enumerate(report, 1):
+            for count, value in enumerate(report, ROW_COUNT):
                 reverse_action(value[1], value[2], count, commit=False)
             self.connection.commit()
 
-        for count, value in enumerate(report, 1):
-            buttons[count] = ttk.Button(frame, text='Undo', 
+        for count, value in enumerate(report, ROW_COUNT):
+            buttons[count] = ttk.Button(frame, text='Undo' , 
                 command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
                     origin, current_path, i))
             buttons[count].grid(row=count, column=0, padx=PADX,
-                                       pady=PADY, sticky="nsew")
+                                       pady=PADY)
 
             action_label = Message(frame, width=400, relief=RAISED, text=value[
-                3], anchor=W, background=self.bg, borderwidth=0)
+                3], anchor=CENTER, background=self.bg, borderwidth=0)
             action_label.grid(row=count, column=1, padx=PADX, pady=PADY,
                               ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
@@ -398,11 +385,16 @@ class TkGui(Tk):
             to_label.grid(row=count, column=4, padx=PADX, pady=PADY,
                           ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
-        last_row = len(report) + 1
+            # Hack: Alter height to refit contents to canvas
+            h = canvas.winfo_height()
+            canvas.configure(height=h+1)
+
+        
+        last_row = len(report) + ROW_COUNT
 
         accept_button = ttk.Button(
             frame, text='Accept', command=lambda: quit(window))
-        accept_button.grid(row=last_row, column=0)
+        accept_button.grid(row=last_row, column=1)
         reverse_button = ttk.Button(frame, text='Undo All', command=lambda report=report: reverse_all(report))
         reverse_button.grid(row=last_row, column=2)
 

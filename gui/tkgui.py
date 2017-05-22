@@ -2,10 +2,12 @@
 
 import base64
 import os
+import shutil
+import sqlite3
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
-from operations import initiate_operation, DB_NAME
+from operations import initiate_operation, recreate_path, DB_NAME, IS_OKAY_FIELD_NAME, DST_FIELD_NAME, SRC_FIELD_NAME, PATHS_TABLE
 from filegroups import typeGroups
 
 
@@ -37,6 +39,9 @@ class TkGui(Tk):
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.init_ui()
+        self.connection = sqlite3.connect(DB_NAME)
+        self.connection.row_factory = sqlite3.Row
+        self.cursor = self.connection.cursor()
 
     def init_ui(self):
         # Configure default theme
@@ -44,8 +49,8 @@ class TkGui(Tk):
         style.theme_use('clam')
         style.map("TEntry", fieldbackground=[
                   ("active", "white"), ("disabled", "#DCDCDC")])
-        bg = self.cget('bg')
-        style.configure('My.TFrame', background=bg)
+        self.bg = self.cget('bg')
+        style.configure('My.TFrame', background=self.bg)
 
         # Configure menubar
         menu = Menu(self)
@@ -82,10 +87,10 @@ class TkGui(Tk):
         label_frame = ttk.Frame(self.top_frame, style='My.TFrame')
         label_frame.pack(side=LEFT, fill=Y, expand=YES)
         source_label = ttk.Label(
-            label_frame, text='Source', anchor=W, background=bg)
+            label_frame, text='Source', anchor=W, background=self.bg)
         source_label.pack(ipady=2.5, pady=5, side=TOP, fill=X)
         dst_label = ttk.Label(
-            label_frame, text='Destination', anchor=W, background=bg)
+            label_frame, text='Destination', anchor=W, background=self.bg)
         dst_label.pack(ipady=2.5, pady=5, side=BOTTOM, fill=X)
 
         # Configure frame for Entry widgets
@@ -267,6 +272,7 @@ class TkGui(Tk):
         answer = messagebox.askyesno(title='Leave',
                                      message='Do you really want to quit?')
         if answer:
+            self.connection.close()
             self.destroy()
 
     def run_sorter(self):
@@ -290,11 +296,115 @@ class TkGui(Tk):
                                     status=self.status_bar)
 
         if report:
-            window = self._create_window('Sorter Report')
-            window.geometry('+{0}+{1}'.format(200, 200))
-            text = Text(window)
-            text.insert(INSERT, report)
-            text.pack(fill=BOTH)
+            self._show_report(report)
+
+    def _show_report(self, report):
+        def quit(window):
+            window.destroy()
+
+        window = self._create_window('Sorter Report')
+        window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
+        window.resizable(width=False, height=False)
+
+        # Configure x-axis scrollbar
+        xscrollbar = Scrollbar(window, orient=HORIZONTAL)
+        xscrollbar.grid(row=1, column=0, sticky=E + W)
+
+        # Configure y-axis scrollbar
+        yscrollbar = Scrollbar(window, orient=VERTICAL)
+        yscrollbar.grid(row=0, column=1, sticky=N + S)
+
+        # Configure canvas
+        canvas = Canvas(window,
+                        width=880,
+                        height=580,
+                        scrollregion=(0, 0, 1250, 1000),
+                        xscrollcommand=xscrollbar.set,
+                        yscrollcommand=yscrollbar.set)
+
+        canvas.grid(row=0, column=0)
+        canvas.config(scrollregion=canvas.bbox("all"))
+        yscrollbar.config(command=canvas.yview)
+        xscrollbar.config(command=canvas.xview)
+
+        frame = Frame(canvas)
+        frame.pack(side=LEFT)
+
+        canvas.create_window(0, 0, anchor=NW, window=frame)
+        PADX = 1
+        PADY = 5
+        IPADX = 5
+        IPADY = 5
+
+        # Add items to canvas
+        llabel = ttk.Label(frame, text='Undo', anchor=N,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=0, sticky="nsew", padx=PADX)
+        llabel = ttk.Label(frame, text='Action', anchor=N,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=1, sticky="nsew", padx=PADX)
+        llabel = ttk.Label(frame, text='Filename', anchor=N,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=2, sticky="nsew", padx=PADX)
+        llabel = ttk.Label(frame, text='From', anchor=N,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=3, sticky="nsew", padx=PADX)
+        llabel = ttk.Label(frame, text='To', anchor=N,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=4, sticky="nsew", padx=PADX)
+
+        buttons = {}
+
+        def reverse_action(origin, current_path, button_index, commit=True):
+            recreate_path(os.path.dirname(origin))
+            shutil.move(current_path, origin)
+            query = 'UPDATE {tn} SET {ok}="0" WHERE {src}="{srcv}" AND {dst}="{dstv}"'.format(
+                tn=PATHS_TABLE, ok=IS_OKAY_FIELD_NAME, src=SRC_FIELD_NAME, dst=DST_FIELD_NAME,
+                srcv=origin, dstv=current_path)
+            self.cursor.execute(query)
+            buttons[button_index].config(state='disabled')
+            if commit:
+                self.connection.commit()
+
+        def reverse_all(report):
+            for count, value in enumerate(report, 1):
+                reverse_action(value[1], value[2], count, commit=False)
+            self.connection.commit()
+
+        for count, value in enumerate(report, 1):
+            buttons[count] = ttk.Button(frame, text='Undo', 
+                command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
+                    origin, current_path, i))
+            buttons[count].grid(row=count, column=0, padx=PADX,
+                                       pady=PADY, sticky="nsew")
+
+            action_label = Message(frame, width=400, relief=RAISED, text=value[
+                3], anchor=W, background=self.bg, borderwidth=0)
+            action_label.grid(row=count, column=1, padx=PADX, pady=PADY,
+                              ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+            filename_label = Message(frame, width=400, relief=RAISED, text=value[
+                0], anchor=W, background=self.bg, borderwidth=0)
+            filename_label.grid(row=count, column=2, padx=PADX, pady=PADY,
+                                ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+            from_label = Message(frame, width=400, relief=RAISED, text=value[
+                1], anchor=W, background=self.bg, borderwidth=0)
+            from_label.grid(row=count, column=3, padx=PADX, pady=PADY,
+                            ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+            to_label = Message(frame, width=400, relief=RAISED, text=value[
+                2], anchor=W, background=self.bg, borderwidth=0)
+            to_label.grid(row=count, column=4, padx=PADX, pady=PADY,
+                          ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+        last_row = len(report) + 1
+
+        accept_button = ttk.Button(
+            frame, text='Accept', command=lambda: quit(window))
+        accept_button.grid(row=last_row, column=0)
+        reverse_button = ttk.Button(frame, text='Undo All', command=lambda report=report: reverse_all(report))
+        reverse_button.grid(row=last_row, column=2)
 
     def _show_diag(self, text):
         dir_ = filedialog.askdirectory()

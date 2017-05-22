@@ -77,7 +77,8 @@ class TkGui(Tk):
         help_menu.add_command(
             label='Help', command=self._show_help, accelerator='F1')
         help_menu.add_command(label='Refresh', command=self._delete_db)
-        help_menu.add_command(label='Update', command=self._check_for_update)
+        help_menu.add_command(
+            label='Update', command=lambda: self._check_for_update(user_checked=True))
         help_menu.add_command(label='About', command=self._show_about)
         self.bind_all('<F1>', self._show_help)
 
@@ -166,7 +167,7 @@ class TkGui(Tk):
                                     relief=SUNKEN, anchor=W)
         self.status_bar.pack(side=BOTTOM, fill=X)
 
-    def _check_for_update(self):
+    def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
             resp = requests.get(link, timeout=5)
@@ -182,8 +183,11 @@ class TkGui(Tk):
                         latest_tag, url)
                     relief = SUNKEN
                 else:
-                    message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
-                    relief = FLAT
+                    if user_checked:
+                        message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
+                        relief = FLAT
+                    else:
+                        return
             else:
                 return
             self._show_update_window(message, relief)

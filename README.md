@@ -3,6 +3,7 @@
 [![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592000)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
 [![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-blue.svg)](https://saythanks.io/to/giantas)
+[![Telegram Channel](https://img.shields.io/badge/channel-Telegram-blue.svg)](https://t.me/giantas_sorter)
 
 
 An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined in [filegroups](filegroups.py)

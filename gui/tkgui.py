@@ -344,19 +344,25 @@ class TkGui(Tk):
 
         def reverse_action(origin, current_path, button_index, commit=True):
             recreate_path(os.path.dirname(origin))
-            shutil.move(current_path, origin)
-            query = 'UPDATE {tn} SET {ok}="0" WHERE {src}="{srcv}" AND {dst}="{dstv}"'.format(
-                tn=PATHS_TABLE, ok=IS_OKAY_FIELD_NAME, src=SRC_FIELD_NAME, dst=DST_FIELD_NAME,
-                srcv=origin, dstv=current_path)
-            self.cursor.execute(query)
-            buttons[button_index].config(state='disabled')
-            if commit:
-                self.connection.commit()
+            try:
+                shutil.move(current_path, origin)
+            except FileNotFoundError:
+                pass
+            else:
+                query = 'UPDATE {tn} SET {ok}="0" WHERE {src}="{srcv}" AND {dst}="{dstv}"'.format(
+                    tn=PATHS_TABLE, ok=IS_OKAY_FIELD_NAME, src=SRC_FIELD_NAME, dst=DST_FIELD_NAME,
+                    srcv=origin, dstv=current_path)
+                self.cursor.execute(query)
+                buttons[button_index].config(state='disabled')
+                del buttons[button_index]
+                if commit:
+                    self.connection.commit()
 
         def reverse_all(report):
-            for count, value in enumerate(report, ROW_COUNT):
-                reverse_action(value[1], value[2], count, commit=False)
-            self.connection.commit()
+            if buttons:
+                for count, value in enumerate(report, ROW_COUNT):
+                    reverse_action(value[1], value[2], count, commit=False)
+                self.connection.commit()
 
         for count, value in enumerate(report, ROW_COUNT):
             buttons[count] = ttk.Button(frame, text='Undo' , 

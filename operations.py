@@ -49,6 +49,7 @@ TIMESTAMP_FIELD = TIMESTAMP_FIELD_NAME + ' ' + TIMESTAMP_FIELD_CONF
 
 def recreate_path(full_path):
     paths = []
+
     def get_paths(full_path):
         dir_path = os.path.dirname(full_path)
         if dir_path != full_path:
@@ -58,6 +59,7 @@ def recreate_path(full_path):
     for path in paths[::-1]:
         if not os.path.isdir(path):
             os.mkdir(path)
+
 
 def initialise_db(db_cursor, db_connect):
     # Create table

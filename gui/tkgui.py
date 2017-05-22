@@ -4,11 +4,14 @@ import base64
 import os
 import shutil
 import sqlite3
+import requests
+import json
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from operations import initiate_operation, recreate_path, DB_NAME, IS_OKAY_FIELD_NAME, DST_FIELD_NAME, SRC_FIELD_NAME, PATHS_TABLE
 from filegroups import typeGroups
+from requests.exceptions import ConnectionError
 
 
 class TkGui(Tk):
@@ -23,7 +26,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
-    VERSION = "Sorter v2.0.0"
+    TAG = "2.0.0"
 
     def __init__(self):
         super(TkGui, self).__init__()
@@ -43,6 +46,7 @@ class TkGui(Tk):
         self.connection = sqlite3.connect(DB_NAME)
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
+        self._check_for_update()
 
     def init_ui(self):
         # Configure default theme
@@ -73,6 +77,7 @@ class TkGui(Tk):
         help_menu.add_command(
             label='Help', command=self._show_help, accelerator='F1')
         help_menu.add_command(label='Refresh', command=self._delete_db)
+        help_menu.add_command(label='Update', command=self._check_for_update)
         help_menu.add_command(label='About', command=self._show_about)
         self.bind_all('<F1>', self._show_help)
 
@@ -161,6 +166,37 @@ class TkGui(Tk):
                                     relief=SUNKEN, anchor=W)
         self.status_bar.pack(side=BOTTOM, fill=X)
 
+    def _check_for_update(self):
+        link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
+        try:
+            resp = requests.get(link, timeout=5)
+        except ConnectionError:
+            pass
+        else:
+            if resp.ok:
+                items = json.loads(resp.text)
+                latest_tag = items.get('tag_name')
+                if latest_tag.strip('v') > self.TAG:
+                    url = items.get('html_url')
+                    message = 'Update available!\n\nSorter {0} found.\n\nDownload from {1}'.format(
+                        latest_tag, url)
+                    relief = SUNKEN
+                else:
+                    message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
+                    relief = FLAT
+            else:
+                return
+            self._show_update_window(message, relief)
+
+    def _show_update_window(self, message, relief):
+        update_window = self._create_window('Update!')
+        update_window.resizable(height=False, width=False)
+        update_window.geometry('{0}x{1}+{2}+{3}'.format(280, 170, 300, 150))
+        msg = Message(update_window, justify=CENTER,
+                      text=message, relief=relief)
+        msg.config(pady=10, padx=10, font='Helvetica 12')
+        msg.pack(fill=Y)
+
     def _delete_db(self):
         try:
             os.remove(os.path.join(os.getcwd(), DB_NAME))
@@ -220,7 +256,7 @@ class TkGui(Tk):
 
                 # Hack: Alter height to refit contents to canvas
                 h = canvas.winfo_height()
-                canvas.configure(height=h+1)
+                canvas.configure(height=h + 1)
 
         else:
             self._on_closing()
@@ -236,7 +272,7 @@ class TkGui(Tk):
         about_window = self._create_window('About')
         about_window.resizable(height=False, width=False)
         about_window.geometry('+{0}+{1}'.format(300, 150))
-        about_message = self.VERSION + '\n' + self.COPYRIGHT_MESSAGE
+        about_message = 'Sorter v' + self.TAG + '\n' + self.COPYRIGHT_MESSAGE
         msg = Message(about_window, justify=CENTER,
                       text=about_message, relief=SUNKEN)
         msg.config(pady=10, padx=10, font='Helvetica 9')
@@ -286,7 +322,7 @@ class TkGui(Tk):
 
         def resize(self, event=None):
             """Resize canvas to fit all contents"""
-            canvas.configure(scrollregion = canvas.bbox('all'))
+            canvas.configure(scrollregion=canvas.bbox('all'))
 
         # Configure canvas
         canvas = Canvas(window)
@@ -301,7 +337,7 @@ class TkGui(Tk):
         window.grid_rowconfigure(0, weight=1)
         window.grid_columnconfigure(0, weight=1)
 
-        canvas.configure(scrollregion = (0, 0, 1250, 10000))
+        canvas.configure(scrollregion=(0, 0, 1250, 10000))
         canvas.bind('<Configure>', resize)
 
         return canvas
@@ -365,11 +401,11 @@ class TkGui(Tk):
                 self.connection.commit()
 
         for count, value in enumerate(report, ROW_COUNT):
-            buttons[count] = ttk.Button(frame, text='Undo' , 
-                command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
-                    origin, current_path, i))
+            buttons[count] = ttk.Button(frame, text='Undo',
+                                        command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
+                                            origin, current_path, i))
             buttons[count].grid(row=count, column=0, padx=PADX,
-                                       pady=PADY)
+                                pady=PADY)
 
             action_label = Message(frame, width=400, relief=RAISED, text=value[
                 3], anchor=CENTER, background=self.bg, borderwidth=0)
@@ -393,15 +429,15 @@ class TkGui(Tk):
 
             # Hack: Alter height to refit contents to canvas
             h = canvas.winfo_height()
-            canvas.configure(height=h+1)
+            canvas.configure(height=h + 1)
 
-        
         last_row = len(report) + ROW_COUNT
 
         accept_button = ttk.Button(
             frame, text='Accept', command=lambda: quit(window))
         accept_button.grid(row=last_row, column=1)
-        reverse_button = ttk.Button(frame, text='Undo All', command=lambda report=report: reverse_all(report))
+        reverse_button = ttk.Button(
+            frame, text='Undo All', command=lambda report=report: reverse_all(report))
         reverse_button.grid(row=last_row, column=2)
 
     def _show_diag(self, text):

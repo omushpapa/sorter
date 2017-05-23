@@ -24,7 +24,7 @@ For specific OS versions (*recommended visit*), go to [Sorter - Official Release
 	__This is an advantage for organising your songs, movies, etc__
 * Undo (reverse) is now possible. You can undo any unwanted file relocation!
 * Check for updates. Automatically check for updates any time your are connected to the Internet.
-* And many more...
+* And many [more](releases/latest)...
 
 
 ## Usage
@@ -54,15 +54,22 @@ Select any (or all) option(s) - sort folders; recursive; types:
 
 ![Choose option(s)](screenshots/Screenshot_20170523_102607.png)
 
+##### Types screen
 ![Types screen](screenshots/Screenshot_20170505_081054.png)
 
+
 ##### Note
+
 If option 'types' is not checked, by default, all files will be organised/sorted.
+
 
 ##### Click Run
 
+
+*Resulting Folder*
 ![Results](screenshots/Screenshot_20170523_101656.png)
 
+*Resulting grouping*
 ![Resulting organisation](screenshots/Screenshot_20170523_101719.png)
 
 
@@ -71,7 +78,10 @@ If option 'types' is not checked, by default, all files will be organised/sorted
 ##### New - Undo 
 ![Undo specific or all actions](screenshots/Screenshot_20170523_101746.png)
 
+
+##### New - Update check 
 ![Update window](screenshots/Screenshot_20170523_101843.png)
+
 
 ##### When "search" is not included
 
@@ -113,6 +123,7 @@ Sorter actions are now reversible.
 
 #### For repo clone
 * Python 3.x (3.4 recommended)
+* [sqlite3](http://www.sqlite.org/download.html)
 
 
 ### Authors

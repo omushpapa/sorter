@@ -45,7 +45,6 @@ class TkGui(Tk):
         self.connection = sqlite3.connect(DB_NAME)
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
-        self._check_for_update()
 
     def init_ui(self):
         # Configure default theme
@@ -229,7 +228,8 @@ class TkGui(Tk):
             self.file_types = []
             # Create new window
             types_window = self._create_window('Types')
-            types_window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
+            types_window.geometry('{0}x{1}+0+0'.format(
+                types_window.winfo_screenwidth()-3, types_window.winfo_screenheight()-3))
             types_window.bind('<Destroy>', self._on_closing)
 
             canvas = self._create_canvas(types_window)

@@ -4,14 +4,13 @@ import base64
 import os
 import shutil
 import sqlite3
-import requests
 import json
+import urllib.request
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from operations import initiate_operation, recreate_path, DB_NAME, IS_OKAY_FIELD_NAME, DST_FIELD_NAME, SRC_FIELD_NAME, PATHS_TABLE
 from filegroups import typeGroups
-from requests.exceptions import ConnectionError
 
 
 class TkGui(Tk):
@@ -170,27 +169,24 @@ class TkGui(Tk):
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
-            resp = requests.get(link, timeout=5)
-        except ConnectionError:
+            with urllib.request.urlopen(link, timeout=5) as response:
+                html = response.read()
+        except urllib.request.URLError:
             pass
         else:
-            if resp.ok:
-                items = json.loads(resp.text)
-                latest_tag = items.get('tag_name')
-                if latest_tag.strip('v') > self.TAG:
-                    url = items.get('html_url')
-                    message = 'Update available!\n\nSorter {0} found.\n\nDownload from {1}'.format(
-                        latest_tag, url)
-                    relief = SUNKEN
-                else:
-                    if user_checked:
-                        message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
-                        relief = FLAT
-                    else:
-                        return
+            items = json.loads(html.decode('utf-8'))
+            latest_tag = items.get('tag_name')
+            if latest_tag.strip('v') > self.TAG:
+                url = items.get('html_url')
+                message = 'Update available!\n\nSorter {0} found.\n\nDownload from {1}'.format(
+                    latest_tag, url)
+                relief = SUNKEN
+                self._show_update_window(message, relief)
             else:
-                return
-            self._show_update_window(message, relief)
+                if user_checked:
+                    message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
+                    relief = FLAT
+                    self._show_update_window(message, relief)
 
     def _show_update_window(self, message, relief):
         update_window = self._create_window('Update!')

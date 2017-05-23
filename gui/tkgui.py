@@ -300,6 +300,7 @@ class TkGui(Tk):
             self.destroy()
 
     def run_sorter(self):
+        """Call Sorter operations on the provided values."""
         dst = self.dst_entry.get()
         search_string = ''
         sort_value = bool(self.sort_folders.get())
@@ -383,6 +384,7 @@ class TkGui(Tk):
         ROW_COUNT = 2
 
         def reverse_action(origin, current_path, button_index, commit=True):
+            """Undo the conducted Sorter operation."""
             recreate_path(os.path.dirname(origin))
             try:
                 shutil.move(current_path, origin)
@@ -399,6 +401,7 @@ class TkGui(Tk):
                     self.connection.commit()
 
         def reverse_all(report):
+            """Undo all the conducted Sorter operations in the current instance."""
             if buttons:
                 for count, value in enumerate(report, ROW_COUNT):
                     reverse_action(value[1], value[2], count, commit=False)
@@ -455,4 +458,5 @@ class TkGui(Tk):
             self.dst_entry.insert(0, dir_)
 
     def tk_run(self):
+        """Run the GUI."""
         self.mainloop()

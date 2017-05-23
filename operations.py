@@ -48,6 +48,7 @@ TIMESTAMP_FIELD = TIMESTAMP_FIELD_NAME + ' ' + TIMESTAMP_FIELD_CONF
 
 
 def recreate_path(full_path):
+    """Create folders (and parents) in the path if they do not exist."""
     paths = []
 
     def get_paths(full_path):
@@ -62,6 +63,7 @@ def recreate_path(full_path):
 
 
 def initialise_db(db_cursor, db_connect):
+    """Create tables if they do not exist."""
     # Create table
     query = 'CREATE TABLE IF NOT EXISTS {0} ({1}, {2}, {3}, {4})'.format(
         FILES_TABLE, FILE_ID_FIELD, FILENAME_FIELD,
@@ -87,6 +89,7 @@ def initialise_db(db_cursor, db_connect):
 
 
 def is_writable(folder_path, status, mtype):
+    """Return True if user has write permission on given path, else False."""
     try:
         permissions_dir = os.path.join(folder_path, 'sorter_dir')
         os.makedirs(permissions_dir)
@@ -101,6 +104,20 @@ def is_writable(folder_path, status, mtype):
 
 
 def sort_files(source_path, destination_path, search_string, string_pattern, file_types, glob_pattern, sort_folders, db_cursor):
+    """Move file in relation to its extension and category.
+
+    source_path - path of origin
+    destination_path - destined root path
+    search_string - only include file names with this value. Defaults to ''.
+    string_pattern -  the compiled pattern to utilise in searching using 
+        the search_string value.
+    file_types - the file extensions or formats to include in the sorting.
+    glob_pattern - the pattern to utilise to include (or exclude) certain file
+        extensions.
+    sort_folders - boolean value determining whether to also group folders 
+        according to their categories - as defined in filegroups.py.
+    db_cursor - the cursor to use in loggin operations to the database.
+    """
     glob_files = []
     if search_string:
         string_pattern = '*' + string_pattern
@@ -151,12 +168,14 @@ def sort_files(source_path, destination_path, search_string, string_pattern, fil
 
 
 def insensitize(string):
+    """Return a case-insensitive pattern of the provided string."""
     def either(c):
         return '[{0}{1}]'.format(c.lower(), c.upper()) if c.isalpha() else c
     return ''.join(map(either, string))
 
 
 def form_search_pattern(search_string):
+    """Return a search pattern if search_string is provided."""
     if search_string:
         insensitive_string = insensitize(search_string)
         return '?'.join(insensitive_string.split())
@@ -165,6 +184,7 @@ def form_search_pattern(search_string):
 
 
 def display_message(text, status, mtype='info'):
+    """Configure the GUI status bar message."""
     if mtype == 'warning':
         status.config(foreground="red")
     else:

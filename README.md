@@ -29,10 +29,10 @@ See the full list of supported OSes at [Sorter - Official Releases](https://gith
 
 
 ## New Features Added
-* Search for file with names you only want e.g. enter "letter" into the search box and only files containing the word "letter" will be organised. What's more is that they will all be moved to a folder named "Letter".
+* **Custom search**: Search for file with names you only want e.g. enter "letter" into the search box and only files containing the word "letter" will be organised. What's more is that they will all be moved to a folder named "Letter".
 	__This is an advantage for organising your songs, movies, etc__
-* Undo (reverse) is now possible. You can undo any unwanted file relocation!
-* Check for updates. Automatically check for updates any time your are connected to the Internet.
+* **Undo**: (reverse) is now possible. You can undo any unwanted file relocation!
+* **Updates**: Check for updates regularly. Automatically check for updates any time your are connected to the Internet.
 * And many [more](releases/latest)...
 
 

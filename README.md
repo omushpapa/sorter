@@ -1,6 +1,6 @@
 # Sorter
 
-[![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592010)](https://github.com/giantas/sorter/releases/latest)
+[![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592001)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
 [![Say Thanks](https://img.shields.io/badge/Say%20Thanks-!-blue.svg)](https://saythanks.io/to/giantas)
 [![Telegram Channel](https://img.shields.io/badge/channel-Telegram-blue.svg)](https://t.me/giantas_sorter)
@@ -13,13 +13,13 @@ An application that organises/sorts files in a folder into folder-groups named b
 [![SourceForge](https://img.shields.io/sourceforge/dm/file-sorter.svg)](http://file-sorter.sourceforge.io)
 [![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
 
-Windows 7, 8, 10 [download](releases/download/v2.0.0/Sorter_2.0.0_Windows_x86_64.exe)
+Windows 7, 8, 10 [download](releases/download/v2.0.1/Sorter_2.0.0_Windows_x86_64.exe)
 
 
-OpenSUSE 42.1 x64 [download](releases/download/v2.0.0/Sorter_2.0.0_OpenSUSE42.1_x64.tar.gz)
+OpenSUSE 42.1 x64 [download](releases/download/v2.0.1/Sorter_2.0.0_OpenSUSE42.1_x64.tar.gz)
 
 
-Ubuntu 16.04 x64 [download](releases/download/v2.0.0/Sorter_2.0.0_Ubuntu16.04_x64.tar.gz)
+Ubuntu 16.04 x64 [download](releases/download/v2.0.1/Sorter_2.0.0_Ubuntu16.04_x64.tar.gz)
 
 
 #### Broken link?

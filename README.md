@@ -6,7 +6,9 @@
 [![Telegram Channel](https://img.shields.io/badge/channel-Telegram-blue.svg)](https://t.me/giantas_sorter)
 
 
-An application that organises/sorts files in a folder into folder-groups named by type. It (optionally) groups the folders created in the first sorting into categories as defined in [filegroups](filegroups.py)
+Sorter uses a custom search to help you organise files that contain similar names into their own folder. You can put all letters documents into one folder, all images with the name home into another, all music by one artist in yet another folder, etc. 
+
+Sorter organises these files into folders which are grouped by the file types/formats. Sorter is able to recursively look into folders and their subfolders and filter out files that are of the same type (and name). The files are then moved to a different directory and can also be categorised into groups such as audio, video, and so on, as defined in [filegroups](filegroups.py)
 
 
 ## Download

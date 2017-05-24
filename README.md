@@ -13,13 +13,19 @@ An application that organises/sorts files in a folder into folder-groups named b
 [![SourceForge](https://img.shields.io/sourceforge/dm/file-sorter.svg)](http://file-sorter.sourceforge.io)
 [![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
 
-Windows 7, 8, 10 [download](releases/download/v2.0.1/Sorter_2.0.1_Windows_x86_64.exe)
+### Windows 7, 8, 10 
+
+[![Download sorter](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/file-sorter/files/v2.0.1/Sorter_2.0.1_Windows_x86_64.exe/download)
 
 
-OpenSUSE 42.1 x64 [download](releases/download/v2.0.1/Sorter_2.0.1_OpenSUSE42.1_x64.tar.gz)
+### OpenSUSE 42.1 x64 
+
+[![Download sorter](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/file-sorter/files/v2.0.1/Sorter_2.0.1_OpenSUSE42.1_x64.tar.gz/download)
 
 
-Ubuntu 16.04 x64 [download](releases/download/v2.0.1/Sorter_2.0.1_Ubuntu16.04_x64.tar.gz)
+### Ubuntu 16.04 x64 
+
+[![Download sorter](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/file-sorter/files/v2.0.1/Sorter_2.0.1_Ubuntu16.04_x64.tar.gz/download)
 
 
 #### Broken link?

@@ -245,7 +245,7 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
         start_value = initialise_db(db_cursor=CURSOR, db_connect=CONN)
 
         if recur:
-            for root, dirs, files in os.walk(source_path, topdown=False):
+            for root, dirs, files in os.walk(source_path):
                 sort_files(root, destination_path, search_string, search_string_pattern,
                            file_types, glob_pattern, sort, db_cursor=CURSOR)
                 if not dirs and not files:

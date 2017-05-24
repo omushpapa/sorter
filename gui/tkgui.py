@@ -177,23 +177,24 @@ class TkGui(Tk):
             latest_tag = items.get('tag_name')
             if latest_tag.strip('v') > self.TAG:
                 url = items.get('html_url')
-                message = 'Update available!\n\nSorter {0} found.\n\nDownload from {1}'.format(
-                    latest_tag, url)
+                body = items.get('body')
+                features = body.replace('*', '')
+                message = 'Update available!\n\nSorter {tag} found.\n\n{feat}\n\nDownload from {url}'.format(
+                    tag=latest_tag, url=url, feat=features)
                 relief = SUNKEN
                 self._show_update_window(message, relief)
             else:
                 if user_checked:
-                    message = 'No update found.\n\nYou have the latest version installed.\n\nStay tuned for more!'
+                    message = 'No update found.\n\nYou have the latest version installed. Always stay up-to-date with fixes and new features.\n\nStay tuned for more!'
                     relief = FLAT
                     self._show_update_window(message, relief)
 
     def _show_update_window(self, message, relief):
         update_window = self._create_window('Update!')
         update_window.resizable(height=False, width=False)
-        update_window.geometry('{0}x{1}+{2}+{3}'.format(280, 170, 300, 150))
         msg = Message(update_window, justify=CENTER,
                       text=message, relief=relief)
-        msg.config(pady=10, padx=10, font='Helvetica 12')
+        msg.config(pady=10, padx=10, font='Helvetica 9')
         msg.pack(fill=Y)
 
     def _delete_db(self):
@@ -229,7 +230,7 @@ class TkGui(Tk):
             # Create new window
             types_window = self._create_window('Types')
             types_window.geometry('{0}x{1}+0+0'.format(
-                types_window.winfo_screenwidth()-3, types_window.winfo_screenheight()-3))
+                types_window.winfo_screenwidth() - 3, types_window.winfo_screenheight() - 3))
             types_window.bind('<Destroy>', self._on_closing)
 
             canvas = self._create_canvas(types_window)

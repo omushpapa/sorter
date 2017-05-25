@@ -15,7 +15,7 @@ Sorter organises these files into folders which are grouped by the file types/fo
 [![SourceForge](https://img.shields.io/sourceforge/dm/file-sorter.svg)](http://file-sorter.sourceforge.io)
 [![Github Latest Downloads](https://img.shields.io/github/downloads/giantas/sorter/latest/total.svg)](https://github.com/giantas/sorter/releases/latest)
 
-### Windows 7, 8, 10 
+### Windows 7, 8, 10 (x86 & x64)
 
 [![Download sorter](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/file-sorter/files/v2.0.1/Sorter_2.0.1_Windows_x86_64.exe/download)
 

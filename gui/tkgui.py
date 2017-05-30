@@ -25,7 +25,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
-    TAG = "2.0.1"
+    TAG = "2.1.0"
 
     def __init__(self):
         super(TkGui, self).__init__()
@@ -54,6 +54,10 @@ class TkGui(Tk):
                   ("active", "white"), ("disabled", "#DCDCDC")])
         self.bg = self.cget('bg')
         style.configure('My.TFrame', background=self.bg)
+        style.configure("blue.Horizontal.TProgressbar",
+                        background='blue', troughcolor='gray')
+        style.configure("green.Horizontal.TProgressbar",
+                        background='green', troughcolor='gray')
 
         # Configure menubar
         menu = Menu(self)
@@ -161,9 +165,16 @@ class TkGui(Tk):
         self.quit_button.pack(side=RIGHT, padx=5)
 
         # Configure status bar
-        self.status_bar = ttk.Label(self, text='Ready',
+        self.status_bar = ttk.Label(self, text=' Ready',
                                     relief=SUNKEN, anchor=W)
         self.status_bar.pack(side=BOTTOM, fill=X)
+
+        # Configure progress bar
+        self.progress_var = DoubleVar()
+        self.progress_bar = ttk.Progressbar(self.status_bar,
+                                            style="blue.Horizontal.TProgressbar", variable=self.progress_var,
+                                            orient=HORIZONTAL, length=120)
+        self.progress_bar.pack(side=RIGHT)
 
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
@@ -315,7 +326,8 @@ class TkGui(Tk):
                                     sort=sort_value,
                                     recur=bool(self.recursive.get()),
                                     types=self.file_types,
-                                    status=self.status_bar)
+                                    status=self.status_bar,
+                                    instance=self)
 
         if report:
             self._show_report(report)

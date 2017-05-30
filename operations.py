@@ -1,6 +1,5 @@
 #! /usr/bin/env python3
 
-import argparse
 import os
 import sqlite3
 import hashlib
@@ -187,12 +186,14 @@ def display_message(text, status, mtype='info'):
     """Configure the GUI status bar message."""
     if mtype == 'warning':
         status.config(foreground="red")
+    elif mtype == 'update':
+        status.config(foreground="blue")
     else:
         status.config(foreground="black")
-    status.config(text=text)
+    status.config(text=' %s' % text)
 
 
-def initiate_operation(src='', dst='', search_string='', sort=False, recur=False, types=None, status=None, parser=None):
+def initiate_operation(src='', dst='', search_string='', sort=False, recur=False, types=None, status=None, parser=None, instance=None):
     proceed = True
     search_string_pattern = form_search_pattern(search_string)
 
@@ -237,10 +238,20 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
                     proceed = False
 
     if proceed:
+        if instance is not None:
+            instance.progress_bar.configure(maximum=100)
+
         display_message('START', status=status)
         CONN = sqlite3.connect(DB_NAME)
         CONN.row_factory = sqlite3.Row
         CURSOR = CONN.cursor()
+
+        if instance is not None:
+            instance.progress_var.set(25)
+            instance.progress_bar.configure(
+                style="blue.Horizontal.TProgressbar")
+            display_message('25%', status=status, mtype='update')
+            instance.update_idletasks()
 
         start_value = initialise_db(db_cursor=CURSOR, db_connect=CONN)
 
@@ -259,6 +270,11 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
             sort_files(source_path, destination_path, search_string, search_string_pattern,
                        file_types, glob_pattern, sort, db_cursor=CURSOR)
 
+        if instance is not None:
+            instance.progress_var.set(50)
+            display_message('50%', status=status, mtype='update')
+            instance.update_idletasks()
+
         if sort:
             folders = [folder for folder in glob(os.path.join(
                 source_path, '*')) if os.path.isdir(folder) and os.path.basename(folder) not in typeGroups.keys() and not has_signore_file(folder)]
@@ -275,9 +291,15 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
 
         display_message('Done.', status=status)
 
+        if instance is not None:
+            instance.progress_var.set(75)
+            display_message('75%', status=status, mtype='update')
+            instance.update_idletasks()
+
         # Generate report
         if start_value is None:
             start_value = 0
+
         query = 'SELECT {ftn}.{ffn},{ptn}.{pap},{ptn}.{sfn} FROM {ftn} INNER JOIN {ptn} ON {ftn}.{ffi} = {ptn}.{ffi} WHERE {ftn}.{ffi} > {sv}'.format(
             ftn=FILES_TABLE,
             ffn=FILENAME_FIELD_NAME,
@@ -296,7 +318,15 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
 
         CONN.commit()
         CONN.close()
+
+        if instance is not None:
+            instance.progress_var.set(100)
+            instance.progress_bar.configure(
+                style="green.Horizontal.TProgressbar")
+            instance.update_idletasks()
+
         display_message('FINISH', status=status)
+
         return report
 
     if status is None and not proceed:

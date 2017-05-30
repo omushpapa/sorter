@@ -156,4 +156,5 @@ Sorter actions are now reversible.
 
 [![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://saythanks.io/to/giantas)
 
-1. Add progress bar
+[x] Add progress bar
+[o] Add reverse for operations in history

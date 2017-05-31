@@ -1,4 +1,4 @@
-# Sorter
+# Sorter &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<a href="http://download.cnet.com/Sorter/3000-2248_4-77544564.html?part=dl-&subj=dl&tag=button"><img src="http://i.i.cbsi.com/cnwk.1d/i/dl/button/dl-button_a.gif" alt="Get it from CNET Download.com!" height="60" width="150" align="center" border="0"></a>
 
 [![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592001)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
@@ -106,54 +106,22 @@ If option 'types' is not checked, by default, all files will be organised/sorted
 ![Resulting folders organised by file type](screenshots/Screenshot_20170505_081329.png)
 
 
-#### Alternatively - clone repo
-
-*Do*
-
-git clone https://github.com/giantas/sorter.git
-
-cd sorter
-
-then 
-
-```
-python sorter.py
-```
-
-or 
-
-```
-python3 sorter.py
-```
-
-Then follow the GUI steps listed above.
-
 ## Warning
 You should have access (read) and *write* permissions on the source and destination folders.
-*Be careful* not to use sorter on application folders. ~~Sorter actions are *NOT* reversible (for now).~~
-Sorter actions are now reversible.
+*Be careful* not to use sorter on application folders. 
 
 ### Prerequisites 
-#### For the installer/binary [packages](releases/latest)
-* None
+* No specifics
 
-#### For repo clone
-* Python 3.x (3.4 recommended)
-* [sqlite3](http://www.sqlite.org/download.html)
-
-### Website
-[Sorter](https://giantas.github.io/sorter)
-
+Repository cloning information has been moved to the [README](README.md)
 
 ### Authors
 
 * **[Giantas](https://github.com/giantas)** 
 
-
 ### License
 
 * This project is licensed under the BSD 3-clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details
-
 
 ### TODO
 

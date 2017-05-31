@@ -1,0 +1,33 @@
+// Typography
+$base-font-family: "font-family: "Helvetica Neue",Helvetica,Arial,sans-serif";
+$header-font-family: $base-font-family;
+$paragraph-font-family: $base-font-family;
+
+
+// Font Colors
+$base-font-color: #ced9e0;
+$base-header-font-color: #fff;
+$base-heading-font-color: #fff;
+$base-accent-color: #e85151;
+$base-footer-font-color: #4c5358;
+
+// Background Color
+$base-background-color: #22272a;
+
+// Link Colors
+$base-link-color: $base-font-color;
+$base-hover-link-color: darken($base-font-color, 15);
+
+// Header Link Colors
+$base-logo-link-color: $base-accent-color;
+$base-logo-hover-link-color: darken($base-accent-color, 15);
+$base-header-link-color: $base-header-font-color;
+$base-header-hover-link-color: darken($base-header-font-color, 15);
+ 
+// Borders
+$base-border-color: #ddd;
+$header-border: 2px solid $base-accent-color;
+$heading-border: 2px solid $base-heading-font-color;
+$section-border: 2px solid $base-font-color;
+
+$max-width: 68em;

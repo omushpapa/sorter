@@ -141,6 +141,9 @@ Sorter actions are now reversible.
 * Python 3.x (3.4 recommended)
 * [sqlite3](http://www.sqlite.org/download.html)
 
+### Website
+[Sorter](https://giantas.github.io/sorter)
+
 
 ### Authors
 

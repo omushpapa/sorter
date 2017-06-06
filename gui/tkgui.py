@@ -9,8 +9,18 @@ import urllib.request
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
-from operations import initiate_operation, recreate_path, DB_NAME, IS_OKAY_FIELD_NAME, DST_FIELD_NAME, SRC_FIELD_NAME, PATHS_TABLE
+from operations import initiate_operation, recreate_path, DB_NAME
 from filegroups import typeGroups
+
+
+# Django configuration
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+
+from data.models import Path as DB_path
 
 
 class TkGui(Tk):
@@ -42,9 +52,6 @@ class TkGui(Tk):
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.init_ui()
-        self.connection = sqlite3.connect(DB_NAME)
-        self.connection.row_factory = sqlite3.Row
-        self.cursor = self.connection.cursor()
 
     def init_ui(self):
         # Configure default theme
@@ -208,7 +215,8 @@ class TkGui(Tk):
         msg.config(pady=10, padx=10, font='Helvetica 9')
         msg.pack(fill=Y)
 
-    def _delete_db(self):
+    @classmethod
+    def _delete_db(cls):
         try:
             os.remove(os.path.join(os.getcwd(), DB_NAME))
         except FileNotFoundError:
@@ -258,7 +266,7 @@ class TkGui(Tk):
                 options_frame.grid(row=count,
                                    column=0, padx=5, pady=10, sticky=W)
 
-                for item_count, item in enumerate(typeGroups[key]):
+                for item in typeGroups[key]:
                     types[item] = IntVar()
                     item_button = Checkbutton(options_frame,
                                               text=item,
@@ -394,27 +402,23 @@ class TkGui(Tk):
 
         def reverse_action(origin, current_path, button_index, commit=True):
             """Undo the conducted Sorter operation."""
+
             recreate_path(os.path.dirname(origin))
             try:
                 shutil.move(current_path, origin)
             except FileNotFoundError:
-                pass
+                return
             else:
-                query = 'UPDATE {tn} SET {ok}="0" WHERE {src}="{srcv}" AND {dst}="{dstv}"'.format(
-                    tn=PATHS_TABLE, ok=IS_OKAY_FIELD_NAME, src=SRC_FIELD_NAME, dst=DST_FIELD_NAME,
-                    srcv=origin, dstv=current_path)
-                self.cursor.execute(query)
+                updated = DB_path.objects.filter(
+                    source=origin, destination=current_path).update(accepted=False)
                 buttons[button_index].config(state='disabled')
                 del buttons[button_index]
-                if commit:
-                    self.connection.commit()
 
         def reverse_all(report):
             """Undo all the conducted Sorter operations in the current instance."""
             if buttons:
                 for count, value in enumerate(report, ROW_COUNT):
                     reverse_action(value[1], value[2], count, commit=False)
-                self.connection.commit()
 
         for count, value in enumerate(report, ROW_COUNT):
             buttons[count] = ttk.Button(frame, text='Undo',

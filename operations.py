@@ -3,47 +3,41 @@
 import os
 import sqlite3
 import hashlib
+import django
 from glob import glob, iglob
 from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
 from filegroups import typeGroups
+from datetime import datetime
 
-# Database variables
-DB_NAME = 'operations.db'
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
-# Configure files table
-FILES_TABLE = 'file'
-FILE_ID_FIELD_NAME = 'file_id'
-FILE_ID_FIELD_CONF = 'INTEGER PRIMARY KEY'
-FILE_ID_FIELD = FILE_ID_FIELD_NAME + ' ' + FILE_ID_FIELD_CONF
-FILENAME_FIELD_NAME = 'filename'
-FILENAME_FIELD_CONF = 'TEXT NOT NULL'
-FILENAME_FIELD = FILENAME_FIELD_NAME + ' ' + FILENAME_FIELD_CONF
-FILEPATH_HASH_FIELD_NAME = 'path_hash'
-FILEPATH_HASH_FIELD_CONF = FILENAME_FIELD_CONF
-FILEPATH_HASH_FIELD = FILEPATH_HASH_FIELD_NAME + ' ' + FILEPATH_HASH_FIELD_CONF
-FILE_LAST_MODIFIED_FIELD_NAME = 'last_modified'
-FILE_LAST_MODIFIED_FIELD_CONF = 'REAL NOT NULL'
-FILE_LAST_MODIFIED_FIELD = FILE_LAST_MODIFIED_FIELD_NAME + \
-    ' ' + FILE_LAST_MODIFIED_FIELD_CONF
 
-# Configure paths table
-PATHS_TABLE = 'path'
-PATH_ID_FIELD_NAME = 'path_id'
-PATH_ID_FIELD_CONF = 'INTEGER PRIMARY KEY'
-PATH_ID_FIELD = PATH_ID_FIELD_NAME + ' ' + PATH_ID_FIELD_CONF
-#FILE_ID_FIELD_NAME = FILE_ID_FIELD_NAME
-SRC_FIELD_NAME = 'src_path'
-SRC_FIELD_CONF = 'TEXT NOT NULL'
-SRC_FIELD = SRC_FIELD_NAME + ' ' + SRC_FIELD_CONF
-DST_FIELD_NAME = 'dst_path'
-DST_FIELD_CONF = 'TEXT NOT NULL'
-DST_FIELD = DST_FIELD_NAME + ' ' + DST_FIELD_CONF
-IS_OKAY_FIELD_NAME = 'is_okay'
-IS_OKAY_FIELD_CONF = 'INTEGER DEFAULT 1'
-IS_OKAY_FIELD = IS_OKAY_FIELD_NAME + ' ' + IS_OKAY_FIELD_CONF
-TIMESTAMP_FIELD_NAME = 'time'
-TIMESTAMP_FIELD_CONF = 'DATE DEFAULT (datetime(\'now\',\'localtime\')),'
-TIMESTAMP_FIELD = TIMESTAMP_FIELD_NAME + ' ' + TIMESTAMP_FIELD_CONF
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+
+from django.conf import settings
+from data.models import File as DB_FILE, Path as DB_PATH
+
+
+DB_NAME = settings.DATABASES['default']['NAME']
+
+
+def initialise_db(db_name=DB_NAME):
+    """Create database tables if they do not exist."""
+    connection = sqlite3.connect(db_name)
+    cursor = connection.cursor()
+    # Create tables
+    # Do not alter the queries, may not work with subsequent database
+    # operations
+    query1 = """CREATE TABLE IF NOT EXISTS "data_file" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "filename" text NOT NULL, "filepath_hash" text NOT NULL, "last_modified" datetime NOT NULL);"""
+    query2 = """CREATE TABLE IF NOT EXISTS "data_path" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "source" text NOT NULL, "destination" text NOT NULL, "accepted" bool NOT NULL, "timestamp" datetime NOT NULL, "filename_id" integer NOT NULL REFERENCES "data_file" ("id"));"""
+    query3 = """CREATE INDEX IF NOT EXISTS "data_path_filename_id_1d40e5f2" ON "data_path" ("filename_id");"""
+    cursor.execute(query1)
+    cursor.execute(query2)
+    cursor.execute(query3)
+    connection.commit()
+    connection.close()
 
 
 def recreate_path(full_path):
@@ -61,32 +55,6 @@ def recreate_path(full_path):
             os.mkdir(path)
 
 
-def initialise_db(db_cursor, db_connect):
-    """Create tables if they do not exist."""
-    # Create table
-    query = 'CREATE TABLE IF NOT EXISTS {0} ({1}, {2}, {3}, {4})'.format(
-        FILES_TABLE, FILE_ID_FIELD, FILENAME_FIELD,
-        FILEPATH_HASH_FIELD, FILE_LAST_MODIFIED_FIELD)
-    db_cursor.execute(query)
-    query = 'CREATE TABLE IF NOT EXISTS {tn} ({pif}, {fif}, {sf}, {df}, {ok}, {tf} {fk})'.format(
-        tn=PATHS_TABLE,
-        pif=PATH_ID_FIELD,
-        fif=(FILE_ID_FIELD_NAME + ' INTEGER '),
-        sf=SRC_FIELD,
-        df=DST_FIELD,
-        ok=IS_OKAY_FIELD,
-        tf=TIMESTAMP_FIELD,
-        fk=('FOREIGN KEY(' + FILE_ID_FIELD_NAME + ') REFERENCES ' +
-            FILES_TABLE + '(%s)' % FILE_ID_FIELD_NAME))
-    db_cursor.execute(query)
-    db_connect.commit()
-
-    # Get last row
-    query = 'SELECT MAX({0}) FROM {1}'.format(FILE_ID_FIELD_NAME, FILES_TABLE)
-    result = db_cursor.execute(str(query))
-    return result.fetchone()[0]
-
-
 def is_writable(folder_path, status, mtype):
     """Return True if user has write permission on given path, else False."""
     try:
@@ -102,7 +70,7 @@ def is_writable(folder_path, status, mtype):
     return True
 
 
-def sort_files(source_path, destination_path, search_string, string_pattern, file_types, glob_pattern, sort_folders, db_cursor):
+def sort_files(source_path, destination_path, search_string, string_pattern, file_types, glob_pattern, sort_folders):
     """Move file in relation to its extension and category.
 
     source_path - path of origin
@@ -115,7 +83,6 @@ def sort_files(source_path, destination_path, search_string, string_pattern, fil
         extensions.
     sort_folders - boolean value determining whether to also group folders 
         according to their categories - as defined in filegroups.py.
-    db_cursor - the cursor to use in loggin operations to the database.
     """
     glob_files = []
     if search_string:
@@ -139,31 +106,16 @@ def sort_files(source_path, destination_path, search_string, string_pattern, fil
             new_path = file_instance.path
             if initial_path != new_path:
                 # Write to DB
-                quote = lambda x: '"' + str(x) + '"'
                 hash_path = hashlib.md5(
                     initial_path.encode('utf-8')).hexdigest()
-                query = 'INSERT INTO {tn} ({fn}, {fp}, {lm}) VALUES ({fnv}, {fpv}, {lmv}) '.format(
-                    tn=FILES_TABLE,
-                    fn=FILENAME_FIELD_NAME,
-                    fp=FILEPATH_HASH_FIELD_NAME,
-                    lm=FILE_LAST_MODIFIED_FIELD_NAME,
-                    fnv=quote(initial_name),
-                    fpv=quote(hash_path),
-                    lmv=quote(last_modified))
-                db_cursor.execute(query)
 
-                num = db_cursor.lastrowid
-                query = 'INSERT INTO {tn} ({fif}, {sfn}, {dfn}, {tfn}) VALUES ({fifv}, {sfnv}, {dfnv}, {tfnv})'.format(
-                    tn=PATHS_TABLE,
-                    fif=FILE_ID_FIELD_NAME,
-                    sfn=SRC_FIELD_NAME,
-                    dfn=DST_FIELD_NAME,
-                    tfn=TIMESTAMP_FIELD_NAME,
-                    fifv=quote(num),
-                    sfnv=quote(initial_path),
-                    dfnv=quote(new_path),
-                    tfnv='DATETIME("NOW")')
-                db_cursor.execute(query)
+                f = DB_FILE.objects.create(
+                    filename=initial_name, filepath_hash=hash_path, last_modified=datetime.fromtimestamp(last_modified))
+                f.save()
+
+                path = DB_PATH.objects.create(filename=f, source=initial_path,
+                                              destination=new_path, timestamp=datetime.now())
+                path.save()
 
 
 def insensitize(string):
@@ -191,6 +143,15 @@ def display_message(text, status, mtype='info'):
     else:
         status.config(foreground="black")
     status.config(text=' %s' % text)
+
+
+def update_progress(instance, value, status, mtype='update', colour=None):
+    instance.progress_var.set(value)
+    if colour is not None:
+        instance.progress_bar.configure(
+            style="{}.Horizontal.TProgressbar".format(colour))
+    display_message('{}%'.format(value), status=status, mtype=mtype)
+    instance.update_idletasks()
 
 
 def initiate_operation(src='', dst='', search_string='', sort=False, recur=False, types=None, status=None, parser=None, instance=None):
@@ -242,23 +203,25 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
             instance.progress_bar.configure(maximum=100)
 
         display_message('START', status=status)
-        CONN = sqlite3.connect(DB_NAME)
-        CONN.row_factory = sqlite3.Row
-        CURSOR = CONN.cursor()
+        initialise_db()
 
         if instance is not None:
-            instance.progress_var.set(25)
-            instance.progress_bar.configure(
-                style="blue.Horizontal.TProgressbar")
-            display_message('25%', status=status, mtype='update')
-            instance.update_idletasks()
+            update_progress(instance=instance, value=10, colour='blue',
+                            status=status)
 
-        start_value = initialise_db(db_cursor=CURSOR, db_connect=CONN)
+        # Get last row in database
+        try:
+            start_value = DB_FILE.objects.last().id
+        except AttributeError:
+            start_value = 0
+
+        if instance is not None:
+            update_progress(instance=instance, value=25, status=status)
 
         if recur:
             for root, dirs, files in os.walk(source_path):
                 sort_files(root, destination_path, search_string, search_string_pattern,
-                           file_types, glob_pattern, sort, db_cursor=CURSOR)
+                           file_types, glob_pattern, sort)
                 if not dirs and not files:
                     try:
                         os.rmdir(root)
@@ -268,12 +231,10 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
 
         else:
             sort_files(source_path, destination_path, search_string, search_string_pattern,
-                       file_types, glob_pattern, sort, db_cursor=CURSOR)
+                       file_types, glob_pattern, sort)
 
         if instance is not None:
-            instance.progress_var.set(50)
-            display_message('50%', status=status, mtype='update')
-            instance.update_idletasks()
+            update_progress(instance=instance, value=50, status=status)
 
         if sort:
             folders = [folder for folder in glob(os.path.join(
@@ -292,38 +253,19 @@ def initiate_operation(src='', dst='', search_string='', sort=False, recur=False
         display_message('Done.', status=status)
 
         if instance is not None:
-            instance.progress_var.set(75)
-            display_message('75%', status=status, mtype='update')
-            instance.update_idletasks()
+            update_progress(instance=instance, value=75, status=status)
 
-        # Generate report
-        if start_value is None:
-            start_value = 0
+        paths = DB_PATH.objects.filter(id__gt=start_value)
 
-        query = 'SELECT {ftn}.{ffn},{ptn}.{pap},{ptn}.{sfn} FROM {ftn} INNER JOIN {ptn} ON {ftn}.{ffi} = {ptn}.{ffi} WHERE {ftn}.{ffi} > {sv}'.format(
-            ftn=FILES_TABLE,
-            ffn=FILENAME_FIELD_NAME,
-            ptn=PATHS_TABLE,
-            sfn=SRC_FIELD_NAME,
-            pap=DST_FIELD_NAME,
-            ffi=FILE_ID_FIELD_NAME,
-            sv=str(start_value))
-        result = CURSOR.execute(query)
-        rows = result.fetchall()
         report = []
-        for row in rows:
-            row_tup = (row['filename'], row['src_path'],
-                       row['dst_path'], 'Moved')
+        for path in paths:
+            row_tup = (path.filename.filename, path.source,
+                       path.destination, 'Moved')
             report.append(row_tup)
 
-        CONN.commit()
-        CONN.close()
-
         if instance is not None:
-            instance.progress_var.set(100)
-            instance.progress_bar.configure(
-                style="green.Horizontal.TProgressbar")
-            instance.update_idletasks()
+            update_progress(instance=instance, value=100, colour='green',
+                            status=status)
 
         display_message('FINISH', status=status)
 

@@ -19,6 +19,7 @@ See the full list of supported OSes at [Sorter - Official Releases](https://gith
 ### Prerequisites 
 * Python 3.x (3.4 recommended)
 * [sqlite3](http://www.sqlite.org/download.html)
+* [TestFixtures](https://testfixtures.readthedocs.io/en/latest/index.html) (for tests)
 
 Open terminal
 

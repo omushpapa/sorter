@@ -19,12 +19,14 @@ class TestDirectoryCommon(object):
     """Test common sdir.Directory attributes."""
 
     def setUp(self):
+        """Initialise temporary directory and file."""
         self.tempdir = TempDirectory(encoding='utf-8')
         self.dirname = 'abc.txt'
         self.tempdir.write(self.dirname, '123')
         self.dir = Directory(self.tempdir.path)
 
     def tearDown(self):
+        """Clean up temporary directory."""
         self.tempdir.cleanup()
         del self.dir
 
@@ -59,9 +61,11 @@ class TestDirectoryUnix(unittest.TestCase, TestDirectoryCommon):
     """Test sdir.Directory attributes for UNIX systems."""
 
     def setUp(self):
+        """Inherits from TestDirectoryCommon.setUp()."""
         TestDirectoryCommon.setUp(self)
 
     def tearDown(self):
+        """Inherits from TestDirectoryCommon.tearDown()."""
         TestDirectoryCommon.tearDown(self)
 
     def test_returns_false_if_path_not_hidden(self):
@@ -74,6 +78,7 @@ class TestFile(unittest.TestCase):
     """Test sdir.File."""
 
     def setUp(self):
+        """Initialise temporary directory and files."""
         self.tempdir = TempDirectory(encoding='utf-8')
 
         self.file_1_name = 'abc.txt'
@@ -95,6 +100,7 @@ class TestFile(unittest.TestCase):
         self.file_5_File = File(self.file_5_path)
 
     def tearDown(self):
+        """Clean temporary directory."""
         self.tempdir.cleanup()
 
     def test_returns_false_if_extensions_lists_dont_match(self):
@@ -118,6 +124,62 @@ class TestFile(unittest.TestCase):
                  self.file_5_File.exists, non_existent.exists]
 
         compare(files, [True, True, True, True, True, False])
+
+    def test_returns_false_if_names_dont_match(self):
+        """Test returns False if there was an error in renaming the file."""
+        dup_file_1_name = 'abc - dup (1).txt'
+        compare(self.file_1_File.find_suitable_name(
+            self.file_1_File.path), dup_file_1_name)
+        self.tempdir.write(dup_file_1_name, '')
+        compare(self.file_1_File.find_suitable_name(
+            self.file_1_File.path), 'abc - dup (2).txt')
+        compare(self.file_3_File.find_suitable_name(
+            self.file_3_File.path), 'abc - dup (1)')
+
+    def test_returns_false_if_relocation_without_grouping_failed(self):
+        """Test returns False if file relocation failed when 
+        File.move_to(group=False)."""
+        self.tempdir.makedir('newfolder')
+        dst = os.path.join(self.tempdir.path, 'newfolder')
+
+        self.file_1_File.move_to(dst)
+        compare(self.file_1_File.path, os.path.join(dst, os.path.join(
+            os.path.splitext(self.file_1_name)[1][1:].upper()), self.file_1_name))
+        self.file_2_File.move_to(dst)
+        compare(self.file_2_File.path, os.path.join(dst, os.path.join(
+            os.path.splitext(self.file_2_name)[1][1:].upper()), self.file_2_name))
+        self.file_3_File.move_to(dst)
+        compare(self.file_3_File.path, os.path.join(
+            dst, os.path.join('UNDEFINED', self.file_3_name)))
+        self.file_4_File.move_to(dst)
+        compare(self.file_4_File.path, os.path.join(dst, os.path.join(
+            os.path.splitext(self.file_4_name)[1][1:].upper()), self.file_4_name))
+        self.file_5_File.move_to(dst)
+        compare(self.file_5_File.path, os.path.join(
+            dst, os.path.join('UNDEFINED', self.file_5_name)))
+
+    def test_returns_false_if_relocation_with_grouping_failed(self):
+        """Test returns False if file relocation failed when 
+        File.move_to(group=True)."""
+        self.tempdir.makedir('grouping_folder')
+        dst = os.path.join(self.tempdir.path, 'grouping_folder')
+
+        self.file_1_File.move_to(dst, group=True)
+        compare(self.file_1_File.path, os.path.join(os.path.join(dst, self.file_1_File.category),
+                                                    os.path.join(os.path.splitext(self.file_1_name)[1][1:].upper()), self.file_1_name))
+        self.file_2_File.move_to(dst, group=True)
+        compare(self.file_2_File.path, os.path.join(os.path.join(dst, self.file_2_File.category),
+                                                    os.path.join(os.path.splitext(self.file_2_name)[1][1:].upper()), self.file_2_name))
+        self.file_3_File.move_to(dst, group=True)
+        compare(self.file_3_File.path, os.path.join(os.path.join(
+            dst, self.file_3_File.category), os.path.join('UNDEFINED', self.file_3_name)))
+        self.file_4_File.move_to(dst, group=True)
+        compare(self.file_4_File.path, os.path.join(os.path.join(dst, self.file_4_File.category),
+                                                    os.path.join(os.path.splitext(self.file_4_name)[1][1:].upper()), self.file_4_name))
+        self.file_5_File.move_to(dst, group=True)
+        compare(self.file_5_File.path, os.path.join(os.path.join(
+            dst, self.file_5_File.category), os.path.join('UNDEFINED', self.file_5_name)))
+
 
 if __name__ == '__main__':
     unittest.main()

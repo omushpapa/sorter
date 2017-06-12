@@ -9,7 +9,8 @@ import urllib.request
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
-from operations import initiate_operation, recreate_path, DB_NAME
+from operations import recreate_path
+from helpers import InterfaceHelper
 from filegroups import typeGroups
 
 
@@ -37,7 +38,7 @@ class TkGui(Tk):
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
     TAG = "2.1.1"
 
-    def __init__(self):
+    def __init__(self, operations):
         super(TkGui, self).__init__()
         self.title('Sorter')
 
@@ -51,6 +52,7 @@ class TkGui(Tk):
         self.maxsize(550, 300)
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
+        self.operations = operations
         self.init_ui()
 
     def init_ui(self):
@@ -135,7 +137,7 @@ class TkGui(Tk):
         self.sort_folders = IntVar()
         self.recursive = IntVar()
         types_value = IntVar()
-        self.file_types = []
+        self.file_types = ['*']
         sort_option = Checkbutton(
             options_frame, text='Sort folders', variable=self.sort_folders)
         sort_option.pack(side=LEFT)
@@ -183,6 +185,10 @@ class TkGui(Tk):
                                             orient=HORIZONTAL, length=120)
         self.progress_bar.pack(side=RIGHT)
 
+        self.interface_helper = InterfaceHelper(
+            progress_bar=self.progress_bar, progress_var=self.progress_var,
+            update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
+
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
@@ -215,13 +221,15 @@ class TkGui(Tk):
         msg.config(pady=10, padx=10, font='Helvetica 9')
         msg.pack(fill=Y)
 
-    @classmethod
-    def _delete_db(cls):
+    def _delete_db(self):
+        db_path = os.path.abspath(self.operations.DB_NAME)
+        db_name = os.path.basename(db_path)
         try:
-            os.remove(os.path.join(os.getcwd(), DB_NAME))
+            os.remove(db_path)
+            messagebox.showinfo(title='Success', message='Database refreshed!')
         except FileNotFoundError:
-            error_msg = 'Could not locate "{0}". Check application folder and delete "{0}"'.format(
-                DB_NAME)
+            error_msg = 'Could not locate "{0}". \n\nCheck application folder and delete "{1}"'.format(
+                db_path, db_name)
             messagebox.showwarning(title='Error', message=error_msg)
 
     def _enable_search_entry(self, value):
@@ -312,7 +320,6 @@ class TkGui(Tk):
         answer = messagebox.askyesno(title='Leave',
                                      message='Do you really want to quit?')
         if answer:
-            self.connection.close()
             self.destroy()
 
     def run_sorter(self):
@@ -328,14 +335,17 @@ class TkGui(Tk):
             search_string = self.search_entry.get()
             sort_value = True
 
-        report = initiate_operation(src=self.source_entry.get(),
-                                    dst=dst,
-                                    search_string=search_string,
-                                    sort=sort_value,
-                                    recur=bool(self.recursive.get()),
-                                    types=self.file_types,
-                                    status=self.status_bar,
-                                    instance=self)
+        if self.file_types == ['*']:
+            types_given = False
+        else:
+            types_given = True
+
+        report = self.operations.initiate_operation(
+            src=self.source_entry.get(), dst=dst,
+            send_message=self.interface_helper.message_user,
+            search_string=search_string, sort_folders=sort_value,
+            recursive=bool(self.recursive.get()),
+            file_types=self.file_types, types_given=types_given)
 
         if report:
             self._show_report(report)

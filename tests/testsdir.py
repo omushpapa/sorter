@@ -3,7 +3,7 @@
 import unittest
 import os
 import ctypes
-from sdir import Directory, File
+from sdir import Directory, File, Folder
 from testfixtures import TempDirectory, compare
 
 
@@ -179,6 +179,62 @@ class TestFile(unittest.TestCase):
         self.file_5_File.move_to(dst, group=True)
         compare(self.file_5_File.path, os.path.join(os.path.join(
             dst, self.file_5_File.category), os.path.join('UNDEFINED', self.file_5_name)))
+
+
+class TestFolder(unittest.TestCase):
+
+    def setUp(self):
+        """Initialise temporary directory."""
+        self.tempdir = TempDirectory(encoding='utf-8')
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_returns_false_if_path_not_equal(self):
+        path = self.tempdir.makedir('sampler')
+        folder = Folder(path)
+        compare(path, folder.path)
+
+    def test_returns_false_if_path_not_exist(self):
+        self.tempdir.makedir('sample')
+        folder = Folder(os.path.join(self.tempdir.path, 'sample'))
+        compare(True, folder.exists)
+
+    def test_returns_false_if_folder_not_meant_for_sorter_use(self):
+        self.tempdir.makedir('sample')
+        self.tempdir.makedir('developer')
+        self.tempdir.makedir('FOLDERS')
+        self.tempdir.makedir('PDF')
+        self.tempdir.makedir('EXIST')
+        folder_1 = Folder(os.path.join(self.tempdir.path, 'sample'))
+        folder_2 = Folder(os.path.join(self.tempdir.path, 'developer'))
+        folder_3 = Folder(os.path.join(self.tempdir.path, 'FOLDERS'))
+        folder_4 = Folder(os.path.join(self.tempdir.path, 'PDF'))
+        folder_5 = Folder(os.path.join(self.tempdir.path, 'false'))
+        folder_6 = Folder(os.path.join(self.tempdir.path, 'EXIST'))
+        compare([folder_1.for_sorter, folder_2.for_sorter, folder_3.for_sorter,
+                 folder_4.for_sorter, folder_5.for_sorter, folder_6.for_sorter],
+                [False, True, True, True, False, False])
+
+    def test_returns_false_if_parent_folder_not_match(self):
+        self.tempdir.makedir('sample')
+        folder_1 = Folder(os.path.join(self.tempdir.path, 'sample'))
+        compare(self.tempdir.path, folder_1.parent)
+
+    def test_returns_fals_if_path_not_exists_after_recreate(self):
+        """Test declares a non-existent path and returns False
+        if still non-existent after operation."""
+        temp_path = self.tempdir.path
+        path_1 = os.path.join(temp_path, 'one')
+        path_2 = os.path.join(path_1, 'two')
+        path_3 = os.path.join(path_2, 'three')
+        path_4 = os.path.join(path_3, 'three')
+        folder = Folder(path_4)
+        compare(False, os.path.exists(path_4))
+        compare(False, folder.exists)
+        folder.recreate()
+        compare(True, os.path.exists(path_4))
+        compare(True, folder.exists)
 
 
 if __name__ == '__main__':

@@ -371,7 +371,7 @@ class Folder(Directory):
         if they do not exist."""
 
         full_path = self.path
-        paths = []
+        paths = [full_path]
 
         def get_paths(full_path):
             dir_path = os.path.dirname(full_path)
@@ -382,6 +382,7 @@ class Folder(Directory):
         for path in paths[::-1]:
             if not os.path.isdir(path):
                 os.mkdir(path)
+        self.path = self.path
 
 
 class CustomFolder(Folder):

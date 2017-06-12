@@ -12,6 +12,28 @@
 
 	<title>Sorter</title>
 
+	<style type="text/css">
+		.toTop{
+			width:3em;
+			height:3em;
+			padding:10px; 
+			text-align:center; 
+			background: transparent;
+			font-weight: bold;
+			color: #e85151;
+			text-decoration: none;
+			position:fixed;
+			top:75px;
+			right:40px;
+			display:none;
+			background: url('img/ic_arrow_drop_up_black.png') no-repeat 0px 20px;
+		}
+		.toTop:hover{
+			text-decoration:none;
+			background-color: #3D4143;
+		}
+	</style>
+
 </head>
 <body>
 
@@ -28,8 +50,8 @@
 			<ul>
 				<li><a href="#how-it-works">How it works</a></li>
 				<li><a href="#download" class="bordered">Download</a></li>
-				<li><a href="#usage">Usage</a></li> 
-				<li><a href="#" >Contact</a></li>
+				<li><a href="#usage">How to use</a></li> 
+				<li><a href="#contact" >Contact</a></li>
 			</ul>
 		</nav> 
 		</div>
@@ -52,19 +74,19 @@
 				<h2 id="download">Download</h2>
 				<p>
 					<p>
-						<a href="https://github.com/giantas/sorter/releases/latest">
+						<a href="https://github.com/giantas/sorter/releases/latest" target="_blank" rel="nofollow">
 							<img src="https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592001" alt="Latest release" />
 						</a>&emsp;
-						<a href="https://saythanks.io/to/giantas">
+						<a href="https://saythanks.io/to/giantas" target="_blank" rel="nofollow">
 							<img src="https://img.shields.io/badge/Say%20Thanks-!-blue.svg" alt="Say thanks" />
 						</a>&emsp;
-						<a href="https://t.me/giantas_sorter">
+						<a href="https://t.me/giantas_sorter" target="_blank" rel="nofollow">
 							<img src="https://img.shields.io/badge/channel-Telegram-blue.svg" alt="Telegram Channel" />
 						</a>
 					</p>
 
 					<p>
-						<a href="http://file-sorter.sourceforge.io">
+						<a href="http://file-sorter.sourceforge.io" target="_blank" rel="nofollow">
 							<img src="https://a.fsdn.com/con/app/sf-download-button" />
 						</a>
 					</p>
@@ -74,7 +96,7 @@
 
 		<section class="row">
 			<div class="col-full">
-				<h2 id="usage">Usage</h2><br/>
+				<h2 id="usage">How to use</h2><br/>
 				<div class="photo-grid">
 					<a href="#download" rel="lightbox" class="col-2">
 						<p><br /><br />Launch Sorter</p>
@@ -135,24 +157,25 @@
 
 		<section class="row">
 			<div class="col">
-				<h2>Issues?</h2>
+				<h2 id="contact">Issues?</h2>
 				<p>
-					Notify me <a href="https://github.com/giantas/sorter/issues/new">here</a>.
+					Notify me <a href="https://github.com/giantas/sorter/issues/new" target="_blank" rel="nofollow">here</a>.
 				</p>
 			</div>
 			<div class="col">
 				<h2>Follow</h2>
 				<p>
-					Also on <a href="https://github.com/giantas">Github</a> and <a href="https://twitter.com/aswa_paul">Twitter</a>.
+					Also on <a href="https://github.com/giantas" target="_blank" rel="nofollow">Github</a> and <a href="https://twitter.com/aswa_paul" target="_blank" rel="nofollow">Twitter</a>.
 				</p>
 			</div>
 		</section>
 
+		<a href ="#" class="toTop">Top</a>
 
 		<section class="row">
 			<div class="col-full">
 				<p>
-					Sorter © 2017 - <a href="https://github.com/giantas">giantas</a>
+					Sorter © 2017 - <a href="https://github.com/giantas" target="_blank" rel="nofollow">giantas</a>
 				</p>
 			</div>
 		</section>
@@ -179,6 +202,66 @@
 	  ga('create', 'YOUR_GOOGLE_ANALYTICS_ID', 'auto');
 	  ga('send', 'pageview');
 
+	</script>
+
+	<script>
+	// Select all links with hashes
+	$('a[href*="#"]')
+	  // Remove links that don't actually link to anything
+	  .not('[href="#"]')
+	  .not('[href="#0"]')
+	  .click(function(event) {
+	    // On-page links
+	    if (
+	      location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') 
+	      && 
+	      location.hostname == this.hostname
+	    ) {
+	      // Figure out element to scroll to
+	      var target = $(this.hash);
+	      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
+	      // Does a scroll target exist?
+	      if (target.length) {
+	        // Only prevent default if animation is actually going to happen
+	        event.preventDefault();
+	        $('html, body').animate({
+	          scrollTop: target.offset().top
+	        }, 1000, function() {
+	          // Callback after animation
+	          // Must change focus!
+	          var $target = $(target);
+	          $target.focus();
+	          if ($target.is(":focus")) { // Checking if the target was focused
+	            return false;
+	          } else {
+	            $target.attr('tabindex','-1'); // Adding tabindex for elements not focusable
+	            $target.focus(); // Set focus again
+	          };
+	        });
+	      }
+	    }
+	  });
+	</script>
+
+	<script type="text/javascript">
+	$(document).ready(function(){
+	
+		//Check to see if the window is top if not then display button
+		$(window).scroll(function(){
+			if ($(this).scrollTop() > 100) {
+				$('.toTop').fadeIn();
+			} else {
+				$('.toTop').fadeOut();
+			}
+		});
+		
+		//Click event to scroll to top
+		$('.toTop').click(function(){
+			$('html, body').animate({scrollTop : 0},800);
+			return false;
+		});
+		
+	});
 	</script>
 
 </body>

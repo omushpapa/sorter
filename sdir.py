@@ -366,6 +366,23 @@ class Folder(Directory):
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
 
+    def recreate(self):
+        """Recreate folders (and parents) in the instance's path 
+        if they do not exist."""
+
+        full_path = self.path
+        paths = []
+
+        def get_paths(full_path):
+            dir_path = os.path.dirname(full_path)
+            if dir_path != full_path:
+                paths.append(dir_path)
+                get_paths(dir_path)
+        get_paths(full_path)
+        for path in paths[::-1]:
+            if not os.path.isdir(path):
+                os.mkdir(path)
+
 
 class CustomFolder(Folder):
     """Define a Folder instance with custom attributes.

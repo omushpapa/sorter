@@ -9,9 +9,9 @@ import urllib.request
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
-from operations import recreate_path
 from helpers import InterfaceHelper
 from filegroups import typeGroups
+from sdir import Folder
 
 
 # Django configuration
@@ -413,7 +413,8 @@ class TkGui(Tk):
         def reverse_action(origin, current_path, button_index, commit=True):
             """Undo the conducted Sorter operation."""
 
-            recreate_path(os.path.dirname(origin))
+            original = Folder(os.path.dirname(origin))
+            original.recreate()
             try:
                 shutil.move(current_path, origin)
             except FileNotFoundError:

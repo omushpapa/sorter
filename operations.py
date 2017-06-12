@@ -18,21 +18,6 @@ application = get_wsgi_application()
 from data.models import File as DB_FILE, Path as DB_PATH
 
 
-def recreate_path(full_path):
-    """Create folders (and parents) in the path if they do not exist."""
-    paths = []
-
-    def get_paths(full_path):
-        dir_path = os.path.dirname(full_path)
-        if dir_path != full_path:
-            paths.append(dir_path)
-            get_paths(dir_path)
-    get_paths(full_path)
-    for path in paths[::-1]:
-        if not os.path.isdir(path):
-            os.mkdir(path)
-
-
 class SorterOps(object):
 
     def __init__(self, db_name):

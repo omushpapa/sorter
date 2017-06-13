@@ -71,6 +71,8 @@ class TkGui(Tk):
         # Configure menubar
         menu = Menu(self)
         self.config(menu=menu)
+
+        # File menu item
         file_menu = Menu(menu, tearoff=False)
         menu.add_cascade(label='File', menu=file_menu)
         dir_submenu = Menu(file_menu, tearoff=False)
@@ -83,6 +85,12 @@ class TkGui(Tk):
         file_menu.add_separator()
         file_menu.add_command(label='Quit', command=self._show_exit_dialog)
 
+        # View menu item
+        view_menu = Menu(menu, tearoff=False)
+        menu.add_cascade(label='View', menu=view_menu)
+        view_menu.add_command(label='Logs', command=self._show_logs)
+
+        # Help menu item
         help_menu = Menu(menu, tearoff=False)
         menu.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(
@@ -188,6 +196,11 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
+
+    def _show_logs(self):
+        logs_window = self._create_window('Logs')
+        logs_window.resizable(height=False, width=False)
+        logs_window.geometry('+{0}+{1}'.format(300, 150))
 
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'

@@ -221,7 +221,7 @@ class TestFolder(unittest.TestCase):
         folder_1 = Folder(os.path.join(self.tempdir.path, 'sample'))
         compare(self.tempdir.path, folder_1.parent)
 
-    def test_returns_fals_if_path_not_exists_after_recreate(self):
+    def test_returns_false_if_path_not_exists_after_recreate(self):
         """Test declares a non-existent path and returns False
         if still non-existent after operation."""
         temp_path = self.tempdir.path
@@ -235,6 +235,20 @@ class TestFolder(unittest.TestCase):
         folder.recreate()
         compare(True, os.path.exists(path_4))
         compare(True, folder.exists)
+
+    def test_returns_false_if_folder_not_moved(self):
+        temp = self.tempdir
+        temp_path = self.tempdir.path
+        path_1 = temp.makedir('one/two/three/four')
+        path_2 = temp.makedir('one/six/ten')
+        folder_1 = Folder(path_1)
+        folder_2 = Folder(path_2)
+        compare([folder_1.exists, folder_2.exists],
+                [True, True])
+        final_dst = os.path.join(path_2, os.path.join('FOLDERS', 'four'))
+        folder_1.group(path_2)
+        compare(True, os.path.exists(os.path.join(path_2, 'FOLDERS')))
+        compare(True, os.path.isdir(final_dst))
 
 
 if __name__ == '__main__':

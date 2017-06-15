@@ -371,7 +371,7 @@ class Folder(Directory):
         if they do not exist."""
 
         full_path = path or self.path
-        os.makedirs(full_path)
+        os.makedirs(full_path, exist_ok=True)
         if path is None:
             self.path = self.path
 

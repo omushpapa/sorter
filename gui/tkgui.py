@@ -39,7 +39,7 @@ class TkGui(Tk):
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
     TAG = "2.1.1"
 
-    def __init__(self, operations):
+    def __init__(self, operations, logger):
         super(TkGui, self).__init__()
         self.title('Sorter')
 
@@ -54,6 +54,7 @@ class TkGui(Tk):
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.operations = operations
+        self.logger = logger
         self.init_ui()
 
     def init_ui(self):
@@ -90,7 +91,6 @@ class TkGui(Tk):
         view_menu = Menu(menu, tearoff=False)
         menu.add_cascade(label='View', menu=view_menu)
         view_menu.add_command(label='History', command=self._show_history)
-        view_menu.add_command(label='Logs', command=self._show_logs)
 
         # Help menu item
         help_menu = Menu(menu, tearoff=False)
@@ -198,15 +198,15 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
+        self.logger.info('Finished GUI initialisation')
 
     def _on_mousewheel(self, event, canvas, count):
         canvas.yview_scroll(count, "units")
 
     def _show_history(self):
-        logs_window = self._create_window('History')
-        #logs_window.resizable(height=False, width=False)
-        logs_window.geometry('{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
-        canvas = self._create_canvas(logs_window)
+        history_window = self._create_window('History')
+        history_window.geometry('{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
+        canvas = self._create_canvas(history_window)
 
         frame = Frame(canvas, background="#C0C0C0")
         frame.pack(side=LEFT)
@@ -263,18 +263,14 @@ class TkGui(Tk):
             h = canvas.winfo_height()
             canvas.configure(height=h + 1)
 
-    def _show_logs(self):
-        logs_window = self._create_window('Logs')
-        logs_window.resizable(height=False, width=False)
-        logs_window.geometry('+{0}+{1}'.format(300, 150))
-
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
             with urllib.request.urlopen(link, timeout=5) as response:
                 html = response.read()
         except urllib.request.URLError:
-            pass
+            self.logger.warning(
+                'Update check failed. Could not connect to the Internet.')
         else:
             items = json.loads(html.decode('utf-8'))
             latest_tag = items.get('tag_name')
@@ -310,6 +306,7 @@ class TkGui(Tk):
             error_msg = 'Could not locate "{0}". \n\nCheck application folder and delete "{1}"'.format(
                 db_path, db_name)
             messagebox.showwarning(title='Error', message=error_msg)
+            self.logger.warning('Error clearing database:: %s', error_msg)
 
     def _enable_search_entry(self, value):
         if bool(value.get()):
@@ -399,10 +396,12 @@ class TkGui(Tk):
         answer = messagebox.askyesno(title='Leave',
                                      message='Do you really want to quit?')
         if answer:
+            self.logger.info('Exiting...')
             self.destroy()
 
     def run_sorter(self):
         """Call Sorter operations on the provided values."""
+        src = self.source_entry.get()
         dst = self.dst_entry.get()
         search_string = ''
         sort_value = bool(self.sort_folders.get())
@@ -414,17 +413,27 @@ class TkGui(Tk):
             search_string = self.search_entry.get()
             sort_value = True
 
-        if self.file_types == ['*']:
+        file_types = self.file_types
+
+        if file_types == ['*']:
             types_given = False
         else:
             types_given = True
 
+        recursive_value = bool(self.recursive.get())
+
+        self.logger.info('Sorter operations initiated. Values: src=%s, dst=%s, search_string=%s, sort_value=%s, recursive_value=%s, file_types=%s, types_given=%s',
+                         src, dst, search_string, sort_value,
+                         recursive_value, file_types, types_given)
+
         report = self.operations.initiate_operation(
-            src=self.source_entry.get(), dst=dst,
+            src=src, dst=dst,
             send_message=self.interface_helper.message_user,
             search_string=search_string, sort_folders=sort_value,
-            recursive=bool(self.recursive.get()),
-            file_types=self.file_types, types_given=types_given)
+            recursive=recursive_value,
+            file_types=file_types, types_given=types_given)
+
+        self.logger.info('%s operations done.', str(len(report)))
 
         if report:
             self._show_report(report)
@@ -510,6 +519,7 @@ class TkGui(Tk):
         def reverse_all(report):
             """Undo all the conducted Sorter operations in the current instance."""
             if buttons:
+                self.logger.info('Reversing %s operations.', str(len(report)))
                 for count, value in enumerate(report, ROW_COUNT):
                     reverse_action(value[1], value[2], count, commit=False)
 

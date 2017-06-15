@@ -11,6 +11,8 @@ DATABASES = {
 
 INSTALLED_APPS = (
     'data',
-    )
+)
 
 SECRET_KEY = '63cFWu$$lhT3bVP9U1k1Iv@Jo02SuM'
+
+LOG_FILE = os.path.join(PROJECT_ROOT, 'sorter.logs')

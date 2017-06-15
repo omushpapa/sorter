@@ -12,6 +12,7 @@ from tkinter import filedialog, messagebox, ttk
 from helpers import InterfaceHelper
 from filegroups import typeGroups
 from sdir import Folder
+from webbrowser import get
 
 
 # Django configuration
@@ -21,7 +22,7 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 
-from data.models import Path as DB_path
+from data.models import Path as DB_path, File as DB_file
 
 
 class TkGui(Tk):
@@ -88,6 +89,7 @@ class TkGui(Tk):
         # View menu item
         view_menu = Menu(menu, tearoff=False)
         menu.add_cascade(label='View', menu=view_menu)
+        view_menu.add_command(label='History', command=self._show_history)
         view_menu.add_command(label='Logs', command=self._show_logs)
 
         # Help menu item
@@ -196,6 +198,70 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
+
+    def _on_mousewheel(self, event, canvas, count):
+        canvas.yview_scroll(count, "units")
+
+    def _show_history(self):
+        logs_window = self._create_window('History')
+        #logs_window.resizable(height=False, width=False)
+        logs_window.geometry('{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
+        canvas = self._create_canvas(logs_window)
+
+        frame = Frame(canvas, background="#C0C0C0")
+        frame.pack(side=LEFT)
+
+        canvas.create_window(0, 0, anchor=NW, window=frame)
+
+        PADX, PADY, IPADX, IPADY = 1, 1, 1, 1
+
+        files = DB_file.objects.all().order_by(
+            '-pk').select_related().filter(filename_path__accepted=True)[:50]
+
+        # Add items to canvas
+        llabel = ttk.Label(frame, text='Filename', anchor=N, relief=SUNKEN,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=0, sticky="nsew", padx=PADX, pady=3)
+        llabel = ttk.Label(frame, text='Original location', anchor=N, relief=SUNKEN,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=1, sticky="nsew", padx=PADX, pady=3)
+        llabel = ttk.Label(frame, text='Current location', anchor=N, relief=SUNKEN,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=2, sticky="nsew", padx=PADX, pady=3)
+        llabel = ttk.Label(frame, anchor=N, relief=SUNKEN,
+                           background=self.bg, borderwidth=0)
+        llabel.grid(row=0, column=3, sticky="nsew", padx=0, pady=0)
+
+        for count, item in enumerate(files, 1):
+            item_path_object = item.filename_path
+            original_location = item_path_object.first().source
+            current_location = item_path_object.last().destination
+
+            filename_label = Message(frame, width=400, relief=RAISED, text=item.filename,
+                                     anchor=CENTER, background=self.bg, borderwidth=0)
+            filename_label.grid(row=count, column=0, padx=PADX, pady=PADY,
+                                ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+            o_loc_label = Message(frame, width=400, relief=RAISED,
+                                  text=original_location, anchor=W, background=self.bg, borderwidth=0)
+            o_loc_label.grid(row=count, column=1, padx=PADX, pady=PADY,
+                             ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+            c_loc_label = Message(frame, width=400, relief=SUNKEN,
+                                  text=current_location, anchor=W, background=self.bg, borderwidth=0)
+            c_loc_label.grid(row=count, column=2, padx=PADX, pady=PADY,
+                             ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            button_label = ttk.Label(
+                frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
+            button_label.grid(row=count, column=3, padx=0, pady=0,
+                              ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            button = ttk.Button(button_label, text='Open location',
+                                command=lambda location=os.path.dirname(current_location): get().open(location))
+            button.grid(sticky="ns", padx=10, pady=10)
+
+            # Hack: Alter height to refit contents to canvas
+            h = canvas.winfo_height()
+            canvas.configure(height=h + 1)
 
     def _show_logs(self):
         logs_window = self._create_window('Logs')
@@ -364,11 +430,6 @@ class TkGui(Tk):
             self._show_report(report)
 
     def _create_canvas(self, window):
-
-        def resize(self, event=None):
-            """Resize canvas to fit all contents"""
-            canvas.configure(scrollregion=canvas.bbox('all'))
-
         # Configure canvas
         canvas = Canvas(window)
         hsb = ttk.Scrollbar(window, orient="h", command=canvas.xview)
@@ -383,9 +444,20 @@ class TkGui(Tk):
         window.grid_columnconfigure(0, weight=1)
 
         canvas.configure(scrollregion=(0, 0, 1250, 10000))
-        canvas.bind('<Configure>', resize)
+        canvas.bind('<Configure>', lambda event,
+                    canvas=canvas: self._resize_canvas(event, canvas))
+        canvas.bind_all("<Button-4>", lambda event, count=-1,
+                        canvas=canvas: self._on_mousewheel(event, canvas, count))
+        canvas.bind_all("<Button-5>", lambda event, count=1,
+                        canvas=canvas: self._on_mousewheel(event, canvas, count))
+        canvas.bind_all("<MouseWheel>", lambda event, count=1,
+                        canvas=canvas: self._on_mousewheel(event, canvas, count))
 
         return canvas
+
+    def _resize_canvas(self, event, canvas):
+        """Resize canvas to fit all contents"""
+        canvas.configure(scrollregion=canvas.bbox('all'))
 
     def _show_report(self, report):
         def quit(window):
@@ -397,28 +469,25 @@ class TkGui(Tk):
 
         canvas = self._create_canvas(window)
 
-        frame = Frame(canvas)
+        frame = Frame(canvas, background="#C0C0C0")
         frame.pack(side=LEFT)
 
         canvas.create_window(0, 0, anchor=NW, window=frame)
-        PADX, PADY, IPADX, IPADY = 1, 5, 5, 5
+        PADX, PADY, IPADX, IPADY = 1, 1, 1, 1
 
         # Add items to canvas
-        llabel = ttk.Label(frame, text='Undo', anchor=N,
+        llabel = ttk.Label(frame, anchor=N,
                            background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=0, sticky="nsew", padx=PADX)
-        llabel = ttk.Label(frame, text='Action', anchor=N,
-                           background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=1, sticky="nsew", padx=PADX)
+        llabel.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
         llabel = ttk.Label(frame, text='Filename', anchor=N,
                            background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=2, sticky="nsew", padx=PADX)
+        llabel.grid(row=0, column=1, sticky="nsew", padx=PADX, pady=5)
         llabel = ttk.Label(frame, text='From', anchor=N,
                            background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=3, sticky="nsew", padx=PADX)
+        llabel.grid(row=0, column=2, sticky="nsew", padx=PADX, pady=5)
         llabel = ttk.Label(frame, text='To', anchor=N,
                            background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=4, sticky="nsew", padx=PADX)
+        llabel.grid(row=0, column=3, sticky="nsew", padx=PADX, pady=5)
 
         buttons = {}
         ROW_COUNT = 2
@@ -445,30 +514,28 @@ class TkGui(Tk):
                     reverse_action(value[1], value[2], count, commit=False)
 
         for count, value in enumerate(report, ROW_COUNT):
-            buttons[count] = ttk.Button(frame, text='Undo',
+            button_label = ttk.Label(
+                frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
+            button_label.grid(row=count, column=0, padx=0, pady=0,
+                              ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            buttons[count] = ttk.Button(button_label, text='Undo',
                                         command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
                                             origin, current_path, i))
-            buttons[count].grid(row=count, column=0, padx=PADX,
-                                pady=PADY)
-
-            action_label = Message(frame, width=400, relief=RAISED, text=value[
-                3], anchor=CENTER, background=self.bg, borderwidth=0)
-            action_label.grid(row=count, column=1, padx=PADX, pady=PADY,
-                              ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            buttons[count].grid(padx=5, pady=5, sticky="ns")
 
             filename_label = Message(frame, width=400, relief=RAISED, text=value[
-                0], anchor=W, background=self.bg, borderwidth=0)
-            filename_label.grid(row=count, column=2, padx=PADX, pady=PADY,
+                0], anchor=CENTER, background=self.bg, borderwidth=0)
+            filename_label.grid(row=count, column=1, padx=PADX, pady=PADY,
                                 ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
             from_label = Message(frame, width=400, relief=RAISED, text=value[
                 1], anchor=W, background=self.bg, borderwidth=0)
-            from_label.grid(row=count, column=3, padx=PADX, pady=PADY,
+            from_label.grid(row=count, column=2, padx=PADX, pady=PADY,
                             ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
             to_label = Message(frame, width=400, relief=RAISED, text=value[
                 2], anchor=W, background=self.bg, borderwidth=0)
-            to_label.grid(row=count, column=4, padx=PADX, pady=PADY,
+            to_label.grid(row=count, column=3, padx=PADX, pady=PADY,
                           ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
             # Hack: Alter height to refit contents to canvas
@@ -477,12 +544,17 @@ class TkGui(Tk):
 
         last_row = len(report) + ROW_COUNT
 
+        buttons_label = ttk.Label(
+            frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
+        buttons_label.grid(row=last_row, column=0, columnspan=5, padx=0, pady=0,
+                           ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
         accept_button = ttk.Button(
-            frame, text='Accept', command=lambda: quit(window))
-        accept_button.grid(row=last_row, column=1)
+            buttons_label, text='Accept', command=lambda: quit(window))
+        accept_button.grid(row=0, column=0, padx=10, pady=40, sticky="ns")
         reverse_button = ttk.Button(
-            frame, text='Undo All', command=lambda report=report: reverse_all(report))
-        reverse_button.grid(row=last_row, column=2)
+            buttons_label, text='Undo All', command=lambda report=report: reverse_all(report))
+        reverse_button.grid(row=0, column=1, padx=10, pady=40, sticky="ns")
 
     def _show_diag(self, text):
         dir_ = filedialog.askdirectory()

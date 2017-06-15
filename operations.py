@@ -263,7 +263,7 @@ class SorterOps(object):
                 report = []
                 for path in paths:
                     row_tup = (path.filename.filename, path.source,
-                               path.destination, 'Moved')
+                               path.destination)
                     report.append(row_tup)
 
                 send_message(through='both', msg='FINISH', weight=1, value=100)

@@ -252,7 +252,6 @@ class Folder(Directory):
     Methods:
     is_sorter_folder
     group
-    move_to
 
     Attributes:
     exists - Boolean value determined by os.path.isdir()
@@ -329,9 +328,9 @@ class Folder(Directory):
             move to category folder.
         """
         dst = os.path.join(root_path, self._get_category_folder())
-        self.move_to(dst, root_path, group_content=True)
+        self._move_to(dst, root_path, group_content=True)
 
-    def move_to(self, dst, root_path, src=None, group_content=False):
+    def _move_to(self, dst, root_path, src=None, group_content=False):
         """Move the folder instance to a location relative to the 
         specified dst_root_path.
 
@@ -353,6 +352,7 @@ class Folder(Directory):
                 print('Could not delete "%s". May contain hidden files.' % src)
 
         else:
+            self.recreate(dst)
             shutil.move(src, dst)
 
     def _move_contents(self, src, dst, root_path, group_content=False):
@@ -363,26 +363,17 @@ class Folder(Directory):
         if files:
             for file_ in files:
                 file_instance = File(os.path.join(src, file_))
-                file_instance.move_to(
+                file_instance._move_to(
                     dst_root_path=root_path, group=group_content)
 
-    def recreate(self):
+    def recreate(self, path=None):
         """Recreate folders (and parents) in the instance's path 
         if they do not exist."""
 
-        full_path = self.path
-        paths = [full_path]
-
-        def get_paths(full_path):
-            dir_path = os.path.dirname(full_path)
-            if dir_path != full_path:
-                paths.append(dir_path)
-                get_paths(dir_path)
-        get_paths(full_path)
-        for path in paths[::-1]:
-            if not os.path.isdir(path):
-                os.mkdir(path)
-        self.path = self.path
+        full_path = path or self.path
+        os.makedirs(full_path)
+        if path is None:
+            self.path = self.path
 
 
 class CustomFolder(Folder):
@@ -421,7 +412,7 @@ class CustomFolder(Folder):
                 file_instance.move_to(
                     dst_root_path=root_path, group=group_content)
 
-    def move_to(self, dst, root_path, src=None, group_content=False):
+    def _move_to(self, dst, root_path, src=None, group_content=False):
         """Move the folder instance to a location relative to the 
         specified dst_root_path.
 
@@ -490,3 +481,48 @@ class CustomFile(File):
         Overrides File.get_category().
         """
         return self._group_folder
+
+    def move_to(self, dst_root_path, group=True):
+        """Move the file instance to a location relative to the 
+        specified dst_root_path.
+
+        dst_root_path is the root folder from where files will be organised
+        by their extension.
+
+        If dst_root_path = '/home/User/'
+        final destination will be
+            '/home/User/<category>/<extension>/<filename>'
+        """
+        final_destination = self._set_extension_destination(
+            dst_root_path, group=True)
+        if not os.path.dirname(self.path) == os.path.dirname(final_destination):
+            try:
+                shutil.move(self.path, final_destination)
+            except PermissionError as e:
+                print('Could not move "{0}": {1}'.format(self.path, e))
+            self.path = final_destination
+
+
+class CustomFileWithoutExtension(CustomFile):
+    """Define a file instance with custom attributes excluding the
+    extension from the path.
+
+    Inherits from File. In this class, the file is grouped according to
+    the group_folder_name and is not put in an extension folder. 
+
+    That is to say, if root_path is /home/User then this file shall be
+    grouped to /home/User/<search string>/<this file>
+    """
+
+    def _set_extension_destination(self, root_path, group=True):
+        group_dst = os.path.join(root_path, self.category)
+
+        if not os.path.isdir(group_dst):
+            os.mkdir(group_dst)
+
+        new_dst = os.path.join(group_dst, self.name)
+        suitable_name = self.find_suitable_name(new_dst)
+        final_dst = os.path.join(os.path.dirname(new_dst),
+                                 suitable_name)
+
+        return final_dst

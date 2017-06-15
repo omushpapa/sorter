@@ -182,13 +182,15 @@ class SorterOps(object):
         source_path = self.src
         search_string_pattern = self.search_string_pattern
         search_string = self.search_string
-        folders = [folder for folder in iglob(os.path.join(source_path, '*')) if os.path.isdir(
+        folder_list_matching_pattern = iglob(os.path.join(
+            source_path, '*' + search_string_pattern + '*'))
+        folders = [folder for folder in folder_list_matching_pattern if os.path.isdir(
             folder) and os.path.basename(folder) not in typeGroups.keys() and not has_signore_file(folder)]
 
         if folders:
             for folder in folders:
                 folder_path = os.path.join(source_path, folder)
-                if list(iglob(os.path.join(source_path, '*' + search_string_pattern + '*'))):
+                if search_string:
                     folder_instance = CustomFolder(
                         folder_path, search_string)
                 else:

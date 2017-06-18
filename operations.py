@@ -8,22 +8,16 @@ from glob import iglob
 from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
 from filegroups import typeGroups
 from datetime import datetime
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
-
-from data.models import File as DB_FILE, Path as DB_PATH
+from helpers import DatabaseHelper
 
 
 class SorterOps(object):
 
-    def __init__(self, db_name):
-        self.DB_NAME = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), db_name)
-        self.db_ready = False
+    def __init__(self, db_helper):
+        self.db_helper = db_helper
+        self._set_defaults()
+
+    def _set_defaults(self):
         self.src = ''
         self.dst = ''
         self.search_string = ''
@@ -34,27 +28,7 @@ class SorterOps(object):
         self.file_types = ['*']
         self.status = None
         self.parser = None
-        self.instance = None
-
-    def initialise_db(self):
-        """Initialise database, set self.db_ready to True."""
-        if not self.db_ready:
-            connection = sqlite3.connect(self.DB_NAME)
-            cursor = connection.cursor()
-            # Create tables
-            # Do not alter the queries, may not work with subsequent database
-            # operations
-            query1 = """CREATE TABLE IF NOT EXISTS "data_file" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "filename" text NOT NULL, "filepath_hash" text NOT NULL, "last_modified" datetime NOT NULL);"""
-            query2 = """CREATE TABLE IF NOT EXISTS "data_path" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "source" text NOT NULL, "destination" text NOT NULL, "accepted" bool NOT NULL, "timestamp" datetime NOT NULL, "filename_id" integer NOT NULL REFERENCES "data_file" ("id"));"""
-            query3 = """CREATE INDEX IF NOT EXISTS "data_path_filename_id_1d40e5f2" ON "data_path" ("filename_id");"""
-            cursor.execute(query1)
-            cursor.execute(query2)
-            cursor.execute(query3)
-            connection.commit()
-            connection.close()
-            self.db_ready = True
-
-        return self.db_ready
+        self.database_dict = {}
 
     @classmethod
     def is_writable(cls, folder_path):
@@ -98,7 +72,6 @@ class SorterOps(object):
         string_pattern = self.search_string_pattern
         file_types = self.file_types
         glob_pattern = self.glob_pattern
-        #sort_folders = sort_folders
 
         glob_files = []
         if search_string:
@@ -129,13 +102,15 @@ class SorterOps(object):
                     hash_path = hashlib.md5(
                         initial_path.encode('utf-8')).hexdigest()
 
-                    f = DB_FILE.objects.create(
-                        filename=initial_name, filepath_hash=hash_path, last_modified=datetime.fromtimestamp(last_modified))
-                    f.save()
+                    file_dict = {'filename': initial_name, 'filepath_hash': hash_path,
+                                 'last_modified': datetime.fromtimestamp(last_modified)}
+                    path_dict = {'source': initial_path,
+                                 'destination': new_path}
 
-                    path = DB_PATH.objects.create(filename=f, source=initial_path,
-                                                  destination=new_path, timestamp=datetime.now())
-                    path.save()
+                    this_file_dict = {initial_name: {
+                        'file': file_dict, 'path': path_dict}}
+
+                    self.database_dict.update(this_file_dict)
 
     def _verify_path(self, path, path_name=''):
         if not os.path.isdir(path):
@@ -235,37 +210,34 @@ class SorterOps(object):
                 self.recursive = kwargs.get('recursive', False)
                 self.sort_folders = kwargs.get('sort_folders', False)
 
-                send_message(through='both', msg='10', value=10)
+                send_message(through='both', msg='10% - running...', value=10)
 
                 # Get last row in database
-                try:
-                    start_value = DB_FILE.objects.last().id
-                except AttributeError:
-                    start_value = 0
+                start_value = self.db_helper.get_start_value()
 
-                send_message(through='both', msg='25', value=25)
+                send_message(through='both', msg='25% - running...', value=25)
 
                 if self.recursive:
                     self._recursive_operation(self.sort_folders)
                 else:
-                    self.sort_files()
+                    self.sort_files(sort_folders=self.sort_folders)
 
-                send_message(through='both', msg='50', value=50)
+                send_message(through='both', msg='40% - running...', value=50)
+
+                # Call database helper
+                self.db_helper.update(self.database_dict)
+
+                send_message(through='both', msg='60% - running...', value=50)
 
                 if self.sort_folders:
                     self._sort_folders_operation()
 
-                send_message(through='status', msg='Done')
-                send_message(through='both', msg='75', value=75)
+                send_message(through='both', msg='75% - running...', value=75)
 
-                paths = DB_PATH.objects.filter(id__gt=start_value)
+                report = self.db_helper.get_report(start_value)
 
-                report = []
-                for path in paths:
-                    row_tup = (path.filename.filename, path.source,
-                               path.destination)
-                    report.append(row_tup)
+                send_message(through='both', msg='Done', weight=1, value=100)
 
-                send_message(through='both', msg='FINISH', weight=1, value=100)
+                self._set_defaults()
 
                 return report

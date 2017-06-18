@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import os
-import django
 import logging
 from gui.tkgui import TkGui
 from operations import SorterOps

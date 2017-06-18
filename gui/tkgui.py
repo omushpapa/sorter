@@ -22,7 +22,8 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 
-from data.models import Path as DB_path, File as DB_file
+from data.models import File as DB_file
+from django.db.utils import OperationalError
 
 
 class TkGui(Tk):
@@ -37,7 +38,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
-    TAG = "2.2.1"
+    TAG = "2.2.2"
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -55,6 +56,7 @@ class TkGui(Tk):
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.operations = operations
         self.logger = logger
+        self.db_helper = self.operations.db_helper
         self.init_ui()
 
     def init_ui(self):
@@ -193,7 +195,8 @@ class TkGui(Tk):
         self.progress_bar = ttk.Progressbar(self.status_bar,
                                             style="blue.Horizontal.TProgressbar", variable=self.progress_var,
                                             orient=HORIZONTAL, length=120)
-        self.progress_bar.pack(side=RIGHT)
+        self.progress_bar.pack(side=RIGHT, pady=3, padx=5)
+        self.progress_var.set(100)
 
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
@@ -204,64 +207,73 @@ class TkGui(Tk):
         canvas.yview_scroll(count, "units")
 
     def _show_history(self):
-        history_window = self._create_window('History')
-        history_window.geometry('{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
-        canvas = self._create_canvas(history_window)
-
-        frame = Frame(canvas, background="#C0C0C0")
-        frame.pack(side=LEFT)
-
-        canvas.create_window(0, 0, anchor=NW, window=frame)
-
-        PADX, PADY, IPADX, IPADY = 1, 1, 1, 1
 
         files = DB_file.objects.all().order_by(
             '-pk').select_related().filter(filename_path__accepted=True)[:50]
 
-        # Add items to canvas
-        llabel = ttk.Label(frame, text='Filename', anchor=N, relief=SUNKEN,
-                           background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=0, sticky="nsew", padx=PADX, pady=3)
-        llabel = ttk.Label(frame, text='Original location', anchor=N, relief=SUNKEN,
-                           background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=1, sticky="nsew", padx=PADX, pady=3)
-        llabel = ttk.Label(frame, text='Current location', anchor=N, relief=SUNKEN,
-                           background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=2, sticky="nsew", padx=PADX, pady=3)
-        llabel = ttk.Label(frame, anchor=N, relief=SUNKEN,
-                           background=self.bg, borderwidth=0)
-        llabel.grid(row=0, column=3, sticky="nsew", padx=0, pady=0)
+        try:
+            length = len(files)
+        except OperationalError:
+            error_msg = 'No files found in history!'
+            messagebox.showwarning(title='Warning', message=error_msg)
+            self.logger.warning('Error accessing history:: %s', error_msg)
+        else:
+            history_window = self._create_window('History')
+            history_window.geometry(
+                '{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
+            canvas = self._create_canvas(history_window)
 
-        for count, item in enumerate(files, 1):
-            item_path_object = item.filename_path
-            original_location = item_path_object.first().source
-            current_location = item_path_object.last().destination
+            frame = Frame(canvas, background="#C0C0C0")
+            frame.pack(side=LEFT)
 
-            filename_label = Message(frame, width=400, relief=RAISED, text=item.filename,
-                                     anchor=CENTER, background=self.bg, borderwidth=0)
-            filename_label.grid(row=count, column=0, padx=PADX, pady=PADY,
-                                ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            canvas.create_window(0, 0, anchor=NW, window=frame)
 
-            o_loc_label = Message(frame, width=400, relief=RAISED,
-                                  text=original_location, anchor=W, background=self.bg, borderwidth=0)
-            o_loc_label.grid(row=count, column=1, padx=PADX, pady=PADY,
-                             ipadx=IPADX, ipady=IPADY, sticky="nsew")
+            PADX, PADY, IPADX, IPADY = 1, 1, 1, 1
 
-            c_loc_label = Message(frame, width=400, relief=SUNKEN,
-                                  text=current_location, anchor=W, background=self.bg, borderwidth=0)
-            c_loc_label.grid(row=count, column=2, padx=PADX, pady=PADY,
-                             ipadx=IPADX, ipady=IPADY, sticky="nsew")
-            button_label = ttk.Label(
-                frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
-            button_label.grid(row=count, column=3, padx=0, pady=0,
-                              ipadx=IPADX, ipady=IPADY, sticky="nsew")
-            button = ttk.Button(button_label, text='Open location',
-                                command=lambda location=os.path.dirname(current_location): get().open(location))
-            button.grid(sticky="ns", padx=10, pady=10)
+            # Add items to canvas
+            llabel = ttk.Label(frame, text='Filename', anchor=N, relief=SUNKEN,
+                               background=self.bg, borderwidth=0)
+            llabel.grid(row=0, column=0, sticky="nsew", padx=PADX, pady=3)
+            llabel = ttk.Label(frame, text='Original location', anchor=N, relief=SUNKEN,
+                               background=self.bg, borderwidth=0)
+            llabel.grid(row=0, column=1, sticky="nsew", padx=PADX, pady=3)
+            llabel = ttk.Label(frame, text='Current location', anchor=N, relief=SUNKEN,
+                               background=self.bg, borderwidth=0)
+            llabel.grid(row=0, column=2, sticky="nsew", padx=PADX, pady=3)
+            llabel = ttk.Label(frame, anchor=N, relief=SUNKEN,
+                               background=self.bg, borderwidth=0)
+            llabel.grid(row=0, column=3, sticky="nsew", padx=0, pady=0)
 
-            # Hack: Alter height to refit contents to canvas
-            h = canvas.winfo_height()
-            canvas.configure(height=h + 1)
+            for count, item in enumerate(files, 1):
+                item_path_object = item.filename_path
+                original_location = item_path_object.first().source
+                current_location = item_path_object.last().destination
+
+                filename_label = Message(frame, width=400, relief=RAISED, text=item.filename,
+                                         anchor=CENTER, background=self.bg, borderwidth=0)
+                filename_label.grid(row=count, column=0, padx=PADX, pady=PADY,
+                                    ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+                o_loc_label = Message(frame, width=400, relief=RAISED,
+                                      text=original_location, anchor=W, background=self.bg, borderwidth=0)
+                o_loc_label.grid(row=count, column=1, padx=PADX, pady=PADY,
+                                 ipadx=IPADX, ipady=IPADY, sticky="nsew")
+
+                c_loc_label = Message(frame, width=400, relief=SUNKEN,
+                                      text=current_location, anchor=W, background=self.bg, borderwidth=0)
+                c_loc_label.grid(row=count, column=2, padx=PADX, pady=PADY,
+                                 ipadx=IPADX, ipady=IPADY, sticky="nsew")
+                button_label = ttk.Label(
+                    frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
+                button_label.grid(row=count, column=3, padx=0, pady=0,
+                                  ipadx=IPADX, ipady=IPADY, sticky="nsew")
+                button = ttk.Button(button_label, text='Open location',
+                                    command=lambda location=os.path.dirname(current_location): get().open(location))
+                button.grid(sticky="ns", padx=10, pady=10)
+
+                # Hack: Alter height to refit contents to canvas
+                h = canvas.winfo_height()
+                canvas.configure(height=h + 1)
 
     def _check_for_update(self, user_checked=False):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
@@ -297,16 +309,19 @@ class TkGui(Tk):
         msg.pack(fill=Y)
 
     def _delete_db(self):
-        db_path = os.path.abspath(self.operations.DB_NAME)
+        db_path = os.path.abspath(self.db_helper.DB_NAME)
         db_name = os.path.basename(db_path)
         try:
             os.remove(db_path)
             messagebox.showinfo(title='Success', message='Database refreshed!')
+            self.operations.db_ready = False
         except FileNotFoundError:
             error_msg = 'Could not locate "{0}". \n\nCheck application folder and delete "{1}"'.format(
                 db_path, db_name)
             messagebox.showwarning(title='Error', message=error_msg)
             self.logger.warning('Error clearing database:: %s', error_msg)
+        finally:
+            db_ready = self.db_helper.initialise_db()
 
     def _enable_search_entry(self, value):
         if bool(value.get()):
@@ -426,17 +441,20 @@ class TkGui(Tk):
                          src, dst, search_string, sort_value,
                          recursive_value, file_types, types_given)
 
-        report = self.operations.initiate_operation(
-            src=src, dst=dst,
-            send_message=self.interface_helper.message_user,
-            search_string=search_string, sort_folders=sort_value,
-            recursive=recursive_value,
-            file_types=file_types, types_given=types_given)
+        if self.db_helper.initialise_db():
+            report = self.operations.initiate_operation(
+                src=src, dst=dst,
+                send_message=self.interface_helper.message_user,
+                search_string=search_string, sort_folders=sort_value,
+                recursive=recursive_value,
+                file_types=file_types, types_given=types_given)
 
-        self.logger.info('%s operations done.', str(len(report)))
+            self.logger.info('%s operations done.', str(len(report)))
 
-        if report:
-            self._show_report(report)
+            if report:
+                self._show_report(report)
+        else:
+            self.logger.info('DB initialisation failed.')
 
     def _create_canvas(self, window):
         # Configure canvas
@@ -501,7 +519,7 @@ class TkGui(Tk):
         buttons = {}
         ROW_COUNT = 2
 
-        def reverse_action(origin, current_path, button_index, commit=True):
+        def reverse_action(origin, current_path, added_at, button_index):
             """Undo the conducted Sorter operation."""
 
             original = Folder(os.path.dirname(origin))
@@ -511,8 +529,10 @@ class TkGui(Tk):
             except FileNotFoundError:
                 return
             else:
-                updated = DB_path.objects.filter(
-                    source=origin, destination=current_path).update(accepted=False)
+                finders = {'source': origin,
+                           'destination': current_path, 'added_at': added_at}
+                alter_value = {'accepted': False}
+                self.db_helper.alter_path(alter_value, finders)
                 buttons[button_index].config(state='disabled')
                 del buttons[button_index]
 
@@ -521,7 +541,7 @@ class TkGui(Tk):
             if buttons:
                 self.logger.info('Reversing %s operations.', str(len(report)))
                 for count, value in enumerate(report, ROW_COUNT):
-                    reverse_action(value[1], value[2], count, commit=False)
+                    reverse_action(value[1], value[2], value[3], count)
 
         for count, value in enumerate(report, ROW_COUNT):
             button_label = ttk.Label(
@@ -529,8 +549,8 @@ class TkGui(Tk):
             button_label.grid(row=count, column=0, padx=0, pady=0,
                               ipadx=IPADX, ipady=IPADY, sticky="nsew")
             buttons[count] = ttk.Button(button_label, text='Undo',
-                                        command=lambda origin=value[1], current_path=value[2], i=count: reverse_action(
-                                            origin, current_path, i))
+                                        command=lambda origin=value[1], current_path=value[2], added_at=value[3], i=count: reverse_action(
+                                            origin, current_path, added_at, i))
             buttons[count].grid(padx=5, pady=5, sticky="ns")
 
             filename_label = Message(frame, width=400, relief=RAISED, text=value[

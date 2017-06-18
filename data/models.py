@@ -5,6 +5,7 @@ class File(models.Model):
     filename = models.TextField()
     filepath_hash = models.TextField()
     last_modified = models.DateTimeField()
+    added_at = models.DateTimeField()
 
 
 class Path(models.Model):
@@ -12,4 +13,4 @@ class Path(models.Model):
     source = models.TextField()
     destination = models.TextField()
     accepted = models.BooleanField(default=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    added_at = models.DateTimeField()

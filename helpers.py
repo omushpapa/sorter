@@ -68,9 +68,9 @@ class DatabaseHelper(object):
             # Create tables
             # Do not alter the queries, may not work with subsequent database
             # operations
-            query1 = """CREATE TABLE "data_file" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "filename" text NOT NULL, "filepath_hash" text NOT NULL, "last_modified" datetime NOT NULL, "added_at" datetime NOT NULL);"""
-            query2 = """CREATE TABLE "data_path" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "source" text NOT NULL, "destination" text NOT NULL, "accepted" bool NOT NULL, "added_at" datetime NOT NULL, "filename_id" integer NOT NULL REFERENCES "data_file" ("id"));"""
-            query3 = """CREATE INDEX "data_path_filename_id_1d40e5f2" ON "data_path" ("filename_id");"""
+            query1 = """CREATE TABLE IF NOT EXISTS "data_file" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "filename" text NOT NULL, "filepath_hash" text NOT NULL, "last_modified" datetime NOT NULL, "added_at" datetime NOT NULL);"""
+            query2 = """CREATE TABLE IF NOT EXISTS "data_path" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "source" text NOT NULL, "destination" text NOT NULL, "accepted" bool NOT NULL, "added_at" datetime NOT NULL, "filename_id" integer NOT NULL REFERENCES "data_file" ("id"));"""
+            query3 = """CREATE INDEX IF NOT EXISTS "data_path_filename_id_1d40e5f2" ON "data_path" ("filename_id");"""
             cursor.execute(query1)
             cursor.execute(query2)
             cursor.execute(query3)

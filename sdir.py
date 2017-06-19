@@ -6,9 +6,8 @@ import re
 import hashlib
 import ctypes
 from filegroups import typeGroups, typeList
-from glob import glob
-
-SORTER_IGNORE_FILENAME = '.signore'
+from glob import iglob
+from settings import SORTER_IGNORE_FILENAME
 
 
 def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
@@ -356,7 +355,7 @@ class Folder(Directory):
     def _move_contents(self, src, dst, root_path, group_content=False):
         # move contents of src to dst
         # ignore folders
-        files = [content for content in glob(
+        files = [content for content in iglob(
             os.path.join(src, '*')) if os.path.isfile(content)]
         if files:
             for file_ in files:
@@ -401,7 +400,7 @@ class CustomFolder(Folder):
     def _move_contents(self, src, dst, root_path, group_content=False):
         # move contents of src to dst
         # ignore folders
-        files = [content for content in glob(
+        files = [content for content in iglob(
             os.path.join(src, '*')) if os.path.isfile(content)]
         if files:
             for file_ in files:

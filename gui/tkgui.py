@@ -9,21 +9,11 @@ import urllib.request
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
+from tkinter import TclError
 from helpers import InterfaceHelper
 from filegroups import typeGroups
 from sdir import Folder
 from webbrowser import get
-
-
-# Django configuration
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
-
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
-
-
-from data.models import File as DB_file
-from django.db.utils import OperationalError
 
 
 class TkGui(Tk):
@@ -38,7 +28,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
-    TAG = "2.2.2"
+    TAG = "2.2.3"
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -206,15 +196,44 @@ class TkGui(Tk):
     def _on_mousewheel(self, event, canvas, count):
         canvas.yview_scroll(count, "units")
 
-    def _show_history(self):
-
-        files = DB_file.objects.all().order_by(
-            '-pk').select_related().filter(filename_path__accepted=True)[:50]
-
+    def _evaluate(self, event, entry_widget, window):
+        count = entry_widget.get()
         try:
-            length = len(files)
-        except OperationalError:
-            error_msg = 'No files found in history!'
+            num = int(count)
+        except ValueError:
+            num = 10
+        else:
+            num = num or 10
+        finally:
+            window.destroy()
+            self._get_history(num)
+
+    def _show_history(self):
+        history_window = self._create_window('History')
+        history_window.resizable(height=False, width=False)
+        history_window.geometry('{0}x{1}+{2}+{3}'.format(200, 90, 300, 150))
+
+        history_label = ttk.Label(
+            history_window, text='Enter number: ', background=self.bg)
+        history_label.grid(row=0, column=0, padx=5, pady=5)
+
+        history_entry = ttk.Entry(history_window, width=10)
+        history_entry.grid(row=0, column=1, padx=5, pady=5)
+        history_entry.focus_set()
+
+        help_text = ttk.Label(history_window, text='Number of files (in history) to view.\n\nPress Enter when done.',
+                              background=self.bg, foreground="#C0C0C0", anchor=CENTER, justify='center')
+        help_text.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        history_window.bind('<Return>',
+                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event, entry_widget, window))
+        history_window.bind('<KP_Enter>',
+                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event, entry_widget, window))
+
+    def _get_history(self, count):
+        files = self.db_helper.get_history(count)
+
+        if files is None:
+            error_msg = 'No data found in history!'
             messagebox.showwarning(title='Warning', message=error_msg)
             self.logger.warning('Error accessing history:: %s', error_msg)
         else:
@@ -303,6 +322,7 @@ class TkGui(Tk):
     def _show_update_window(self, message, relief):
         update_window = self._create_window('Update!')
         update_window.resizable(height=False, width=False)
+        update_window.geometry('+{0}+{1}'.format(200, 200))
         msg = Message(update_window, justify=CENTER,
                       text=message, relief=relief)
         msg.config(pady=10, padx=10, font='Helvetica 9')
@@ -385,6 +405,11 @@ class TkGui(Tk):
         toplevel_window.wm_title(title)
         toplevel_window.tk.call(
             'wm', 'iconphoto', toplevel_window._w, self.icon)
+        toplevel_window.wm_attributes("-topmost", 1)
+        try:
+            toplevel_window.grab_set()
+        except TclError:
+            pass
         return toplevel_window
 
     def _show_about(self):

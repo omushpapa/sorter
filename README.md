@@ -12,15 +12,16 @@ Sorter organises these files into folders which are grouped by the file types/fo
 ## Download
 Visit [Sorter](http://giantas.github.io/sorter) for features, download and usage tutorials.
 
-See the full list of supported OSes at [Sorter - Official Releases](https://github.com/giantas/sorter/releases/latest) (**recommended visit**)
+**Recommended:** See the full list of supported OSes at [Sorter - Official Releases](https://github.com/giantas/sorter/releases/latest)
 
 
 ## Clone
 
 ### Prerequisites 
-* Python 3.x (3.4 recommended)
+* Python 3.4
 * [sqlite3](http://www.sqlite.org/download.html)
 * [TestFixtures](https://testfixtures.readthedocs.io/en/latest/index.html) (for tests)
+**NB**: View [requirements.txt](requirements.txt) for detailed requirements
 
 Open terminal
 
@@ -44,7 +45,12 @@ python3 sorter.py
 
 
 ### Website
-[Sorter](https://giantas.github.io/sorter)
+* **[Sorter](https://giantas.github.io/sorter)**
+
+
+### Contributing
+
+Thank you for your interest in contributing to the [Sorter](https://github.com/giantas/sorter) project. To get you started, have a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
 
 ### Authors
@@ -59,8 +65,6 @@ python3 sorter.py
 
 ### TODO
 
-[![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://saythanks.io/to/giantas)
-
-- [x] Add progress bar
+[![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://github.com/giantas/sorter/issues/new)
 
 - [ ] Add reverse for operations in history 

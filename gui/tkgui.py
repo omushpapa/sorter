@@ -58,9 +58,9 @@ class TkGui(Tk):
         self.bg = self.cget('bg')
         style.configure('My.TFrame', background=self.bg)
         style.configure("blue.Horizontal.TProgressbar",
-                        background='blue', troughcolor='gray')
+                        background='#778899', troughcolor=self.bg)
         style.configure("green.Horizontal.TProgressbar",
-                        background='green', troughcolor='gray')
+                        background='#2E8B57', troughcolor=self.bg)
 
         # Configure menubar
         menu = Menu(self)

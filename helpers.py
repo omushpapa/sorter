@@ -11,6 +11,7 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 from data.models import File as DB_FILE, Path as DB_PATH
+from django.db.utils import OperationalError
 
 
 class InterfaceHelper(object):
@@ -89,7 +90,8 @@ class DatabaseHelper(object):
             return start_value
 
     def get_report(self, start_value):
-        paths = self.db_path_objects.filter(id__gt=start_value).order_by('-pk')
+        paths = self.db_path_objects.filter(
+            id__gte=start_value).order_by('-pk')
 
         report = []
         for path in paths:
@@ -117,3 +119,14 @@ class DatabaseHelper(object):
 
     def alter_path(self, alter_value, finders):
         updated = self.db_path_objects.filter(**finders).update(**alter_value)
+
+    def get_history(self, count):
+        files = self.db_file_objects.all().order_by(
+            '-pk').select_related().filter(filename_path__accepted=True)[:count]
+
+        try:
+            length = len(files)
+        except OperationalError:
+            files = None
+        finally:
+            return files

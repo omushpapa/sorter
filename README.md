@@ -21,6 +21,7 @@ Visit [Sorter](http://giantas.github.io/sorter) for features, download and usage
 * Python 3.4
 * [sqlite3](http://www.sqlite.org/download.html)
 * [TestFixtures](https://testfixtures.readthedocs.io/en/latest/index.html) (for tests)
+
 **NB**: View [requirements.txt](requirements.txt) for detailed requirements
 
 Open terminal
@@ -67,4 +68,5 @@ Thank you for your interest in contributing to the [Sorter](https://github.com/g
 
 [![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://github.com/giantas/sorter/issues/new)
 
-- [ ] Add reverse for operations in history 
+- ~[ ] Add reverse for operations in history~
+- Add search for files in history

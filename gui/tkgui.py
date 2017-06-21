@@ -36,6 +36,7 @@ class TkGui(Tk):
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
         self.title('Sorter')
+        self.protocol("WM_DELETE_WINDOW", self._show_exit_dialog)
 
         # Configure icon
         icondata = base64.b64decode(icon_string)  # utf-8 encoded
@@ -80,7 +81,8 @@ class TkGui(Tk):
         file_menu.add_cascade(label='Open', menu=dir_submenu)
 
         file_menu.add_separator()
-        file_menu.add_command(label='Quit', command=self._show_exit_dialog)
+        file_menu.add_command(label='Quit', command=self._show_exit_dialog,
+                              accelerator="Ctrl+Q")
 
         # View menu item
         view_menu = Menu(menu, tearoff=False)
@@ -100,6 +102,8 @@ class TkGui(Tk):
             label='Update', command=lambda: self._check_for_update(user_checked=True))
         help_menu.add_command(label='About', command=self._show_about)
         self.bind_all('<F1>', self._show_help)
+        self.bind_all(
+            '<Control-q>', lambda event=None: self._show_exit_dialog())
 
         # Create main frames
         self.top_frame = ttk.Frame(self, style='My.TFrame')

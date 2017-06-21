@@ -4,9 +4,9 @@ import os
 import logging
 from gui.tkgui import TkGui
 from gui.loader import Loader
-from operations import SorterOps
-from helpers import DatabaseHelper
-from settings import DATABASES, LOG_FILE
+from slib.operations import SorterOps
+from slib.helpers import DatabaseHelper
+from data.settings import DATABASES, LOG_FILE
 
 DB_NAME = DATABASES['default']['NAME']
 

@@ -3,7 +3,7 @@
 import unittest
 import os
 import ctypes
-from sdir import Directory, File, Folder
+from slib.sdir import Directory, File, Folder
 from testfixtures import TempDirectory, compare
 
 

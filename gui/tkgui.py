@@ -10,9 +10,9 @@ from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from tkinter import TclError
-from helpers import InterfaceHelper
-from filegroups import typeGroups
-from sdir import Folder
+from slib.helpers import InterfaceHelper
+from slib.sdir import Folder
+from data.filegroups import typeGroups
 from webbrowser import get
 from time import sleep
 from tkinter import font
@@ -31,7 +31,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nFor more information click"
-    TAG = "2.2.5"
+    TAG = "2.2.6"
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()

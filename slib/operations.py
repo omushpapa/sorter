@@ -5,10 +5,10 @@ import sqlite3
 import hashlib
 import django
 from glob import iglob
-from sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
-from filegroups import typeGroups
+from slib.sdir import File, Folder, CustomFolder, CustomFile, has_signore_file
+from slib.helpers import DatabaseHelper
+from data.filegroups import typeGroups
 from datetime import datetime
-from helpers import DatabaseHelper
 
 
 class SorterOps(object):

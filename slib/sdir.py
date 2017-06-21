@@ -5,9 +5,9 @@ import shutil
 import re
 import hashlib
 import ctypes
-from filegroups import typeGroups, typeList
 from glob import iglob
-from settings import SORTER_IGNORE_FILENAME
+from data.filegroups import typeGroups, typeList
+from data.settings import SORTER_IGNORE_FILENAME
 
 
 def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):

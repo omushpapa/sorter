@@ -4,7 +4,7 @@ import os
 import sqlite3
 from datetime import datetime
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "data.settings")
 
 
 from django.core.wsgi import get_wsgi_application

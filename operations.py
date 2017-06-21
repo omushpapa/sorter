@@ -113,7 +113,7 @@ class SorterOps(object):
                     self.database_dict.update(this_file_dict)
 
     def _verify_path(self, path, path_name=''):
-        if not os.path.isdir(path):
+        if not os.path.isdir(path) or not os.path.isabs(path):
             msg = 'Given {} folder is NOT a folder'.format(path_name)
             return False, msg
         elif not self.is_writable(path):
@@ -124,8 +124,12 @@ class SorterOps(object):
             return True, ''
 
     def _check_source_path(self, src):
-        self.src = os.path.abspath(src)
-        return self._verify_path(self.src, 'Source')
+        self.src = src
+        if not src:
+            msg = 'Source folder is NOT optional (required)'
+            return False, msg
+        else:
+            return self._verify_path(src, 'Source')
 
     def _check_dst_path(self, dst=''):
         if dst:

@@ -84,5 +84,5 @@ Thank you for your interest in contributing to the [Sorter](https://github.com/g
 
 [![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://github.com/giantas/sorter/issues/new)
 
-- ~[ ] Add reverse for operations in history~
+- ~~[ ] Add reverse for operations in history~~
 - Add search for files in history

@@ -127,6 +127,6 @@ class DatabaseHelper(object):
         try:
             length = len(files)
         except OperationalError:
-            files = None
+            pass
         finally:
             return files

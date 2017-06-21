@@ -44,6 +44,22 @@ or
 python3 sorter.py
 ```
 
+## Compile executable
+
+### Install Prerequisites
+* Python 3.4
+* [Pyinstaller](http://www.pyinstaller.org/) (tested with v3.2.1)
+* [sqlite3](http://www.sqlite.org/download.html)
+* [Django](https://www.djangoproject.com/download/) v1.8.x
+
+### How to compile
+* Create and activate a [Virtual Environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/)
+* Ensure prerequisites are available
+* Clone this repository
+* In terminal/cmd, run (the command in) [pybuild.sh](pybuild.sh)
+
+**NB:** Ensure [sorter.ico](assets/sorter.ico) is in the current working directory.
+
 
 ### Website
 * **[Sorter](https://giantas.github.io/sorter)**

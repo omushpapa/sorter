@@ -14,9 +14,12 @@ from helpers import InterfaceHelper
 from filegroups import typeGroups
 from sdir import Folder
 from webbrowser import get
+from time import sleep
+from tkinter import font
 
 
 class TkGui(Tk):
+    HOMEPAGE = "https://giantas.github.io/sorter"
     SHORT_DESCRIPTION = "Sorter organises/sorts files in a folder into folders which are grouped by type e.g pdf, docx. It (optionally) groups/sorts the folders created in the first sorting into categories e.g audio, video."
     SOURCE_DESCRIPTION = "SOURCE (required)\nThis is the folder in which the sorting should be done i.e the folder containing the disorganised files."
     DESTINATION_DESCRIPTION = "DESTINATION (optional)\nAn optional destination (a folder) where the user would want the sorted files/folders to be moved to."
@@ -27,8 +30,8 @@ class TkGui(Tk):
     HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
-    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at\nhttps://github.com/giantas/sorter"
-    TAG = "2.2.3"
+    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at"
+    TAG = "2.2.4"
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -232,8 +235,8 @@ class TkGui(Tk):
     def _get_history(self, count):
         files = self.db_helper.get_history(count)
 
-        if files is None:
-            error_msg = 'No data found in history!'
+        if not files:
+            error_msg = 'No data found!'
             messagebox.showwarning(title='Warning', message=error_msg)
             self.logger.warning('Error accessing history:: %s', error_msg)
         else:
@@ -295,13 +298,28 @@ class TkGui(Tk):
                 canvas.configure(height=h + 1)
 
     def _check_for_update(self, user_checked=False):
+        message = 'Checking for updates...'
+        update_window = self._create_window('Update!')
+        update_window.resizable(height=False, width=False)
+        update_window.geometry('+{0}+{1}'.format(310, 250))
+        msg_widget = Message(update_window, justify=CENTER,
+                             text=message, relief=SUNKEN)
+        msg_widget.config(pady=10, padx=10, font='Helvetica 9')
+        msg_widget.pack(fill=Y)
+        msg_widget.update()
+        sleep(2)
+        msg_widget.after(7, lambda msg_widget=msg_widget: self._github_connect(
+            msg_widget, user_checked))
+
+    def _github_connect(self, msg_widget, user_checked):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
             with urllib.request.urlopen(link, timeout=5) as response:
                 html = response.read()
         except urllib.request.URLError:
-            self.logger.warning(
-                'Update check failed. Could not connect to the Internet.')
+            message = 'Update check failed. Could not connect to the Internet.'
+            msg_widget.config(text=message, relief=SUNKEN)
+            self.logger.warning(message)
         else:
             items = json.loads(html.decode('utf-8'))
             latest_tag = items.get('tag_name')
@@ -311,22 +329,11 @@ class TkGui(Tk):
                 features = body.replace('*', '')
                 message = 'Update available!\n\nSorter {tag} found.\n\n{feat}\n\nDownload from {url}'.format(
                     tag=latest_tag, url=url, feat=features)
-                relief = SUNKEN
-                self._show_update_window(message, relief)
+                msg_widget.config(text=message, relief=SUNKEN)
             else:
                 if user_checked:
                     message = 'No update found.\n\nYou have the latest version installed. Always stay up-to-date with fixes and new features.\n\nStay tuned for more!'
-                    relief = FLAT
-                    self._show_update_window(message, relief)
-
-    def _show_update_window(self, message, relief):
-        update_window = self._create_window('Update!')
-        update_window.resizable(height=False, width=False)
-        update_window.geometry('+{0}+{1}'.format(200, 200))
-        msg = Message(update_window, justify=CENTER,
-                      text=message, relief=relief)
-        msg.config(pady=10, padx=10, font='Helvetica 9')
-        msg.pack(fill=Y)
+                    msg_widget.config(text=message, relief=FLAT)
 
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
@@ -413,19 +420,36 @@ class TkGui(Tk):
         return toplevel_window
 
     def _show_about(self):
+        homepage = self.HOMEPAGE
+
+        def _open_homepage(event, link, window):
+            window.destroy()
+            get().open(link)
+
         about_window = self._create_window('About')
         about_window.resizable(height=False, width=False)
         about_window.geometry('+{0}+{1}'.format(300, 150))
+
+        frame = Frame(about_window, relief=SUNKEN)
+        frame.pack(fill=BOTH)
         about_message = 'Sorter v' + self.TAG + '\n' + self.COPYRIGHT_MESSAGE
-        msg = Message(about_window, justify=CENTER,
-                      text=about_message, relief=SUNKEN)
-        msg.config(pady=10, padx=10, font='Helvetica 9')
-        msg.pack(fill=Y)
+        msg = Message(frame, justify=CENTER,
+                      text=about_message)
+        msg.config(pady=5, padx=10, font='Helvetica 9')
+        msg.pack(side=TOP, fill=X)
+        link_label = Label(frame, justify=CENTER, foreground='blue',
+                           text=homepage, font='Helvetica 9', cursor="hand2")
+        link_label.pack(side=BOTTOM, fill=X, ipady=5, ipadx=10)
+        underlined_font = font.Font(link_label, link_label.cget("font"))
+        underlined_font.configure(underline=True)
+        link_label.configure(font=underlined_font)
+        link_label.bind('<Button-1>', lambda event=None, link=homepage,
+                        window=about_window: _open_homepage(event, link, window))
 
     def _show_help(self, info=None):
         help_window = self._create_window('Help')
         help_window.resizable(height=False, width=False)
-        help_window.geometry('+{0}+{1}'.format(200, 200))
+        help_window.geometry('+{0}+{1}'.format(240, 180))
         help_message = self.HELP_MESSAGE
         msg = Message(help_window, text=help_message,
                       justify=LEFT, relief=RIDGE)

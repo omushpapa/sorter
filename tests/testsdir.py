@@ -348,6 +348,67 @@ class TestCustomFile(unittest.TestCase, TestFileCommon):
         compare(self.file_5_File.path, os.path.join(dst, os.path.join(os.path.join('123 556U',
                                                                                    "UNDEFINED"), self.file_5_name)))
 
+class TestCustomFileWithoutExtension(unittest.TestCase, TestFileCommon):
+
+    def setUp(self):
+        """Initialise temporary directory and files."""
+        self.tempdir = TempDirectory(encoding='utf-8')
+
+        self.file_1_name = 'abc.txt'
+        self.file_2_name = 'ay.c'
+        self.file_3_name = 'abc'
+        self.file_4_name = 'crpart.tar.gz'
+        self.file_5_name = 'long file name without extension and with spaces'
+
+        self.file_1_path = self.tempdir.write(self.file_1_name, '')
+        self.file_2_path = self.tempdir.write(self.file_2_name, '')
+        self.file_3_path = self.tempdir.write(self.file_3_name, '')
+        self.file_4_path = self.tempdir.write(self.file_4_name, '')
+        self.file_5_path = self.tempdir.write(self.file_5_name, '')
+
+        self.file_1_File = CustomFileWithoutExtension(self.file_1_path, 'sample')
+        self.file_2_File = CustomFileWithoutExtension(
+            self.file_2_path, 'grey hound And an animaL')
+        self.file_3_File = CustomFileWithoutExtension(self.file_3_path, 'one 1rt 7')
+        self.file_4_File = CustomFileWithoutExtension(self.file_4_path, 's')
+        self.file_5_File = CustomFileWithoutExtension(self.file_5_path, '123 556u')
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_returns_false_if_categories_lists_dont_match(self):
+        """Return False if file categories do not match with list."""
+        categories = [self.file_1_File.category, self.file_2_File.category,
+                      self.file_3_File.category, self.file_4_File.category, self.file_5_File.category]
+        compare(categories, ['Sample', 'Grey Hound And An Animal',
+                             'One 1Rt 7', 'S', '123 556U'])
+
+    def test_returns_false_if_relocation_without_grouping_failed(self):
+        """Test returns False if file relocation failed when 
+        File.move_to(dst) and group argument is not provided."""
+        self.tempdir.makedir('newfolder')
+        dst = os.path.join(self.tempdir.path, 'newfolder')
+
+        self.file_1_File.move_to(dst)
+        compare(self.file_1_File.path, os.path.join(dst, os.path.join('Sample', self.file_1_name)))
+        self.file_2_File.move_to(dst)
+        compare(self.file_2_File.path, os.path.join(dst, os.path.join('Grey Hound And An Animal', self.file_2_name)))
+        self.file_3_File.move_to(dst)
+        compare(self.file_3_File.path, os.path.join(dst, os.path.join('One 1Rt 7', self.file_3_name)))
+        self.file_4_File.move_to(dst)
+        compare(self.file_4_File.path, os.path.join(dst, os.path.join('S', self.file_4_name)))
+        self.file_5_File.move_to(dst)
+        compare(self.file_5_File.path, os.path.join(dst, os.path.join('123 556U', self.file_5_name)))
+
+    def test_returns_false_if_relocation_with_grouping_failed(self):
+        """Test returns False if file relocation failed when 
+        File.move_to(group=True)."""
+        self.tempdir.makedir('grouping_folder')
+        dst = os.path.join(self.tempdir.path, 'grouping_folder')
+
+        self.file_1_File.move_to(dst, group=True)
+        compare(self.file_1_File.path, os.path.join(dst, os.path.join('Sample', self.file_1_name)))
+
 
 if __name__ == '__main__':
     unittest.main()

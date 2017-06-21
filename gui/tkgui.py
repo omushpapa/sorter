@@ -30,7 +30,7 @@ class TkGui(Tk):
     HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
-    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information at"
+    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nFor more information click"
     TAG = "2.2.4"
 
     def __init__(self, operations, logger):
@@ -43,7 +43,7 @@ class TkGui(Tk):
         self.tk.call('wm', 'iconphoto', self._w, self.icon)
 
         # Configure main window
-        self.resizable(width=False, height=True)
+        self.resizable(width=False, height=False)
         self.maxsize(550, 300)
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
@@ -92,6 +92,9 @@ class TkGui(Tk):
         menu.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(
             label='Help', command=self._show_help, accelerator='F1')
+        usage_link = self.HOMEPAGE + '#usage'
+        help_menu.add_command(
+            label='Tutorial', command=lambda link=usage_link: self._open_homepage(link))
         help_menu.add_command(label='Refresh', command=self._delete_db)
         help_menu.add_command(
             label='Update', command=lambda: self._check_for_update(user_checked=True))
@@ -139,34 +142,44 @@ class TkGui(Tk):
         # Configure Options frame
         options_frame = LabelFrame(self.mid_frame, text='Options')
         options_frame.pack(fill=BOTH, expand=YES, padx=5, pady=10)
+
+        options_frame_left = ttk.Frame(options_frame, style="My.TFrame")
+        options_frame_left.pack(side=LEFT, fill=X, anchor=W, padx=20)
+
+        options_frame_right = ttk.Frame(options_frame, style="My.TFrame")
+        options_frame_right.pack(side=LEFT, fill=X, anchor=W, padx=40)
+
         self.sort_folders = IntVar()
         self.recursive = IntVar()
         types_value = IntVar()
         self.file_types = ['*']
         sort_option = Checkbutton(
-            options_frame, text='Sort folders', variable=self.sort_folders)
-        sort_option.pack(side=LEFT)
+            options_frame_left, text='Sort folders', variable=self.sort_folders)
+        sort_option.pack(side=TOP, anchor=W)
         recursive_option = Checkbutton(
-            options_frame, text='recursive', variable=self.recursive)
-        recursive_option.pack(side=LEFT)
+            options_frame_left, text='Include subfolders', variable=self.recursive)
+        recursive_option.pack(side=TOP, anchor=W, pady=5)
 
         self.types_window = None
-        self.items_option = Checkbutton(options_frame, text='types',
+        self.items_option = Checkbutton(options_frame_right, text='Filter file formats',
                                         variable=types_value,
                                         command=lambda: self._show_types_window(types_value))
-        self.items_option.pack(side=LEFT)
+        self.items_option.pack(side=TOP, anchor=W)
 
         # Configure search string option
+        search_frame = ttk.Frame(options_frame_right, style="My.TFrame")
+        search_frame.pack(side=TOP, anchor=W, pady=5)
+
         self.search_option_value = IntVar()
         search_option = Checkbutton(
-            options_frame, text='search',
+            search_frame, text='Search for:',
             variable=self.search_option_value,
             command=lambda: self._enable_search_entry(self.search_option_value))
-        search_option.pack(side=LEFT)
+        search_option.grid(row=0, column=0)
 
         self.search_entry = ttk.Entry(
-            options_frame, width=15, state='disabled')
-        self.search_entry.pack(side=LEFT)
+            search_frame, width=15, state='disabled')
+        self.search_entry.grid(row=0, column=1, padx=5)
 
         # Configure action buttons
         self.run_button = ttk.Button(self.bottom_frame,
@@ -419,13 +432,12 @@ class TkGui(Tk):
             pass
         return toplevel_window
 
-    def _show_about(self):
-        homepage = self.HOMEPAGE
-
-        def _open_homepage(event, link, window):
+    def _open_homepage(self, link, event=None, window=None):
+        if window is not None:
             window.destroy()
-            get().open(link)
+        get().open(link)
 
+    def _show_about(self):
         about_window = self._create_window('About')
         about_window.resizable(height=False, width=False)
         about_window.geometry('+{0}+{1}'.format(300, 150))
@@ -438,13 +450,13 @@ class TkGui(Tk):
         msg.config(pady=5, padx=10, font='Helvetica 9')
         msg.pack(side=TOP, fill=X)
         link_label = Label(frame, justify=CENTER, foreground='blue',
-                           text=homepage, font='Helvetica 9', cursor="hand2")
+                           text='here', font='Helvetica 9', cursor="hand2")
         link_label.pack(side=BOTTOM, fill=X, ipady=5, ipadx=10)
         underlined_font = font.Font(link_label, link_label.cget("font"))
         underlined_font.configure(underline=True)
         link_label.configure(font=underlined_font)
-        link_label.bind('<Button-1>', lambda event=None, link=homepage,
-                        window=about_window: _open_homepage(event, link, window))
+        link_label.bind('<Button-1>', lambda event=None, link=self.HOMEPAGE,
+                        window=about_window: self._open_homepage(link, event, window))
 
     def _show_help(self, info=None):
         help_window = self._create_window('Help')
@@ -498,7 +510,11 @@ class TkGui(Tk):
                 recursive=recursive_value,
                 file_types=file_types, types_given=types_given)
 
-            self.logger.info('%s operations done.', str(len(report)))
+            try:
+                ops_length = str(len(report))
+            except TypeError:
+                ops_length = 0
+            self.logger.info('%s operations done.', ops_length)
 
             if report:
                 self._show_report(report)
@@ -588,7 +604,11 @@ class TkGui(Tk):
         def reverse_all(report):
             """Undo all the conducted Sorter operations in the current instance."""
             if buttons:
-                self.logger.info('Reversing %s operations.', str(len(report)))
+                try:
+                    ops_length = str(len(report))
+                except TypeError:
+                    ops_length = 0
+                self.logger.info('Reversing %s operations.', ops_length)
                 for count, value in enumerate(report, ROW_COUNT):
                     reverse_action(value[1], value[2], value[3], count)
 

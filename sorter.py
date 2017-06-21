@@ -11,28 +11,30 @@ from data.settings import DATABASES, LOG_FILE
 DB_NAME = DATABASES['default']['NAME']
 
 if __name__ == '__main__':
-    sorter_loader = Loader()
-
-    # Load database
-    sorter_loader.report_progress(10, 'Loading database...')
-    db_helper = DatabaseHelper(DB_NAME)
-    sorter_loader.report_progress(20, 'Database loaded.')
-
-    # Create database and tables
-    sorter_loader.report_progress(30, 'Checking tables...')
-    db_helper.initialise_db()
-    sorter_loader.report_progress(40, 'Database initalised.')
-
-    # Initialise operations
-    sorter_loader.report_progress(50, 'Loading operations...')
-    operations = SorterOps(db_helper)
-    sorter_loader.report_progress(60, 'Operations initialised.')
-
     # Initialise logger
-    sorter_loader.report_progress(80, 'Loading logger...')
     logging.basicConfig(filename=LOG_FILE,
                         format='%(asctime)s %(message)s', level=logging.INFO)
-    sorter_loader.report_progress(90, 'Logger set.')
+    logging.info('Logger ready')
+
+    sorter_loader = Loader(logger=logging)
+
+    # Load database helper
+    sorter_loader.report_progress(
+        30, 'Loading database helper with database file at "{}"'.format(DB_NAME))
+    db_helper = DatabaseHelper(DB_NAME)
+    sorter_loader.report_progress(40, 'Database helper loaded.')
+
+    # Create database tables
+    sorter_loader.report_progress(
+        50, 'Connecting to database and checking tables...')
+    db_helper.initialise_db()
+    sorter_loader.report_progress(60, 'Database initalised.')
+
+    # Initialise operations
+    sorter_loader.report_progress(70, 'Loading operations...')
+    operations = SorterOps(db_helper)
+    sorter_loader.report_progress(
+        90, 'Operations initialised. Database helper configured.')
 
     # Close loader
     sorter_loader.report_progress(100, 'Initialising UI.')

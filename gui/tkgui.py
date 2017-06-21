@@ -31,7 +31,7 @@ class TkGui(Tk):
         "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
         "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
     COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nFor more information click"
-    TAG = "2.2.6"
+    TAG = "2.2.7"
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -211,7 +211,7 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
-        self.logger.info('Finished GUI initialisation')
+        self.logger.info('Finished GUI initialisation. Waiting...')
 
     def _on_mousewheel(self, event, canvas, count):
         canvas.yview_scroll(count, "units")

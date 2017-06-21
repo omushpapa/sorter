@@ -3,7 +3,7 @@
 import unittest
 import os
 import ctypes
-from slib.sdir import Directory, File, Folder
+from slib.sdir import Directory, File, Folder, CustomFolder, CustomFile, CustomFileWithoutExtension
 from testfixtures import TempDirectory, compare
 
 
@@ -74,34 +74,116 @@ class TestDirectoryUnix(unittest.TestCase, TestDirectoryCommon):
         compare(self.dir.hidden_path, False)
 
 
-class TestFile(unittest.TestCase):
-    """Test sdir.File."""
+class TestFolderCommon(object):
+
+    def test_returns_false_if_path_not_equal(self):
+        path = self.tempdir.makedir('sampler')
+        folder = self.FolderClass(path)
+        compare(path, folder.path)
+
+    def test_returns_false_if_path_not_exist(self):
+        self.tempdir.makedir('sample')
+        folder = self.FolderClass(os.path.join(self.tempdir.path, 'sample'))
+        compare(True, folder.exists)
+
+    def test_returns_false_if_folder_not_meant_for_sorter_use(self):
+        self.tempdir.makedir('sample')
+        self.tempdir.makedir('developer')
+        self.tempdir.makedir('FOLDERS')
+        self.tempdir.makedir('PDF')
+        self.tempdir.makedir('EXIST')
+        folder_1 = self.FolderClass(os.path.join(self.tempdir.path, 'sample'))
+        folder_2 = self.FolderClass(
+            os.path.join(self.tempdir.path, 'developer'))
+        folder_3 = self.FolderClass(os.path.join(self.tempdir.path, 'FOLDERS'))
+        folder_4 = self.FolderClass(os.path.join(self.tempdir.path, 'PDF'))
+        folder_5 = self.FolderClass(os.path.join(self.tempdir.path, 'false'))
+        folder_6 = self.FolderClass(os.path.join(self.tempdir.path, 'EXIST'))
+        compare([folder_1.for_sorter, folder_2.for_sorter, folder_3.for_sorter,
+                 folder_4.for_sorter, folder_5.for_sorter, folder_6.for_sorter],
+                [False, True, True, True, False, False])
+
+    def test_returns_false_if_parent_folder_not_match(self):
+        self.tempdir.makedir('sample')
+        folder_1 = self.FolderClass(os.path.join(self.tempdir.path, 'sample'))
+        compare(self.tempdir.path, folder_1.parent)
+
+    def test_returns_false_if_path_not_exists_after_recreate(self):
+        """Test declares a non-existent path and returns False
+        if still non-existent after operation."""
+        temp_path = self.tempdir.path
+        path_1 = os.path.join(temp_path, 'one')
+        path_2 = os.path.join(path_1, 'two')
+        path_3 = os.path.join(path_2, 'three')
+        path_4 = os.path.join(path_3, 'three')
+        folder = self.FolderClass(path_4)
+        compare(False, os.path.exists(path_4))
+        compare(False, folder.exists)
+        folder.recreate()
+        compare(True, os.path.exists(path_4))
+        compare(True, folder.exists)
+
+    def test_returns_false_if_folder_not_moved(self):
+        temp = self.tempdir
+        temp_path = self.tempdir.path
+        path_1 = temp.makedir('one/two/three/four')
+        path_2 = temp.makedir('one/six/ten')
+        folder_1 = self.FolderClass(path_1)
+        folder_2 = self.FolderClass(path_2)
+        compare([folder_1.exists, folder_2.exists],
+                [True, True])
+        final_dst = os.path.join(path_2, os.path.join('FOLDERS', 'four'))
+        folder_1.group(path_2)
+        compare(True, os.path.exists(os.path.join(path_2, 'FOLDERS')))
+        compare(True, os.path.isdir(final_dst))
+
+
+class TestFolder(unittest.TestCase, TestFolderCommon):
 
     def setUp(self):
-        """Initialise temporary directory and files."""
+        """Initialise temporary directory."""
         self.tempdir = TempDirectory(encoding='utf-8')
-
-        self.file_1_name = 'abc.txt'
-        self.file_2_name = 'ay.c'
-        self.file_3_name = 'abc'
-        self.file_4_name = 'crpart.tar.gz'
-        self.file_5_name = 'long file name without extension and with spaces'
-
-        self.file_1_path = self.tempdir.write(self.file_1_name, '')
-        self.file_2_path = self.tempdir.write(self.file_2_name, '')
-        self.file_3_path = self.tempdir.write(self.file_3_name, '')
-        self.file_4_path = self.tempdir.write(self.file_4_name, '')
-        self.file_5_path = self.tempdir.write(self.file_5_name, '')
-
-        self.file_1_File = File(self.file_1_path)
-        self.file_2_File = File(self.file_2_path)
-        self.file_3_File = File(self.file_3_path)
-        self.file_4_File = File(self.file_4_path)
-        self.file_5_File = File(self.file_5_path)
+        self.FolderClass = Folder
 
     def tearDown(self):
-        """Clean temporary directory."""
         self.tempdir.cleanup()
+
+
+class TestCustomFolder(unittest.TestCase, TestFolderCommon):
+
+    def setUp(self):
+        """Initialise temporary directory."""
+        self.tempdir = TempDirectory(encoding='utf-8')
+        self.group_folder_name = 'my name is a small guy'
+        self.FolderClass = lambda path, group_folder_name=self.group_folder_name: CustomFolder(
+            path, group_folder_name)
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_returns_false_if_group_folder_name_not_match(self):
+        """Test returns False if provided group_folder names do not match."""
+        f = self.FolderClass(self.tempdir.path)
+        compare(f.group_folder, self.group_folder_name.title())
+
+    def test_returns_false_if_folder_not_moved(self):
+        """Test returns False if folder not moved to a location with
+        the name similar to the group_folder_name value, in title format."""
+        temp = self.tempdir
+        temp_path = self.tempdir.path
+        path_1 = temp.makedir('one/two/three/four')
+        path_2 = temp.makedir('one/six/ten')
+        folder_1 = self.FolderClass(path_1)
+        folder_2 = self.FolderClass(path_2)
+        compare(True, folder_1.exists)
+        folder_1.group(path_2)
+        final_path = os.path.join(path_2, self.group_folder_name.title())
+        compare(final_path, folder_1.path)
+        compare(True, folder_1.exists)
+
+
+class TestFileCommon(object):
+    """Test sdir.File."""
 
     def test_returns_false_if_extensions_lists_dont_match(self):
         """Return False if file extensions do not match with list."""
@@ -181,74 +263,90 @@ class TestFile(unittest.TestCase):
             dst, self.file_5_File.category), os.path.join('UNDEFINED', self.file_5_name)))
 
 
-class TestFolder(unittest.TestCase):
+class TestFile(unittest.TestCase, TestFileCommon):
 
     def setUp(self):
-        """Initialise temporary directory."""
+        """Initialise temporary directory and files."""
         self.tempdir = TempDirectory(encoding='utf-8')
+
+        self.file_1_name = 'abc.txt'
+        self.file_2_name = 'ay.c'
+        self.file_3_name = 'abc'
+        self.file_4_name = 'crpart.tar.gz'
+        self.file_5_name = 'long file name without extension and with spaces'
+
+        self.file_1_path = self.tempdir.write(self.file_1_name, '')
+        self.file_2_path = self.tempdir.write(self.file_2_name, '')
+        self.file_3_path = self.tempdir.write(self.file_3_name, '')
+        self.file_4_path = self.tempdir.write(self.file_4_name, '')
+        self.file_5_path = self.tempdir.write(self.file_5_name, '')
+
+        self.file_1_File = File(self.file_1_path)
+        self.file_2_File = File(self.file_2_path)
+        self.file_3_File = File(self.file_3_path)
+        self.file_4_File = File(self.file_4_path)
+        self.file_5_File = File(self.file_5_path)
 
     def tearDown(self):
         self.tempdir.cleanup()
 
-    def test_returns_false_if_path_not_equal(self):
-        path = self.tempdir.makedir('sampler')
-        folder = Folder(path)
-        compare(path, folder.path)
 
-    def test_returns_false_if_path_not_exist(self):
-        self.tempdir.makedir('sample')
-        folder = Folder(os.path.join(self.tempdir.path, 'sample'))
-        compare(True, folder.exists)
+class TestCustomFile(unittest.TestCase, TestFileCommon):
 
-    def test_returns_false_if_folder_not_meant_for_sorter_use(self):
-        self.tempdir.makedir('sample')
-        self.tempdir.makedir('developer')
-        self.tempdir.makedir('FOLDERS')
-        self.tempdir.makedir('PDF')
-        self.tempdir.makedir('EXIST')
-        folder_1 = Folder(os.path.join(self.tempdir.path, 'sample'))
-        folder_2 = Folder(os.path.join(self.tempdir.path, 'developer'))
-        folder_3 = Folder(os.path.join(self.tempdir.path, 'FOLDERS'))
-        folder_4 = Folder(os.path.join(self.tempdir.path, 'PDF'))
-        folder_5 = Folder(os.path.join(self.tempdir.path, 'false'))
-        folder_6 = Folder(os.path.join(self.tempdir.path, 'EXIST'))
-        compare([folder_1.for_sorter, folder_2.for_sorter, folder_3.for_sorter,
-                 folder_4.for_sorter, folder_5.for_sorter, folder_6.for_sorter],
-                [False, True, True, True, False, False])
+    def setUp(self):
+        """Initialise temporary directory and files."""
+        self.tempdir = TempDirectory(encoding='utf-8')
 
-    def test_returns_false_if_parent_folder_not_match(self):
-        self.tempdir.makedir('sample')
-        folder_1 = Folder(os.path.join(self.tempdir.path, 'sample'))
-        compare(self.tempdir.path, folder_1.parent)
+        self.file_1_name = 'abc.txt'
+        self.file_2_name = 'ay.c'
+        self.file_3_name = 'abc'
+        self.file_4_name = 'crpart.tar.gz'
+        self.file_5_name = 'long file name without extension and with spaces'
 
-    def test_returns_false_if_path_not_exists_after_recreate(self):
-        """Test declares a non-existent path and returns False
-        if still non-existent after operation."""
-        temp_path = self.tempdir.path
-        path_1 = os.path.join(temp_path, 'one')
-        path_2 = os.path.join(path_1, 'two')
-        path_3 = os.path.join(path_2, 'three')
-        path_4 = os.path.join(path_3, 'three')
-        folder = Folder(path_4)
-        compare(False, os.path.exists(path_4))
-        compare(False, folder.exists)
-        folder.recreate()
-        compare(True, os.path.exists(path_4))
-        compare(True, folder.exists)
+        self.file_1_path = self.tempdir.write(self.file_1_name, '')
+        self.file_2_path = self.tempdir.write(self.file_2_name, '')
+        self.file_3_path = self.tempdir.write(self.file_3_name, '')
+        self.file_4_path = self.tempdir.write(self.file_4_name, '')
+        self.file_5_path = self.tempdir.write(self.file_5_name, '')
 
-    def test_returns_false_if_folder_not_moved(self):
-        temp = self.tempdir
-        temp_path = self.tempdir.path
-        path_1 = temp.makedir('one/two/three/four')
-        path_2 = temp.makedir('one/six/ten')
-        folder_1 = Folder(path_1)
-        folder_2 = Folder(path_2)
-        compare([folder_1.exists, folder_2.exists],
-                [True, True])
-        final_dst = os.path.join(path_2, os.path.join('FOLDERS', 'four'))
-        folder_1.group(path_2)
-        compare(True, os.path.exists(os.path.join(path_2, 'FOLDERS')))
-        compare(True, os.path.isdir(final_dst))
+        self.file_1_File = CustomFile(self.file_1_path, 'sample')
+        self.file_2_File = CustomFile(
+            self.file_2_path, 'grey hound And an animaL')
+        self.file_3_File = CustomFile(self.file_3_path, 'one 1rt 7')
+        self.file_4_File = CustomFile(self.file_4_path, 's')
+        self.file_5_File = CustomFile(self.file_5_path, '123 556u')
+
+    def tearDown(self):
+        self.tempdir.cleanup()
+
+    def test_returns_false_if_categories_lists_dont_match(self):
+        """Return False if file categories do not match with list."""
+        categories = [self.file_1_File.category, self.file_2_File.category,
+                      self.file_3_File.category, self.file_4_File.category, self.file_5_File.category]
+        compare(categories, ['Sample', 'Grey Hound And An Animal',
+                             'One 1Rt 7', 'S', '123 556U'])
+
+    def test_returns_false_if_relocation_without_grouping_failed(self):
+        """Test returns False if file relocation failed when 
+        File.move_to(dst) and group argument is not provided."""
+        self.tempdir.makedir('newfolder')
+        dst = os.path.join(self.tempdir.path, 'newfolder')
+
+        self.file_1_File.move_to(dst)
+        compare(self.file_1_File.path, os.path.join(dst, os.path.join(os.path.join('Sample',
+                                                                                   os.path.splitext(self.file_1_name)[1][1:].upper()), self.file_1_name)))
+        self.file_2_File.move_to(dst)
+        compare(self.file_2_File.path, os.path.join(dst, os.path.join(os.path.join('Grey Hound And An Animal',
+                                                                                   os.path.splitext(self.file_2_name)[1][1:].upper()), self.file_2_name)))
+        self.file_3_File.move_to(dst)
+        compare(self.file_3_File.path, os.path.join(dst, os.path.join(os.path.join('One 1Rt 7',
+                                                                                   "UNDEFINED"), self.file_3_name)))
+        self.file_4_File.move_to(dst)
+        compare(self.file_4_File.path, os.path.join(dst, os.path.join(os.path.join('S',
+                                                                                   os.path.splitext(self.file_4_name)[1][1:].upper()), self.file_4_name)))
+        self.file_5_File.move_to(dst)
+        compare(self.file_5_File.path, os.path.join(dst, os.path.join(os.path.join('123 556U',
+                                                                                   "UNDEFINED"), self.file_5_name)))
 
 
 if __name__ == '__main__':

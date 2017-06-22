@@ -69,26 +69,22 @@ class Directory(object):
         self._parent = os.path.dirname(self.path)
         self._hidden_path = self.in_hidden_path(self.path)
 
-    def in_hidden_path(self, path):
-        """Check whether parent folders are hidden, return True, else False."""
-        if not os.path.basename(path):
-            return False
-        else:
-            hidden_path = False
-            path_base = os.path.basename(path)
-            if os.name == 'nt':
+    def in_hidden_path(self, full_path):
+        paths = full_path.split(os.sep)
+
+        if os.name == 'nt':
+            for i in range(len(paths) + 1):
+                path = str(os.sep).join(paths[:i])
                 if self.has_hidden_attribute(path):
                     return True
-                else:
-                    hidden_path = self.has_hidden_attribute(
-                        os.path.abspath(os.path.dirname(path)))
-            else:
-                if path_base.startswith('.') or path_base.startswith('__'):
+        else:
+            for i in range(len(paths) + 1):
+                path = str(os.sep).join(paths[:i])
+                base_name = os.path.basename(path)
+                if base_name.startswith('.') or base_name.startswith('__'):
                     return True
-                else:
-                    hidden_path = self.in_hidden_path(
-                        os.path.abspath(os.path.dirname(path)))
-            return hidden_path
+
+        return False
 
     def has_hidden_attribute(self, filepath):
         """For Windows Systems, return True is attribute 'hidden' is set."""

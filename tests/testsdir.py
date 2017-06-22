@@ -3,6 +3,7 @@
 import unittest
 import os
 import ctypes
+import shutil
 from slib.sdir import Directory, File, Folder, CustomFolder, CustomFile, CustomFileWithoutExtension
 from testfixtures import TempDirectory, compare
 
@@ -11,8 +12,12 @@ def windows_only(cls_or_func):
     """Return function or class if OS is Windows."""
     if os.name == 'nt':
         return cls_or_func
-    else:
-        pass
+
+
+def unix_only(cls_or_func):
+    """Return function or class if OS is Windows."""
+    if not os.name == 'nt':
+        return cls_or_func
 
 
 class TestDirectoryCommon(object):
@@ -51,12 +56,45 @@ class TestDirectoryWindows(unittest.TestCase, TestDirectoryCommon):
         TestDirectoryCommon.setUp(self)
 
     def tearDown(self):
-        TestDirectoryCommon.tearDown(self)
+        """Clean up temporary directory."""
+        self.tempdir.cleanup()
 
-    def test_returns_true_if_path_hidden(self):
-        pass
+    def test_returns_fails_if_hidden_value_not_match(self):
+        """Test returns False is Directory.hidden_path returns False
+        if Dirctory.path is hidden or has a hidden parent directory,
+        True otherwise.
+
+        TestFixtures is not used in this case since Windows temp directory
+        is hidden by default.
+        """
+        path_1 = os.path.join(os.getcwd(), 'one')
+        path_2 = os.path.join(path_1, 'two')
+        path_3 = os.path.join(path_2, 'three')
+        path_4 = os.path.join(path_3, 'three')
+        os.makedirs(path_4)
+
+        dir_1 = Directory(path_4)
+        compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+
+        a = ctypes.windll.kernel32.SetFileAttributesW(
+            os.path.dirname(path_4), 2)
+        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+        compare([dir_1.path, dir_1.hidden_path], [path_4, True])
+
+        a = ctypes.windll.kernel32.SetFileAttributesW(
+            os.path.dirname(path_4), 0)
+        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+        compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+
+        a = ctypes.windll.kernel32.SetFileAttributesW(
+            os.path.dirname(path_2), 2)
+        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+        compare([dir_1.path, dir_1.hidden_path], [path_4, True])
+
+        shutil.rmtree(path_1)
 
 
+@unix_only
 class TestDirectoryUnix(unittest.TestCase, TestDirectoryCommon):
     """Test sdir.Directory attributes for UNIX systems."""
 
@@ -348,6 +386,7 @@ class TestCustomFile(unittest.TestCase, TestFileCommon):
         compare(self.file_5_File.path, os.path.join(dst, os.path.join(os.path.join('123 556U',
                                                                                    "UNDEFINED"), self.file_5_name)))
 
+
 class TestCustomFileWithoutExtension(unittest.TestCase, TestFileCommon):
 
     def setUp(self):
@@ -366,12 +405,15 @@ class TestCustomFileWithoutExtension(unittest.TestCase, TestFileCommon):
         self.file_4_path = self.tempdir.write(self.file_4_name, '')
         self.file_5_path = self.tempdir.write(self.file_5_name, '')
 
-        self.file_1_File = CustomFileWithoutExtension(self.file_1_path, 'sample')
+        self.file_1_File = CustomFileWithoutExtension(
+            self.file_1_path, 'sample')
         self.file_2_File = CustomFileWithoutExtension(
             self.file_2_path, 'grey hound And an animaL')
-        self.file_3_File = CustomFileWithoutExtension(self.file_3_path, 'one 1rt 7')
+        self.file_3_File = CustomFileWithoutExtension(
+            self.file_3_path, 'one 1rt 7')
         self.file_4_File = CustomFileWithoutExtension(self.file_4_path, 's')
-        self.file_5_File = CustomFileWithoutExtension(self.file_5_path, '123 556u')
+        self.file_5_File = CustomFileWithoutExtension(
+            self.file_5_path, '123 556u')
 
     def tearDown(self):
         self.tempdir.cleanup()
@@ -390,15 +432,20 @@ class TestCustomFileWithoutExtension(unittest.TestCase, TestFileCommon):
         dst = os.path.join(self.tempdir.path, 'newfolder')
 
         self.file_1_File.move_to(dst)
-        compare(self.file_1_File.path, os.path.join(dst, os.path.join('Sample', self.file_1_name)))
+        compare(self.file_1_File.path, os.path.join(
+            dst, os.path.join('Sample', self.file_1_name)))
         self.file_2_File.move_to(dst)
-        compare(self.file_2_File.path, os.path.join(dst, os.path.join('Grey Hound And An Animal', self.file_2_name)))
+        compare(self.file_2_File.path, os.path.join(
+            dst, os.path.join('Grey Hound And An Animal', self.file_2_name)))
         self.file_3_File.move_to(dst)
-        compare(self.file_3_File.path, os.path.join(dst, os.path.join('One 1Rt 7', self.file_3_name)))
+        compare(self.file_3_File.path, os.path.join(
+            dst, os.path.join('One 1Rt 7', self.file_3_name)))
         self.file_4_File.move_to(dst)
-        compare(self.file_4_File.path, os.path.join(dst, os.path.join('S', self.file_4_name)))
+        compare(self.file_4_File.path, os.path.join(
+            dst, os.path.join('S', self.file_4_name)))
         self.file_5_File.move_to(dst)
-        compare(self.file_5_File.path, os.path.join(dst, os.path.join('123 556U', self.file_5_name)))
+        compare(self.file_5_File.path, os.path.join(
+            dst, os.path.join('123 556U', self.file_5_name)))
 
     def test_returns_false_if_relocation_with_grouping_failed(self):
         """Test returns False if file relocation failed when 
@@ -407,7 +454,8 @@ class TestCustomFileWithoutExtension(unittest.TestCase, TestFileCommon):
         dst = os.path.join(self.tempdir.path, 'grouping_folder')
 
         self.file_1_File.move_to(dst, group=True)
-        compare(self.file_1_File.path, os.path.join(dst, os.path.join('Sample', self.file_1_name)))
+        compare(self.file_1_File.path, os.path.join(
+            dst, os.path.join('Sample', self.file_1_name)))
 
 
 if __name__ == '__main__':

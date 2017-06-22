@@ -56,9 +56,7 @@ python3 sorter.py
 * Create and activate a [Virtual Environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/)
 * Ensure prerequisites are available
 * Clone this repository
-* In terminal/cmd, run (the command in) [pybuild.sh](pybuild.sh)
-
-**NB:** Ensure [sorter.ico](assets/sorter.ico) is in the current working directory.
+* In terminal/cmd, run the command in [pybuild.sh](pybuild.sh)
 
 
 ### Website

@@ -4,97 +4,159 @@ import unittest
 import os
 import ctypes
 import shutil
-from slib.sdir import Directory
 from testfixtures import TempDirectory, compare
+from slib.sdir import Directory, RelativePathException
 
 
-class TestDirectoryCommon(object):
-    """Test common sdir.Directory attributes."""
+class TestDirectoryTestCase(unittest.TestCase):
 
-    def setUp(self):
-        """Initialise temporary directory and file."""
-        self.tempdir = TempDirectory(encoding='utf-8')
-        self.dirname = 'abc.txt'
-        self.tempdir.write(self.dirname, '123')
-        self.dir = Directory(self.tempdir.path)
+	def setUp(self):
+		"""Initialise temporary directory."""
+		self.tempdir = TempDirectory(encoding='utf-8')
 
-    def tearDown(self):
-        """Clean up temporary directory."""
-        self.tempdir.cleanup()
-        del self.dir
+	def tearDown(self):
+		self.tempdir.cleanup()
 
-    def test_fails_if_abs_path_not_equal(self):
-        """Return False is absolute paths do not match."""
-        compare(self.tempdir.path, self.dir.path)
+	def test_returns_false_if_path_not_provided(self):
+		self.assertRaises(TypeError, Directory)
 
-    def test_fails_if_basename_not_equal(self):
-        """Return False if file names do not match."""
-        compare(os.path.basename(self.tempdir.path), self.dir.name)
+	def test_returns_false_if_path_provided_is_relative(self):
+		self.assertRaises(RelativePathException, Directory, '.')
 
-    def test_fails_if_parent_not_equal(self):
-        """Return False if parent directory names do not match."""
-        compare(os.path.dirname(self.tempdir.path), self.dir.parent)
+	@unittest.skipIf(os.name == 'nt', 'Test meant to work on UNIX systems')
+	def test_returns_false_if_path_provided_is_not_unix_style(self):
+		self.assertRaises(RelativePathException, Directory, 'C:/users/')
 
+	@unittest.skipIf(os.name != 'nt', 'Test meant to work on Windows systems')
+	def test_returns_false_if_path_provided_is_not_unix_style(self):
+		self.assertRaises(RelativePathException, Directory, '/home/User/helper/')
 
-@unittest.skipIf(os.name != 'nt', 'Tests can be run on Windows only')
-class TestDirectoryWindows(unittest.TestCase, TestDirectoryCommon):
-    """Test sdir.Directory attributes for Windows systems."""
+	def test_returns_false_if_path_not_set(self):
+		d = Directory(self.tempdir.path)
+		compare(self.tempdir.path, d.path)
 
-    def setUp(self):
-        TestDirectoryCommon.setUp(self)
+	def test_returns_false_if_parent_path_not_returned(self):
+		path = self.tempdir.path
+		d = Directory(path)
+		compare(os.path.dirname(path), d.parent)
 
-    def tearDown(self):
-        """Clean up temporary directory."""
-        self.tempdir.cleanup()
+	def test_returns_false_if_name_not_returned(self):
+		d = Directory(self.tempdir.path)
+		compare(os.path.basename(self.tempdir.path), d.name)
 
-    def test_returns_fails_if_hidden_value_not_match(self):
-        """Test returns False is Directory.hidden_path returns False
-        if Dirctory.path is hidden or has a hidden parent directory,
-        True otherwise.
+	def test_returns_false_if_path_not_changed(self):
+		d = Directory(self.tempdir.path)
+		with self.subTest(1):
+			compare(self.tempdir.path, d.path)
+		new_path = self.tempdir.makedir('abc')
+		with self.subTest(2):
+			d.path = new_path
+			compare(new_path, d.path)
 
-        TestFixtures is not used in this case since Windows temp directory
-        is hidden by default.
-        """
-        path_1 = os.path.join(os.getcwd(), 'one')
-        path_2 = os.path.join(path_1, 'two')
-        path_3 = os.path.join(path_2, 'three')
-        path_4 = os.path.join(path_3, 'three')
-        os.makedirs(path_4)
+	def test_returns_false_if_parent_is_changed(self):
+		new_parent = self.tempdir.makedir('one/one/')
+		d = Directory(self.tempdir.path)
+		self.assertRaises(TypeError, d.parent, new_parent)
 
-        dir_1 = Directory(path_4)
-        compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+	def test_returns_false_if_name_changed(self):
+		d = Directory(self.tempdir.path)
+		self.assertRaises(TypeError, d.name, 'new_name.pdf')
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_4), 2)
-        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
-        compare([dir_1.path, dir_1.hidden_path], [path_4, True])
+	@unittest.skipIf(os.name != 'nt', 'Test hidden path on Windows systems only')
+	def test_returns_false_if_hidden_values_not_match_windows(self):
+		"""Test returns False is Directory.hidden_path returns False
+		if Dirctory.path is hidden or has a hidden parent directory,
+		True otherwise.
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_4), 0)
-        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
-        compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+		TestFixtures is not used in this case since Windows temp directory
+		is hidden by default.
+		"""
+		path_1 = os.path.join(os.getcwd(), 'one')
+		path_2 = os.path.join(path_1, 'two')
+		path_3 = os.path.join(path_2, 'three')
+		path_4 = os.path.join(path_3, 'three')
+		try:
+			os.makedirs(path_4)
+		except FileExistsError:
+			pass
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_2), 2)
-        dir_1.path = dir_1.path    # Trigger re-evaluation of instance
-        compare([dir_1.path, dir_1.hidden_path], [path_4, True])
+		dir_1 = Directory(path_4)
+		with self.subTest(1):
+			compare([dir_1.path, dir_1.hidden_path], [path_4, False])
 
-        shutil.rmtree(path_1)
+		a = ctypes.windll.kernel32.SetFileAttributesW(
+			os.path.dirname(path_4), 2)
+		dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+		with self.subTest(2):
+			compare([dir_1.path, dir_1.hidden_path], [path_4, True])
 
+		a = ctypes.windll.kernel32.SetFileAttributesW(
+			os.path.dirname(path_4), 0)
+		dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+		with self.subTest(3):
+			compare([dir_1.path, dir_1.hidden_path], [path_4, False])
 
-@unittest.skipIf(os.name == 'nt', 'Tests can be run on UNIX only')
-class TestDirectoryUnix(unittest.TestCase, TestDirectoryCommon):
-    """Test sdir.Directory attributes for UNIX systems."""
+		a = ctypes.windll.kernel32.SetFileAttributesW(
+			os.path.dirname(path_2), 2)
+		dir_1.path = dir_1.path    # Trigger re-evaluation of instance
+		with self.subTest(4):
+			compare([dir_1.path, dir_1.hidden_path], [path_4, True])
 
-    def setUp(self):
-        """Inherits from TestDirectoryCommon.setUp()."""
-        TestDirectoryCommon.setUp(self)
+		shutil.rmtree(path_1)
 
-    def tearDown(self):
-        """Inherits from TestDirectoryCommon.tearDown()."""
-        TestDirectoryCommon.tearDown(self)
+	@unittest.skipIf(os.name == 'nt', 'Test meant to run on unix systems only')
+	def test_returns_false_if_hidden_values_not_match_unix(self):
+		path_1 = self.tempdir.makedir('abc/.kin/one')
+		path_1 = self.tempdir.write(os.path.join(path_1, 'one.docx'), '')
 
-    def test_returns_false_if_path_not_hidden(self):
-        """Return False if file is in a path where the directory,
-        including the file itself, is hidden."""
-        compare(self.dir.hidden_path, False)
+		path_2 = self.tempdir.makedir('abc/kin')
+		path_2 = self.tempdir.write(os.path.join(path_2, '.two.tar.gz'), '')
+
+		path_3 = self.tempdir.makedir('.yabc/kin/one')
+		path_4 = self.tempdir.makedir('yabc/too/many/.paths/here/kin/one')
+		path_5 = self.tempdir.makedir('typo/too/many/paths/here/kin/one')
+		dir_1 = Directory(path_1)
+		with self.subTest(1):
+			compare(True, dir_1.hidden_path)
+		dir_2 = Directory(path_2)
+		with self.subTest(2):
+			compare(True, dir_2.hidden_path)
+		dir_3 = Directory(path_3)
+		with self.subTest(3):
+			compare(True, dir_3.hidden_path)
+		dir_4 = Directory(path_4)
+		with self.subTest(4):
+			compare(True, dir_4.hidden_path)
+		dir_5 = Directory(path_5)
+		with self.subTest(5):
+			compare(False, dir_5.hidden_path)
+
+	@unittest.skipIf(os.name == 'nt', 'Hidden path tests for UNIX systems')
+	def test_returns_false_if_attributes_are_not_reevaluated(self):
+		d = Directory(self.tempdir.path)
+		with self.subTest(1):
+			compare(self.tempdir.path, d.path)
+		with self.subTest(2):
+			compare(os.path.dirname(self.tempdir.path), d.parent)
+		with self.subTest(3):
+			compare(False, d.hidden_path)
+		new_path = self.tempdir.makedir('.abc')
+		d.path = new_path
+		with self.subTest(4):
+			compare(new_path, d.path)
+		with self.subTest(5):
+			compare('.abc', d.name)
+		with self.subTest(6):
+			compare(True, d.hidden_path)
+		with self.subTest(7):
+			compare(os.path.dirname(new_path), d.parent)
+
+	def test_returns_false_if_path_change_is_relative(self):
+		d = Directory(self.tempdir.path)
+		with self.subTest(1):
+			compare(self.tempdir.path, d.path)
+		with self.subTest(2):
+			compare(False, d.hidden_path)
+		def call(x):
+			d.path = x
+		self.assertRaises(RelativePathException, call, '.')

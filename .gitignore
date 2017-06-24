@@ -112,3 +112,4 @@ installers/
 push.sh
 sorter.ico
 sorter.logs
+coverage.sh

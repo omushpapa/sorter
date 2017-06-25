@@ -160,3 +160,16 @@ class TestDirectoryTestCase(unittest.TestCase):
 		def call(x):
 			d.path = x
 		self.assertRaises(RelativePathException, call, '.')
+
+	def test_returns_false_if_pathlib_methods_fail(self):
+		with self.subTest(1):
+			path = self.tempdir.makedir('abc/fig/last')
+			d = Directory(path)
+			compare('', d.suffix)
+			compare('last', d.stem)
+
+		with self.subTest(2):
+			path = self.tempdir.makedir('abc/fig/my awesome cat.txt')
+			d = Directory(path)
+			compare('.txt', d.suffix)
+			compare('my awesome cat', d.stem)

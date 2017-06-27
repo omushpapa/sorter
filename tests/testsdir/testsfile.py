@@ -5,7 +5,7 @@ import os
 import ctypes
 import shutil
 from testfixtures import TempDirectory, compare
-from slib.sdir import File, RelativePathException
+from slib.sdir import File, RelativePathException, EmptyNameException
 
 
 class TestFileTestCase(unittest.TestCase):
@@ -53,6 +53,8 @@ class TestFileTestCase(unittest.TestCase):
             compare('document', d.category)
         with self.subTest(6):
             compare('txt', d.extension)
+        with self.subTest(7):
+            compare(d.path, str(d))
 
     def test_returns_false_if_names_not_match(self):
         initial_file = self.tempdir.write('123.txt', '')
@@ -83,19 +85,18 @@ class TestFileTestCase(unittest.TestCase):
         f = File(file_)
         f.move_to(dir_2, group=False)
         with self.subTest(1):
-            compare(os.path.join(dir_2, os.path.join(
-                'TXT', 'my awesome cat.txt')), f.path)
+            compare(os.path.join(dir_2, 'TXT', 'my awesome cat.txt'), f.path)
         with self.subTest(2):
             compare(True, f.exists)
         f.move_to(dir_3, group=True, by_extension=True)
         with self.subTest(3):
-            compare(os.path.join(os.path.join(dir_3, 'document'),
-                                 os.path.join('TXT', 'my awesome cat.txt')), f.path)
+            compare(os.path.join(dir_3, 'document',
+                                 'TXT', 'my awesome cat.txt'), f.path)
         with self.subTest(4):
             compare(True, f.exists)
         with self.subTest(5):
             compare(False, os.path.isfile(os.path.join(
-                dir_2, os.path.join('TXT', 'my awesome cat.txt'))))
+                dir_2, 'TXT', 'my awesome cat.txt')))
 
     def test_returns_false_if_grouping_by_category_fails_group_false(self):
         dir_1 = self.tempdir.makedir('abc/fig/')
@@ -109,15 +110,15 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
-        f1.move_to(dst_root_path=dir_2, group=False, by_extension=False, 
-            group_folder_name=None)  # default
+        f1.move_to(dst_root_path=dir_2, group=False, by_extension=False,
+                   group_folder_name=None)  # default
         with self.subTest(1):
-            final_path = os.path.join(dir_2, os.path.join('TXT', 'my awesome cat.txt'))
+            final_path = os.path.join(dir_2, 'TXT', 'my awesome cat.txt')
             compare(final_path, f1.path)
-        f1.move_to(dst_root_path=dir_3, group=False, by_extension=False, 
-            group_folder_name=None)  # default
+        f1.move_to(dst_root_path=dir_3, group=False, by_extension=False,
+                   group_folder_name=None)  # default
         with self.subTest(1):
-            final_path = os.path.join(dir_3, os.path.join('TXT', 'my awesome cat.txt'))
+            final_path = os.path.join(dir_3, 'TXT', 'my awesome cat.txt')
             compare(final_path, f1.path)
 
     def test_returns_false_if_grouping_fails_group_true(self):
@@ -132,10 +133,10 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
-        f1.move_to(dst_root_path=dir_2, group=True, by_extension=False, 
-            group_folder_name=None)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=False,
+                   group_folder_name=None)
         with self.subTest(1):
-            final_path = os.path.join(dir_2, os.path.join('document', 'my awesome cat.txt'))
+            final_path = os.path.join(dir_2, 'document', 'my awesome cat.txt')
             compare(final_path, f1.path)
 
     def test_returns_false_if_grouping_fails_by_extension_true_group_folder_name_none(self):
@@ -150,10 +151,11 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
-        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True, 
-            group_folder_name=None)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name=None)
         with self.subTest(1):
-            final_path = os.path.join(os.path.join(dir_2, 'document'), os.path.join('TXT', 'my awesome cat.txt'))
+            final_path = os.path.join(
+                dir_2, 'document', 'TXT', 'my awesome cat.txt')
             compare(final_path, f1.path)
 
     def test_returns_false_if_grouping_fails_by_extension_true_group_folder_name_given(self):
@@ -168,12 +170,12 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
-        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True, 
-            group_folder_name='sample dir')
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name='sample dir')
         with self.subTest(1):
-            final_path = os.path.join(os.path.join(dir_2, 'sample dir'), os.path.join('TXT', 'my awesome cat.txt'))
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'TXT', 'my awesome cat.txt')
             compare(final_path, f1.path)
-
 
     def test_returns_false_if_grouping_fails_by_extension_false_group_folder_name_given(self):
         dir_1 = self.tempdir.makedir('abc/fig/')
@@ -187,9 +189,123 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
-        f1.move_to(dst_root_path=dir_2, group=True, by_extension=False, 
-            group_folder_name='sample dir')
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=False,
+                   group_folder_name='sample dir')
         with self.subTest(1):
-            final_path = os.path.join(dir_2, os.path.join('sample dir', 'my awesome cat.txt'))
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'my awesome cat.txt')
             compare(final_path, f1.path)
 
+    def test_returns_false_if_relocation_to_existing_child_folder_fails(self):
+        dir_1 = self.tempdir.makedir('abc/fig/')
+        dir_2 = self.tempdir.makedir('abc/fig/one/two')
+        dir_3 = self.tempdir.makedir('abc/fig/one/two/three/')
+        file_1 = self.tempdir.write(
+            os.path.join(dir_1, 'my awesome cat.txt'), '')
+
+        f1 = File(file_1)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(1):
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+        f1.move_to(dst_root_path=dir_3, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(2):
+            final_path = os.path.join(
+                dir_3, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+
+    def test_returns_false_if_relocation_to_non_existent_folder_fails(self):
+        temp_path = self.tempdir.path
+        dir_1 = self.tempdir.makedir('abc/fig/')
+        dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
+        dir_3 = os.path.join(temp_path, 'first', 'fig', 'one', 'two', 'three')
+        file_1 = self.tempdir.write(
+            os.path.join(dir_1, 'my awesome cat.txt'), '')
+
+        f1 = File(file_1)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(1):
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+        f1.move_to(dst_root_path=dir_3, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(2):
+            final_path = os.path.join(
+                dir_3, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+
+    def test_returns_false_if_relocation_to_parent_folder_fails(self):
+        temp_path = self.tempdir.path
+        dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
+        dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
+        dir_3 = os.path.join(temp_path, 'abc', 'fig')
+        file_1 = self.tempdir.write(
+            os.path.join(dir_1, 'my awesome cat.txt'), '')
+
+        f1 = File(file_1)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(1):
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+        f1.move_to(dst_root_path=dir_3, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(2):
+            final_path = os.path.join(
+                dir_3, 'sample dir', 'TXT', 'my awesome cat.txt')
+            compare(final_path, f1.path)
+
+    def test_returns_false_if_relocation_of_file_without_extension_fails(self):
+        temp_path = self.tempdir.path
+        dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
+        dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
+        dir_3 = os.path.join(temp_path, 'abc', 'fig')
+        file_1 = self.tempdir.write(
+            os.path.join(dir_1, '146 awesome street $# yea'), '')
+
+        f1 = File(file_1)
+        f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(1):
+            compare(True, f1.exists)
+        with self.subTest(2):
+            final_path = os.path.join(
+                dir_2, 'sample dir', 'UNDEFINED', '146 awesome street $# yea')
+            compare(final_path, f1.path)
+        f1.move_to(dst_root_path=dir_3, group=False, by_extension=True,
+                   group_folder_name='sample dir')
+        with self.subTest(3):
+            final_path = os.path.join(
+                dir_3, 'UNDEFINED', '146 awesome street $# yea')
+            compare(final_path, f1.path)
+
+    def test_returns_false_if_emptynameexception_not_raised(self):
+        temp_path = self.tempdir.path
+        dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
+        dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
+        file_1 = self.tempdir.write(
+            os.path.join(dir_1, 'my awesome cat.txt'), '')
+
+        f1 = File(file_1)
+        call = lambda: f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
+                                  group_folder_name=' ')
+        self.assertRaises(EmptyNameException, call())
+
+    def test_returns_false_if_file_not_created(self):
+        dir_1 = self.tempdir.makedir('abc/fig/one/two/three')
+        file_1 = os.path.join(dir_1, 'my awesome cat.txt')
+
+        f1 = File(file_1)
+        with self.subTest(1):
+            compare(False, f1.exists)
+        f1.touch()
+        with self.subTest(2):
+            compare(True, f1.exists)
+        with self.subTest(3):
+            self.assertRaises(FileExistsError, f1.touch, exist_ok=False)

@@ -17,4 +17,6 @@ SECRET_KEY = '63cFWu$$lhT3bVP9U1k1Iv@Jo02SuM'
 
 LOG_FILE = os.path.join(PROJECT_ROOT, 'sorter.logs')
 
-SORTER_IGNORE_FILENAME = '.signore'
+SORTER_IGNORE_FILENAME = '.signore'		# Should start with a dot
+
+SORTER_FOLDER_IDENTITY_FILENAME = '.sorter'		# Should start with a dot

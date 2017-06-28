@@ -260,7 +260,7 @@ class TestOperationsTestCase(unittest.TestCase):
         with self.subTest(2):
             compare(1, count)
 
-    def test_returns_false_false_if_initiate_operation_fails(self):
+    def test_returns_false_false_if_start_fails(self):
         def messenger(through='stdout', msg='', **kwargs):
             print('{}: {}'.format(through, msg))
         dir_1 = self.temp.makedir('one/two')
@@ -283,8 +283,8 @@ class TestOperationsTestCase(unittest.TestCase):
             compare(True, db_ready)
         with self.subTest(4):
             compare(True, os.path.exists(self.db_helper.DB_NAME))
-        self.operations.initiate_operation(src=dir_1, dst=dir_1,
-                                           send_message=messenger, **kwargs)
+        self.operations.start(src=dir_1, dst=dir_1,
+                              send_message=messenger, **kwargs)
         with self.subTest(5):
             self.temp.compare([
                 '{}/'.format('PHP'),
@@ -314,8 +314,8 @@ class TestOperationsTestCase(unittest.TestCase):
             compare(True, db_ready)
         with self.subTest(4):
             compare(True, os.path.exists(self.db_helper.DB_NAME))
-        self.operations.initiate_operation(src=dir_1, dst=dir_2,
-                                           send_message=messenger, **kwargs)
+        self.operations.start(src=dir_1, dst=dir_2,
+                              send_message=messenger, **kwargs)
         with self.subTest(5):
             self.temp.compare([
                 '{}/'.format('whatsapp image'),
@@ -352,8 +352,8 @@ class TestOperationsTestCase(unittest.TestCase):
             compare(True, db_ready)
         with self.subTest(4):
             compare(True, os.path.exists(self.db_helper.DB_NAME))
-        self.operations.initiate_operation(src=dir_1, dst=dir_2,
-                                           send_message=messenger, **kwargs)
+        self.operations.start(src=dir_1, dst=dir_2,
+                              send_message=messenger, **kwargs)
         with self.subTest(5):
             self.temp.compare([
                 '{}/'.format('whatsapp image'),
@@ -391,8 +391,8 @@ class TestOperationsTestCase(unittest.TestCase):
             'group': True,
             'recursive': True,
         }
-        self.operations.initiate_operation(src=dir_2, dst=dir_1,
-                                           send_message=messenger, **kwargs)
+        self.operations.start(src=dir_2, dst=dir_1,
+                              send_message=messenger, **kwargs)
         with self.subTest(2):
             self.temp.compare([
                 '{}/'.format('sample dir'),

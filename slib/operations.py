@@ -12,6 +12,39 @@ from datetime import datetime
 
 
 class SorterOps(object):
+    """A handler class for Sorter operations.
+
+    data attributes:
+        src - source path
+        dst - destination path
+        search_string - the value to use in filename searching
+        search_string_pattern - the pattern to use in searching for
+            files using iglob
+        glob_pattern - the final pattern to use in glob, which caters
+            for inclusion and/or exclusion of certain file extensions
+        group - boolean value which determines whether the files will
+            be grouped by category or group_folder_name
+        recursive - loop through all the subdirectories sorting files
+            using the other parameters
+        file_types - the file types to include in iglob searching, in
+            in lower case
+        by_extension - boolean value which determins whether the files
+            will be group by their extensions too
+        group_folder_name - name of the final folder to which the files
+            will be moved to
+        status - an instance of a tkinter status bar, for interfacing 
+            with the user
+        database_dict - contains the values to be inserted into and/or
+            retrieved from the database tables after operations
+
+    class methods:
+        is_writable
+
+    instance methods:
+        form_search_pattern
+        sort_files
+        start
+    """
 
     def __init__(self, db_helper):
         self.db_helper = db_helper
@@ -155,7 +188,6 @@ class SorterOps(object):
                         root, e))
 
     def _sort_folders_operation(self):
-        # return
         source_path = self.src
         destination_path = self.dst or self.src
         search_string_pattern = self.search_string_pattern
@@ -180,7 +212,7 @@ class SorterOps(object):
         else:
             return None
 
-    def initiate_operation(self, src, dst, send_message, **kwargs):
+    def start(self, src, dst, send_message, **kwargs):
         """Initiate Sorter operations.
 
         Execution starts from here once the Run button is clicked.

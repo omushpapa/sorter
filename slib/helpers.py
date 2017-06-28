@@ -54,6 +54,22 @@ class InterfaceHelper(object):
 
 
 class DatabaseHelper(object):
+    """A helper class that interacts with the database.
+
+    data attributes:
+        DB_NAME - the path to the database
+        db_path_objects - DB_PATH.objects
+        db_file_objects - DB_FILE.objects
+        db_ready - True if database table have been created
+
+    methods:
+        initialise_db
+        get_start_value
+        get_report
+        update
+        alter_value
+        get_history
+    """
 
     def __init__(self, db_name):
         self.DB_NAME = db_name
@@ -61,11 +77,23 @@ class DatabaseHelper(object):
         self.db_path_objects = DB_PATH.objects
         self.db_ready = False
 
-    def initialise_db(self):
-        """Initialise database, set self.db_ready to True."""
+    def initialise_db(self, test=False):
+        """Initialise database, set self.db_ready to True.
+
+        If test is True (for tests), drop tables first.
+        """
         if not self.db_ready:
             connection = sqlite3.connect(self.DB_NAME)
             cursor = connection.cursor()
+
+            if test:
+                query1 = 'DROP TABLE IF EXISTS data_file'
+                query2 = 'DROP TABLE IF EXISTS data_path'
+                query3 = 'DROP TABLE IF EXISTS data_path_filename_id_1d40e5f2'
+                cursor.execute(query1)
+                cursor.execute(query2)
+                cursor.execute(query3)
+                connection.commit()
             # Create tables
             # Do not alter the queries, may not work with subsequent database
             # operations
@@ -82,14 +110,20 @@ class DatabaseHelper(object):
         return self.db_ready
 
     def get_start_value(self):
+        """Return the index of the last database entry in the
+        db_file_objects table.
+
+        Return 0 if table has no entry.
+        """
         try:
             start_value = self.db_file_objects.last().id
-        except AttributeError:
+        except (AttributeError, OperationalError):
             start_value = 0
         finally:
             return start_value
 
     def get_report(self, start_value):
+        """Return the objects created by the current operations."""
         paths = self.db_path_objects.filter(
             id__gte=start_value).order_by('-pk')
 
@@ -101,6 +135,7 @@ class DatabaseHelper(object):
         return report
 
     def update(self, database_dict):
+        """Insert values of the current operations into the database."""
         now = datetime.now()
         item_count = len(database_dict)
 
@@ -111,16 +146,23 @@ class DatabaseHelper(object):
             run_list.append(this_file)
         self.db_file_objects.bulk_create(run_list)
 
-        file_objects = self.db_file_objects.filter(added_at=now)
-
+        file_objects = DB_FILE.objects.filter(added_at=now)
         for file_ in file_objects:
             this_path = self.db_path_objects.create(
                 filename=file_, added_at=now, **database_dict[file_.filename]['path'])
 
     def alter_path(self, alter_value, finders):
+        """Alter the value of db_file_objects instance in the database.
+
+        finders - the key,value pairs to use to search for the entry in the
+            table
+        alter_value - the key,value pair of the value to alter in the database
+            table
+        """
         updated = self.db_path_objects.filter(**finders).update(**alter_value)
 
     def get_history(self, count):
+        """Return the number of db_file_objects instances as specified by count."""
         files = self.db_file_objects.all().order_by(
             '-pk').select_related().filter(filename_path__accepted=True)[:count]
 

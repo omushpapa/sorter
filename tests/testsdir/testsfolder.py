@@ -5,7 +5,7 @@ import os
 import ctypes
 import shutil
 from testfixtures import TempDirectory, compare
-from slib.sdir import Folder, RelativePathException, EmptyNameException
+from slib.sdir import Folder
 from data.settings import SORTER_FOLDER_IDENTITY_FILENAME, SORTER_IGNORE_FILENAME
 
 

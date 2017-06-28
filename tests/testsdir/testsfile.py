@@ -5,7 +5,7 @@ import os
 import ctypes
 import shutil
 from testfixtures import TempDirectory, compare
-from slib.sdir import File, RelativePathException, EmptyNameException
+from slib.sdir import File, RelativePathError, EmptyNameError
 
 
 class TestFileTestCase(unittest.TestCase):
@@ -36,7 +36,7 @@ class TestFileTestCase(unittest.TestCase):
 
         def call(x):
             d.path = x
-        self.assertRaises(RelativePathException, call, '.')
+        self.assertRaises(RelativePathError, call, '.')
 
     def test_returns_false_if_attributes_not_set(self):
         file_path = self.tempdir.write('123.txt', '')
@@ -285,7 +285,7 @@ class TestFileTestCase(unittest.TestCase):
                 dir_3, 'UNDEFINED', '146 awesome street $# yea')
             compare(final_path, f1.path)
 
-    def test_returns_false_if_emptynameexception_not_raised(self):
+    def test_returns_false_if_emptynameerror_not_raised(self):
         temp_path = self.tempdir.path
         dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
         dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
@@ -295,7 +295,7 @@ class TestFileTestCase(unittest.TestCase):
         f1 = File(file_1)
         call = lambda: f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
                                   group_folder_name=' ')
-        self.assertRaises(EmptyNameException, call())
+        self.assertRaises(EmptyNameError, call())
 
     def test_returns_false_if_file_not_created(self):
         dir_1 = self.tempdir.makedir('abc/fig/one/two/three')

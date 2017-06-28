@@ -5,7 +5,7 @@ import os
 import ctypes
 import shutil
 from testfixtures import TempDirectory, compare
-from slib.sdir import Directory, RelativePathException
+from slib.sdir import Directory, RelativePathError
 
 
 class TestDirectoryTestCase(unittest.TestCase):
@@ -21,15 +21,15 @@ class TestDirectoryTestCase(unittest.TestCase):
         self.assertRaises(TypeError, Directory)
 
     def test_returns_false_if_path_provided_is_relative(self):
-        self.assertRaises(RelativePathException, Directory, '.')
+        self.assertRaises(RelativePathError, Directory, '.')
 
     @unittest.skipIf(os.name == 'nt', 'Test meant to work on UNIX systems')
     def test_returns_false_if_path_provided_is_not_unix_style(self):
-        self.assertRaises(RelativePathException, Directory, 'C:/users/')
+        self.assertRaises(RelativePathError, Directory, 'C:/users/')
 
     @unittest.skipIf(os.name != 'nt', 'Test meant to work on Windows systems')
     def test_returns_false_if_path_provided_is_not_unix_style(self):
-        self.assertRaises(RelativePathException,
+        self.assertRaises(RelativePathError,
                           Directory, '/home/User/helper/')
 
     def test_returns_false_if_path_not_set(self):
@@ -161,7 +161,7 @@ class TestDirectoryTestCase(unittest.TestCase):
 
         def call(x):
             d.path = x
-        self.assertRaises(RelativePathException, call, '.')
+        self.assertRaises(RelativePathError, call, '.')
 
     def test_returns_false_if_pathlib_methods_fail(self):
         with self.subTest(1):

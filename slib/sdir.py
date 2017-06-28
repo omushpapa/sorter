@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
+    """Return True is a SORTER_IGNORE_FILENAME file is found in path."""
     try:
         open(os.path.join(path, filename), 'r').close()
     except FileNotFoundError:
@@ -22,6 +23,7 @@ def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
 
 
 def write_identity_file(path):
+    """Create a SORTER_FOLDER_IDENTITY_FILENAME file in path."""
     identity_file = os.path.join(path, SORTER_FOLDER_IDENTITY_FILENAME)
     open(identity_file, 'w+').close()
     if os.name == 'nt':
@@ -29,19 +31,36 @@ def write_identity_file(path):
         ctypes.windll.kernel32.SetFileAttributesW(identity_file, 2)
 
 
-class RelativePathException(Exception):
-    pass
+class RelativePathError(ValueError):
+    """Raise when the given value is a relative path."""
 
 
-class EmptyNameException(Exception):
-    pass
+class EmptyNameError(ValueError):
+    """Raise when the given value is empty."""
 
 
 class Directory(object):
+    """A path object that can be a file or folder.
+
+    data attributes:
+        Path - a pathlib.Path instance of this path
+        path - the absolute path to this Directory instance
+        parent - the parent folder in which this Directory instance
+            is contained
+        name - the name of this instance including the suffix
+        hidden_path - True is any of the parents, or this instance,
+            is hidden
+        suffix - the last part of the name, which defines the file
+            type
+        stem - the name without the suffix
+
+    methods:
+        in_hidden_path
+    """
 
     def __init__(self, path):
         if not os.path.isabs(path):
-            raise RelativePathException('relative paths cannot be used')
+            raise RelativePathError('relative paths cannot be used')
         self.Path = Path(path)
         self._path = self.Path.absolute().__str__()
         self._parent = self.Path.parent.absolute().__str__()
@@ -88,6 +107,9 @@ class Directory(object):
         self.__init__(value)
 
     def in_hidden_path(self, full_path):
+        """Return True if any parent folder, or this instance, is hidden,
+        False otherwise.
+        """
         paths = full_path.split(os.sep)
 
         if os.name == 'nt':
@@ -113,9 +135,29 @@ class Directory(object):
 
 
 class File(Directory):
+    """An instance of a file.
+
+    Inherits from Directory.
+
+    class attributes:
+        default_category=UNDEFINED - the default name for files whose 
+            categories are not defined in the filegroups module
+
+    data attributes:
+        extension - the suffix without the dot(.)
+        category - the category to which this File instance belongs
+            to as defined in the filegroups module
+        exists - True if self.path points to an existent file in
+            the system
+
+    methods:
+        touch
+        get_category
+        find_suitable_name
+        move_to
+    """
 
     default_category = 'UNDEFINED'
-    filename_pattern = re.compile(r'\-\sdup[\s\(\d\)]+')
 
     def __init__(self, path):
         super(File, self).__init__(path)
@@ -137,12 +179,21 @@ class File(Directory):
         return self._exists()
 
     def touch(self, **kwargs):
+        """Creates this file on the hard drive.
+
+        kwargs:
+            mode=438
+            exist_ok=True
+        """
         self.Path.touch(**kwargs)
 
     def get_category(self, extension):
-        """Return the category of the file instance as determined by its extension.
+        """Return the category of the file instance as determined by its 
+        extension.
 
-        Categories are determined in filegroups.py
+        Categories are determined in the filegroups module.
+
+        The return value is not a full path, just the base name.
         """
         if extension:
             file_extension = set([extension.upper()])
@@ -155,8 +206,6 @@ class File(Directory):
     def find_suitable_name(self, file_path):
         """Validate whether a file with the same name exists, return a name
         indicating that it is a duplicate, else return the given file name.
-
-        A fix is provided in case file renaming errors occur. Check comments.
         """
         dirname = os.path.dirname(file_path)
         new_filename = os.path.basename(file_path)
@@ -171,7 +220,7 @@ class File(Directory):
         return new_filename
 
     def move_to(self, dst_root_path, group=False, by_extension=False, group_folder_name=None):
-        """Move the file instance to a location relative to the
+        """Move the file instance to the location relative to the
         specified dst_root_path.
 
         dst_root_path is the root folder from where files will be organised
@@ -180,27 +229,27 @@ class File(Directory):
         If dst_root_path = '/home/User/'
         final destination may be
 
-                '/home/User/<extension>/<filename>'
+                '/home/User/<extension>/<this file>'
                 - group=False, ignore other options
 
                 or
 
-                '/home/User/<category>/<filename>'
+                '/home/User/<category>/<this file>'
                 - group=True, by_extension=False, group_folder_name=None
 
                 or
 
-                '/home/User/<category>/<extension>/<filename>'
+                '/home/User/<category>/<extension>/<this file>'
                 - group=True, by_extension=True, group_folder_name=None
 
                 or
 
-                '/home/User/<group_folder_name>/<filename>'
+                '/home/User/<group_folder_name>/<this file>'
                 - group=True,by_extension=False,group_folder_name=<some name>
 
                 or
 
-                '/home/User/<group_folder_name>/<extension>/<filename>'
+                '/home/User/<group_folder_name>/<extension>/<this file>'
                 - group=True,by_extension=True,group_folder_name=<some name>
         """
         if group:
@@ -208,7 +257,7 @@ class File(Directory):
                 final_dst, go_back = self._set_category_filename_dst(
                     dst_root_path, by_extension)
             elif not group_folder_name:
-                raise EmptyNameException('blank name not allowed')
+                raise EmptyNameError('blank name not allowed')
             else:
                 final_dst, go_back = self._set_group_folder_dst(
                     dst_root_path, by_extension, group_folder_name)
@@ -265,6 +314,25 @@ class File(Directory):
 
 
 class Folder(Directory):
+    """An instance of a folder.
+
+    Inherits from Directory.
+
+    class attributes:
+        default_category=FOLDERS - the default name for folders whose categories
+            are not defined in filegroups module
+
+    data attributes:
+        exists - True if folder in self.path exists and is a folder
+        for_sorter - True if folder was generated by Sorter
+        category_folder - The category of this instance as defined by filegroups
+            module
+
+    methods:
+        glob
+        move_to
+        group
+    """
 
     default_category = 'FOLDERS'
 
@@ -287,14 +355,29 @@ class Folder(Directory):
         return self._category_folder
 
     def create(self, **kwargs):
+        """Create this Folder.
+
+        Calls pathlib.Path.mkdir(**kwargs)
+
+        kwargs:
+            mode=511
+            parents=False
+        """
         self.Path.mkdir(**kwargs)
 
     def glob(self, pattern):
+        """Iterate over this path and yield all content matching the
+        given pattern.
+
+        Calls pathlib.Path.glob(pattern)
+        """
         return self.Path.glob(pattern)
 
     def _is_sorter_folder(self, path=None):
         """Return True if Folder instance was generated by Sorter, else False.
-        The folder has to exist."""
+
+        The folder in path has to exist.
+        """
         path = path or self.path
         try:
             sorter_identity = os.path.join(
@@ -328,8 +411,17 @@ class Folder(Directory):
 
     def move_to(self, dst_root_path, **kwargs):
         """Move the folder to dst_root_path and, if self.for_sorter is True,
-        create a sorter identity file if the folder has been generated by the
-        current operation i.e. not preexistent."""
+        create a SORTER_FOLDER_IDENTITY_FILENAME file only if the folder has 
+        been generated by the current operation i.e. not preexistent.
+
+        Once all files have been relocated self.path is mapped to the new
+        location.
+
+        If this folder contains a SORTER_IGNORE_FILENAME file then
+        it will be skipped. Nothing will happen.
+
+        If dst_root_path points to the current path the Folder.group is called.
+        """
         if has_signore_file(self.path):
             return
         if self.path == dst_root_path:
@@ -338,7 +430,11 @@ class Folder(Directory):
             else:
                 return
 
-        if self.category_folder is None:
+        group_folder_name = kwargs.get('group_folder_name', None)
+        if group_folder_name:
+            category_dst = os.path.join(dst_root_path, group_folder_name)
+            create_category_identity_file = True
+        elif self.category_folder is None:
             category_dst = dst_root_path
             create_category_identity_file = False
         else:
@@ -390,21 +486,35 @@ class Folder(Directory):
                         pass
 
     def group(self, dst_root_path, **kwargs):
-        """
-        dst_root_path = /home/User/
+        """Relocate files in relation to dst_root_path and delete this
+        folder.
 
-        /home/User/<this folder>/
-        -group=False,ignore the rest
+        If this folder contains a SORTER_IGNORE_FILENAME file then
+        it will be skipped. Nothing will happen.
 
-        or
+        dst_root_path is the root folder from where files will be organised
+        by their extension.
 
-        /home/User/<category>/<this folder>/
-        -group=True,group_folder_name=None,ignore the rest
+        If dst_root_path = /home/User/ 
+            then relocation happens as follows:
 
-        or 
+            /home/User/<this folder>/
+            -group=False,ignore the rest
 
-        /home/User/<group_folder_name>/<this folder>/
-        -group=True,group_folder_name=<some name>
+            or
+
+            /home/User/<category>/<this folder>/
+            -group=True,group_folder_name=None,ignore the rest
+
+            or
+
+            /home/User/<group_folder_name>/<this folder>/
+            -group=True,group_folder_name=<some name>,ignore the rest
+
+        kwargs: (as defined in sdir.File)
+            group=False,
+            by_extension=False,
+            group_folder_name=None
         """
         if has_signore_file(self.path):
             return

@@ -20,3 +20,5 @@ LOG_FILE = os.path.join(PROJECT_ROOT, 'sorter.logs')
 SORTER_IGNORE_FILENAME = '.signore'		# Should start with a dot
 
 SORTER_FOLDER_IDENTITY_FILENAME = '.sorter'		# Should start with a dot
+
+MIDDLEWARE_CLASSES = []

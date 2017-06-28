@@ -3,6 +3,6 @@ python:
   - "3.4"
 cache: pip
 install:
-  - pip install Django==1.11 testfixtures==5.0.0
+  - pip install Django==1.8 testfixtures==5.0.0
 script:
   - python -m unittest discover

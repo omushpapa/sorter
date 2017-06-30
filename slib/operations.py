@@ -2,7 +2,6 @@
 
 import os
 import hashlib
-import django
 from glob import iglob
 from slib.sdir import File, Folder, has_signore_file
 from datetime import datetime

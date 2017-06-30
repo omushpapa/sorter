@@ -64,7 +64,7 @@ class TestOperationsTestCase(unittest.TestCase):
     @unittest.skipIf(os.name == 'nt', 'Windows systems do not have root folder')
     def test_returns_false_if_folder_if_is_writable_fails(self):
         dir_1 = self.temp.makedir('one/two')
-        dir_2 = self.temp.makedir('three/two')
+        self.temp.makedir('three/two')
         with self.subTest(1):
             compare(True, self.operations.is_writable(dir_1))
         with self.subTest(2):

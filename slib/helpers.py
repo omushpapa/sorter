@@ -145,7 +145,7 @@ class DatabaseHelper(object):
 
         file_objects = DB_FILE.objects.filter(added_at=now)
         for file_ in file_objects:
-            this_path = self.db_path_objects.create(
+            self.db_path_objects.create(
                 filename=file_, added_at=now, **database_dict[file_.filename]['path'])
 
     def alter_path(self, alter_value, finders):
@@ -156,7 +156,7 @@ class DatabaseHelper(object):
         alter_value - the key,value pair of the value to alter in the database
             table
         """
-        updated = self.db_path_objects.filter(**finders).update(**alter_value)
+        self.db_path_objects.filter(**finders).update(**alter_value)
 
     def get_history(self, count):
         """Return the number of db_file_objects instances as specified by count."""

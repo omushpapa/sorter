@@ -85,20 +85,17 @@ class TestDirectoryTestCase(unittest.TestCase):
         with self.subTest(1):
             compare([dir_1.path, dir_1.hidden_path], [path_4, False])
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_4), 2)
+        ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_4), 2)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
         with self.subTest(2):
             compare([dir_1.path, dir_1.hidden_path], [path_4, True])
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_4), 0)
+        ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_4), 0)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
         with self.subTest(3):
             compare([dir_1.path, dir_1.hidden_path], [path_4, False])
 
-        a = ctypes.windll.kernel32.SetFileAttributesW(
-            os.path.dirname(path_2), 2)
+        ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_2), 2)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
         with self.subTest(4):
             compare([dir_1.path, dir_1.hidden_path], [path_4, True])

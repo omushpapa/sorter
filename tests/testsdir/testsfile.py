@@ -61,8 +61,7 @@ class TestFileTestCase(unittest.TestCase):
             d = File(initial_file)
             with self.subTest(i):
                 compare(filename, d.find_suitable_name(initial_file))
-            file_path = self.tempdir.write(
-                os.path.join(self.tempdir.path, filename), '')
+            self.tempdir.write(os.path.join(self.tempdir.path, filename), '')
 
     def test_returns_false_if_pathlib_methods_fail(self):
         path = self.tempdir.makedir('abc/fig/')
@@ -102,8 +101,7 @@ class TestFileTestCase(unittest.TestCase):
         dir_3 = self.tempdir.makedir('some/dir/')
         file_1 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_2 = self.tempdir.write(
-            os.path.join(dir_1, 'my awesome cat.txt'), '')
+        self.tempdir.write(os.path.join(dir_1, 'my awesome cat.txt'), '')
         self.tempdir.write(os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
@@ -121,13 +119,11 @@ class TestFileTestCase(unittest.TestCase):
     def test_returns_false_if_grouping_fails_group_true(self):
         dir_1 = self.tempdir.makedir('abc/fig/')
         dir_2 = self.tempdir.makedir('one/twp/')
-        dir_3 = self.tempdir.makedir('some/dir/')
+        self.tempdir.makedir('some/dir/')
         file_1 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_2 = self.tempdir.write(
-            os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_3 = self.tempdir.write(
-            os.path.join(dir_1, '1.jpeg'), '')
+        self.tempdir.write(os.path.join(dir_1, 'my awesome cat.txt'), '')
+        self.tempdir.write(os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
         f1.move_to(dst_root_path=dir_2, group=True, by_extension=False,

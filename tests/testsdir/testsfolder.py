@@ -72,7 +72,6 @@ class TestFolderTestCase(unittest.TestCase):
             compare(True, dir_1.exists)
 
     def test_returns_false_if_grouping_failed(self):
-        temp_path = self.tempdir.path
         dir_1 = self.tempdir.makedir('abc/for/document')
         dir_2 = self.tempdir.makedir('abc/for/PDF')
         dir_3 = self.tempdir.makedir('abc/for/last')
@@ -232,7 +231,6 @@ class TestFolderTestCase(unittest.TestCase):
     def test_retuns_false_folder_with_multiple_subfolders_relocation_failse(self):
         temp_path = self.tempdir.path
         write = lambda path: self.tempdir.write(path, '')
-        isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
         self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')
@@ -264,7 +262,7 @@ class TestFolderTestCase(unittest.TestCase):
         write = lambda path: self.tempdir.write(path, '')
         isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
-        dir_2 = self.tempdir.makedir('one/two/document/PDF/')
+        self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')
         file_2 = write(
             'abc/for/PDF/somefolder/another/and another/JPEG/abc.jpeg')

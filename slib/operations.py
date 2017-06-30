@@ -183,9 +183,8 @@ class SorterOps(object):
             if not dirs and not files:
                 try:
                     os.rmdir(root)
-                except PermissionError as e:
-                    print('Could not move "{0}": {1}'.format(
-                        root, e))
+                except PermissionError:
+                    pass
 
     def _sort_folders_operation(self):
         source_path = self.src
@@ -196,7 +195,7 @@ class SorterOps(object):
         folder_list_matching_pattern = iglob(os.path.join(
             source_path, search_string_pattern + '*'))
         folders = (folder for folder in folder_list_matching_pattern if os.path.isdir(
-            folder) and os.path.basename(folder) not in typeGroups.keys() and not has_signore_file(folder))
+            folder) and not has_signore_file(folder))
 
         for folder in folders:
             folder_path = os.path.join(source_path, folder)
@@ -226,15 +225,15 @@ class SorterOps(object):
             search_string - only include file names with this value. Defaults to ''.
             file_types - the file extensions or formats to include in the sorting.
                 Defaults to ['*'].
-            glob_pattern - the pattern to utilise to include (or exclude) certain file
-                extensions. Default value is determined by the value of kwargs['types_given'].
-            recursive - check into folders and their subfolders.
-            by_extension - group files by types
-            group_folder_name - the name to give the destination folder
+            recursive - check into folders and their subfolders. Defaults to False.
+            by_extension - group files by types. Defaults to False.
+            group_folder_name - the name to give the destination folder.
+            group - boolean value determining whether to group into category or
+                group_folder_name value.
 
         group:
          - into folder/group_folder_name
-         - by search value
+         - by search value/search_string
          - by extension/file type
         """
         proceed, msg = self._check_source_path(src)

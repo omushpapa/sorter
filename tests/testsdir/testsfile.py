@@ -293,9 +293,8 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, 'my awesome cat.txt'), '')
 
         f1 = File(file_1)
-        call = lambda: f1.move_to(dst_root_path=dir_2, group=True, by_extension=True,
-                                  group_folder_name=' ')
-        self.assertRaises(EmptyNameError, call())
+        self.assertRaises(EmptyNameError, f1.move_to, dst_root_path=dir_2,
+                          group=True, by_extension=True, group_folder_name=' ')
 
     def test_returns_false_if_file_not_created(self):
         dir_1 = self.tempdir.makedir('abc/fig/one/two/three')

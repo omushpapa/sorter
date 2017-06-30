@@ -369,6 +369,7 @@ class TestFolderTestCase(unittest.TestCase):
                 '{}/'.format('document'),
                 '{}/'.format('PDF'),
                 '{}/{}'.format('document', SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('document', SORTER_IGNORE_FILENAME),
                 '{}/{}/'.format('document', 'PDF'),
                 '{}/{}/{}'.format('document', 'PDF',
                                   SORTER_FOLDER_IDENTITY_FILENAME),

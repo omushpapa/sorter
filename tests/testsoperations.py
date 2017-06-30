@@ -9,7 +9,7 @@ from slib.operations import SorterOps
 from slib.helpers import DatabaseHelper
 from testfixtures import compare, TempDirectory
 from tests.some_files import many_files, few_files
-from data.settings import SORTER_FOLDER_IDENTITY_FILENAME, DATABASES
+from data.settings import DATABASES, SORTER_FOLDER_IDENTITY_FILENAME, SORTER_IGNORE_FILENAME
 from datetime import datetime
 
 DB_NAME = DATABASES['default']['NAME']
@@ -174,6 +174,16 @@ class TestOperationsTestCase(unittest.TestCase):
                                SORTER_FOLDER_IDENTITY_FILENAME),
                 '{}/{}'.format('presentation',
                                SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('image', SORTER_IGNORE_FILENAME),
+                '{}/{}'.format('website',
+                               SORTER_IGNORE_FILENAME),
+                '{}/{}'.format('archive',
+                               SORTER_IGNORE_FILENAME),
+                '{}/{}'.format('video', SORTER_IGNORE_FILENAME),
+                '{}/{}'.format('installer',
+                               SORTER_IGNORE_FILENAME),
+                '{}/{}'.format('presentation',
+                               SORTER_IGNORE_FILENAME),
                 '{}/{}/{}'.format('image', 'JPEG',
                                   'WhatsApp Image 2017-06-10 at 9.53.02 PM.jpeg'),
                 '{}/{}/{}'.format('image', 'PNG', 'unnamed.png'),
@@ -245,6 +255,8 @@ class TestOperationsTestCase(unittest.TestCase):
                                'pyinstaller-draft1a-35x35-trans.png'),
                 '{}/{}'.format('sample dir',
                                SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('sample dir',
+                               SORTER_IGNORE_FILENAME),
             ], path=dir_1)
 
     def test_returns_false_if_database_insert_fails(self):
@@ -261,8 +273,8 @@ class TestOperationsTestCase(unittest.TestCase):
             compare(1, count)
 
     def test_returns_false_false_if_start_fails(self):
-        def messenger(through='stdout', msg='', **kwargs):
-            print('{}: {}'.format(through, msg))
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         paths = self.add_files_to_path(dir_1)
         expected = ['index.php', 'wp-settings.php']
@@ -294,8 +306,8 @@ class TestOperationsTestCase(unittest.TestCase):
             ] + contents, path=dir_1)
 
     def test_returns_false_false_if_operation_fails_group_true(self):
-        def messenger(through='stdout', msg='', **kwargs):
-            print('{}: {}'.format(through, msg))
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         dir_2 = self.temp.makedir('three/two')
         paths = self.add_files_to_path(dir_1, 'many')
@@ -328,11 +340,13 @@ class TestOperationsTestCase(unittest.TestCase):
                 '{}/{}'.format('whatsapp image', 'GBWhatsApp Images.zip'),
                 '{}/{}'.format('whatsapp image',
                                SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('whatsapp image',
+                               SORTER_IGNORE_FILENAME),
             ], path=dir_2)
 
     def test_returns_false_false_if_operation_fails_group_true_with_matching_folders(self):
-        def messenger(through='stdout', msg='', **kwargs):
-            print('{}: {}'.format(through, msg))
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         dir_2 = self.temp.makedir('three/two')
         dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
@@ -368,11 +382,13 @@ class TestOperationsTestCase(unittest.TestCase):
                 '{}/{}'.format('whatsapp image', 'GBWhatsApp Images.zip'),
                 '{}/{}'.format('whatsapp image',
                                SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('whatsapp image',
+                               SORTER_IGNORE_FILENAME),
             ], path=dir_2)
 
     def test_returns_false_if_recursive_operation_fails(self):
-        def messenger(through='stdout', msg='', **kwargs):
-            print('{}: {}'.format(through, msg))
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('three/two')
         dir_2 = self.temp.makedir('one/two')
         dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
@@ -413,4 +429,6 @@ class TestOperationsTestCase(unittest.TestCase):
                                'pyinstaller-draft1a-35x35-trans.png'),
                 '{}/{}'.format('sample dir',
                                SORTER_FOLDER_IDENTITY_FILENAME),
+                '{}/{}'.format('sample dir',
+                               SORTER_IGNORE_FILENAME),
             ], path=dir_1)

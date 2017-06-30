@@ -235,12 +235,12 @@ class SorterOps(object):
         proceed, msg = self._check_source_path(src)
 
         if not proceed:
-            send_message(msg=msg, weight=2)
+            send_message(through='all', msg=msg, weight=2)
         else:
             proceed, msg = self._check_dst_path(dst)
 
             if not proceed:
-                send_message(msg=msg, weight=2)
+                send_message(through='all', msg=msg, weight=2)
             else:
                 self.search_string = kwargs.get('search_string', None)
                 self.search_string_pattern = self.form_search_pattern(
@@ -279,7 +279,8 @@ class SorterOps(object):
 
                 report = self.db_helper.get_report(start_value)
 
-                send_message(through='both', msg='Done', weight=1, value=100)
+                send_message(through='all', msg='Sorting done',
+                             weight=1, value=100)
 
                 self._set_defaults()
 

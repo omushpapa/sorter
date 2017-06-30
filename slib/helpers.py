@@ -17,22 +17,29 @@ from django.db.utils import OperationalError as DjangoOperationalError
 class InterfaceHelper(object):
     """Handles the messaging to the user."""
 
-    def __init__(self, progress_bar, progress_var, update_idletasks, status_config):
+    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox):
         progress_bar.configure(maximum=100)
         self.progress_bar = progress_bar
         self.progress_var = progress_var
         self.update_idletasks = update_idletasks
         self.status_config = status_config
+        self.messagebox = messagebox
 
-    def message_user(self, through='status', msg='Ready', weight=0, value=0):
+    def message_user(self, through='status', msg='Ready', weight=0, value=100):
         """Show a message to the user."""
         if through == 'status':
             self._use_status(msg, weight)
         if through == 'progress_bar':
             self._use_progress_bar(weight, value)
+        if through == 'dialog':
+            self._use_messagebox(msg, weight)
         if through == 'both':
             self._use_status(msg, weight)
             self._use_progress_bar(weight, value)
+        if through == 'all':
+            self._use_status(msg, weight)
+            self._use_progress_bar(weight, value)
+            self._use_messagebox(msg, weight)
 
     def _use_status(self, msg, weight):
         if weight == 0:
@@ -51,6 +58,12 @@ class InterfaceHelper(object):
         self.progress_bar.configure(
             style="{}.Horizontal.TProgressbar".format(color))
         self.update_idletasks()
+
+    def _use_messagebox(self, msg, weight):
+        if weight == 2:
+            self.messagebox.showwarning(title='Warning', message=msg)
+        else:
+            self.messagebox.showinfo(title='Info', message=msg)
 
 
 class DatabaseHelper(object):

@@ -53,6 +53,7 @@ class TkGui(Tk):
                         background='#778899', troughcolor=self.bg)
         style.configure("green.Horizontal.TProgressbar",
                         background='#2E8B57', troughcolor=self.bg)
+        self.option_add('*Dialog.msg.font', 'Helvetica 10')
 
         # Configure menubar
         menu = Menu(self)
@@ -220,7 +221,8 @@ class TkGui(Tk):
 
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
-            update_idletasks=self.update_idletasks, status_config=self.status_bar.config)
+            update_idletasks=self.update_idletasks, status_config=self.status_bar.config,
+            messagebox=messagebox)
         self.logger.info('Finished GUI initialisation. Waiting...')
 
     def _on_mousewheel(self, event, canvas, count):

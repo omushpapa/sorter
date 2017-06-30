@@ -3,6 +3,7 @@
 [![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2592001)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
 [![Travis-CI](https://img.shields.io/travis/giantas/sorter.svg?maxAge=2592000)](https://travis-ci.org/giantas/sorter)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/cc39b46d83564cd687bb1278f7a942b4)](https://www.codacy.com/app/giantas/sorter?utm_source=github.com&utm_medium=referral&utm_content=giantas/sorter&utm_campaign=Badge_Coverage)
 
 Sorter uses a custom search to help you organise files that contain similar names into their own folder. You can put all letters documents into one folder, all images with the name home into another, all music by one artist in yet another folder, etc. 
 

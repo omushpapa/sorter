@@ -11,7 +11,7 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 
 from data.models import File as DB_FILE, Path as DB_PATH
-from django.db.utils import OperationalError
+from django.db.utils import OperationalError as DjangoOperationalError
 
 
 class InterfaceHelper(object):
@@ -117,7 +117,7 @@ class DatabaseHelper(object):
         """
         try:
             start_value = self.db_file_objects.last().id
-        except (AttributeError, OperationalError):
+        except (AttributeError, DjangoOperationalError):
             start_value = 0
         finally:
             return start_value
@@ -163,12 +163,10 @@ class DatabaseHelper(object):
 
     def get_history(self, count):
         """Return the number of db_file_objects instances as specified by count."""
-        files = self.db_file_objects.all().order_by(
-            '-pk').select_related().filter(filename_path__accepted=True)[:count]
-
         try:
-            length = len(files)
-        except OperationalError:
-            pass
+            files = self.db_file_objects.all().order_by(
+                '-pk').select_related().filter(filename_path__accepted=True)[:count]
+        except (DjangoOperationalError, sqlite3.OperationalError):
+            files = ''
         finally:
             return files

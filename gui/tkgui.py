@@ -11,27 +11,16 @@ from tkinter import *
 from tkinter import filedialog, messagebox, ttk
 from tkinter import TclError
 from slib.helpers import InterfaceHelper
-from slib.sdir import Folder
 from data.filegroups import typeGroups
 from webbrowser import get
 from time import sleep
 from tkinter import font
+from . import descriptions
+from data.version import SORTER_VERSION
 
 
 class TkGui(Tk):
-    HOMEPAGE = "https://giantas.github.io/sorter"
-    SHORT_DESCRIPTION = "Sorter organises/sorts files in a folder into folders which are grouped by type e.g pdf, docx. It (optionally) groups/sorts the folders created in the first sorting into categories e.g audio, video."
-    SOURCE_DESCRIPTION = "SOURCE (required)\nThis is the folder in which the sorting should be done i.e the folder containing the disorganised files."
-    DESTINATION_DESCRIPTION = "DESTINATION (optional)\nAn optional destination (a folder) where the user would want the sorted files/folders to be moved to."
-    SORT_FOLDER_DESCRIPTION = "SORT FOLDERS (optional)\nInstructs Sorter to group the folders created after the first sorting into categories, such as documents, videos, etc."
-    RECURSIVE_DESCRIPTION = "RECURSIVE (optional)\nChecks into every subfolder,starting from the source, and groups/sorts the files accordingly."
-    TYPES_DESCRIPTION = "TYPES (optional)\nSelect the specific file types/formats to be sorted."
-    SEARCH_DESCRIPTION = "SEARCH (optional)\nDirects Sorter to group files containing this value. If this is enabled then, by default, Sort Folders option is enabled to enable the sorted files to be moved to a folder whose name will be the value provided here."
-    HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
-        "\n\n" + SORT_FOLDER_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
-        "\n\n" + TYPES_DESCRIPTION + "\n\n" + SEARCH_DESCRIPTION
-    COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nFor more information click"
-    TAG = "2.2.7"
+    """Sorter GUI class"""
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -51,9 +40,9 @@ class TkGui(Tk):
         self.operations = operations
         self.logger = logger
         self.db_helper = self.operations.db_helper
-        self.init_ui()
+        self._init_ui()
 
-    def init_ui(self):
+    def _init_ui(self):
         # Configure default theme
         style = ttk.Style(self)
         style.theme_use('clam')
@@ -94,7 +83,7 @@ class TkGui(Tk):
         menu.add_cascade(label='Help', menu=help_menu)
         help_menu.add_command(
             label='Help', command=self._show_help, accelerator='F1')
-        usage_link = self.HOMEPAGE + '#usage'
+        usage_link = descriptions.HOMEPAGE + '#usage'
         help_menu.add_command(
             label='Tutorial', command=lambda link=usage_link: self._open_homepage(link))
         help_menu.add_command(label='Refresh', command=self._delete_db)
@@ -143,52 +132,74 @@ class TkGui(Tk):
                                 command=lambda: self._show_diag('destination'))
         dst_button.pack(side=BOTTOM, pady=5)
 
-        # Configure Options frame
-        options_frame = LabelFrame(self.mid_frame, text='Options')
-        options_frame.pack(fill=BOTH, expand=YES, padx=5, pady=10)
-
-        options_frame_left = ttk.Frame(options_frame, style="My.TFrame")
-        options_frame_left.pack(side=LEFT, fill=X, anchor=W, padx=20)
-
-        options_frame_right = ttk.Frame(options_frame, style="My.TFrame")
-        options_frame_right.pack(side=LEFT, fill=X, anchor=W, padx=40)
-
+        # Variables
         self.sort_folders = IntVar()
         self.recursive = IntVar()
         types_value = IntVar()
         self.file_types = ['*']
-        sort_option = Checkbutton(
-            options_frame_left, text='Sort folders', variable=self.sort_folders)
-        sort_option.pack(side=TOP, anchor=W)
-        recursive_option = Checkbutton(
-            options_frame_left, text='Include subfolders', variable=self.recursive)
-        recursive_option.pack(side=TOP, anchor=W, pady=5)
+        self.by_extension = IntVar()
 
-        self.types_window = None
-        self.items_option = Checkbutton(options_frame_right, text='Filter file formats',
-                                        variable=types_value,
-                                        command=lambda: self._show_types_window(types_value))
-        self.items_option.pack(side=TOP, anchor=W)
+        # Configure Options frame
+        options_frame = LabelFrame(self.mid_frame, text='Options')
+        options_frame.pack(fill=BOTH, expand=YES, padx=5, pady=10)
 
-        # Configure search string option
-        search_frame = ttk.Frame(options_frame_right, style="My.TFrame")
-        search_frame.pack(side=TOP, anchor=W, pady=5)
+        frame_left = ttk.Frame(options_frame, style="My.TFrame")
+        frame_left.pack(side=LEFT, fill=Y, anchor=W, padx=20)
+
+        frame_right = ttk.Frame(options_frame, style="My.TFrame")
+        frame_right.pack(side=LEFT, fill=Y, anchor=W, padx=10)
+
+        # For frame_right
+        group_separator = ttk.Separator(frame_left)
+        group_separator.grid(row=0, column=0, pady=1)
+
+        self.search_string = StringVar()
+        search_entry = ttk.Entry(
+            frame_left, width=15, state='disabled', textvariable=self.search_string)
+        search_entry.grid(row=1, column=1, padx=5, pady=2)
 
         self.search_option_value = IntVar()
         search_option = Checkbutton(
-            search_frame, text='Search for:',
-            variable=self.search_option_value,
-            command=lambda: self._enable_search_entry(self.search_option_value))
-        search_option.grid(row=0, column=0)
+            frame_left, text='Search for:',
+            variable=self.search_option_value, anchor=E,
+            command=lambda: self._enable_search_entry(search_entry,
+                                                      self.search_option_value))
+        search_option.grid(row=1, column=0, pady=3, sticky=W, padx=5)
 
-        self.search_entry = ttk.Entry(
-            search_frame, width=15, state='disabled')
-        self.search_entry.grid(row=0, column=1, padx=5)
+        self.group_folder_name = StringVar()
+        group_folder_entry = ttk.Entry(
+            frame_left, width=15, state='disabled', textvariable=self.group_folder_name)
+        group_folder_entry.grid(row=2, column=1, padx=5, pady=2, sticky=S)
+
+        self.group_folder_value = IntVar()
+        group_folder_option = Checkbutton(
+            frame_left, text='Group into folder',
+            variable=self.group_folder_value,
+            command=lambda: self._enable_search_entry(group_folder_entry, self.group_folder_value))
+        group_folder_option.grid(row=2, column=0, pady=3, sticky=W, padx=5)
+
+        extension_button = Checkbutton(
+            frame_left, text='Group by file type',
+            variable=self.by_extension)
+        extension_button.grid(row=3, column=0, pady=3, sticky=W, padx=5)
+
+        # For frame_left
+        other_separator = ttk.Separator(frame_right)
+        other_separator.grid(row=0, column=0)
+        recursive_option = Checkbutton(
+            frame_right, text='Look into sub-folders', variable=self.recursive)
+        recursive_option.grid(row=1, column=0, sticky=W, pady=3)
+
+        self.types_window = None
+        self.items_option = Checkbutton(frame_right, text='Select file types',
+                                        variable=types_value,
+                                        command=lambda: self._show_types_window(types_value))
+        self.items_option.grid(row=2, column=0, sticky=W, pady=3)
 
         # Configure action buttons
         self.run_button = ttk.Button(self.bottom_frame,
                                      text='Run',
-                                     command=self.run_sorter)
+                                     command=self._run_sorter)
         self.run_button.pack(side=LEFT, padx=5)
         self.quit_button = ttk.Button(self.bottom_frame,
                                       text='Quit',
@@ -340,7 +351,7 @@ class TkGui(Tk):
         else:
             items = json.loads(html.decode('utf-8'))
             latest_tag = items.get('tag_name')
-            if latest_tag.strip('v') > self.TAG:
+            if latest_tag.strip('v') > SORTER_VERSION:
                 url = items.get('html_url')
                 body = items.get('body')
                 features = body.replace('*', '')
@@ -367,11 +378,13 @@ class TkGui(Tk):
         finally:
             db_ready = self.db_helper.initialise_db()
 
-    def _enable_search_entry(self, value):
+    def _enable_search_entry(self, entry_widget, value):
         if bool(value.get()):
-            self.search_entry.config(state='normal')
+            entry_widget.config(state='normal')
+            entry_widget.insert(0, 'Enter name here')
         else:
-            self.search_entry.config(state='disabled')
+            entry_widget.delete(0, END)
+            entry_widget.config(state='disabled')
 
     def _set_types(self, types, item):
         type_obj = types.get(item)
@@ -448,7 +461,8 @@ class TkGui(Tk):
 
         frame = Frame(about_window, relief=SUNKEN)
         frame.pack(fill=BOTH)
-        about_message = 'Sorter v' + self.TAG + '\n' + self.COPYRIGHT_MESSAGE
+        about_message = 'Sorter v' + SORTER_VERSION + \
+            '\n' + descriptions.COPYRIGHT_MESSAGE
         msg = Message(frame, justify=CENTER,
                       text=about_message)
         msg.config(pady=5, padx=10, font='Helvetica 9')
@@ -459,14 +473,14 @@ class TkGui(Tk):
         underlined_font = font.Font(link_label, link_label.cget("font"))
         underlined_font.configure(underline=True)
         link_label.configure(font=underlined_font)
-        link_label.bind('<Button-1>', lambda event=None, link=self.HOMEPAGE,
+        link_label.bind('<Button-1>', lambda event=None, link=descriptions.HOMEPAGE,
                         window=about_window: self._open_homepage(link, event, window))
 
     def _show_help(self, info=None):
         help_window = self._create_window('Help')
         help_window.resizable(height=False, width=False)
         help_window.geometry('+{0}+{1}'.format(240, 180))
-        help_message = self.HELP_MESSAGE
+        help_message = descriptions.HELP_MESSAGE
         msg = Message(help_window, text=help_message,
                       justify=LEFT, relief=RIDGE)
         msg.config(pady=10, padx=10, font='Helvetica 10')
@@ -479,40 +493,32 @@ class TkGui(Tk):
             self.logger.info('Exiting...')
             self.destroy()
 
-    def run_sorter(self):
+    def _run_sorter(self):
         """Call Sorter operations on the provided values."""
-        src = self.source_entry.get()
-        dst = self.dst_entry.get()
-        search_string = ''
-        sort_value = bool(self.sort_folders.get())
+        kwargs = {'send_message': self.interface_helper.message_user}
+        kwargs['src'] = self.source_entry.get()
+        kwargs['dst'] = self.dst_entry.get()
+        kwargs['file_types'] = self.file_types
+        kwargs['by_extension'] = bool(self.by_extension.get())
 
-        if dst == 'optional':
-            dst = None
+        search_string = self.search_string.get().strip()
+        if bool(self.search_option_value.get()) and search_string and search_string != 'Enter name here':
+            kwargs['search_string'] = search_string
 
-        if bool(self.search_option_value.get()):
-            search_string = self.search_entry.get()
-            sort_value = True
+        group_folder_name = self.group_folder_name.get().strip()
+        if bool(self.group_folder_value.get()) and group_folder_name and group_folder_name != 'Enter name here':
+            kwargs['group_folder_name'] = group_folder_name
 
-        file_types = self.file_types
+        kwargs['recursive'] = bool(self.recursive.get())
 
-        if file_types == ['*']:
-            types_given = False
-        else:
-            types_given = True
+        if any([kwargs.get('group_folder_name'), kwargs.get('search_string'), kwargs.get('by_extension')]):
+            kwargs['group'] = True
 
-        recursive_value = bool(self.recursive.get())
-
-        self.logger.info('Sorter operations initiated. Values: src=%s, dst=%s, search_string=%s, sort_value=%s, recursive_value=%s, file_types=%s, types_given=%s',
-                         src, dst, search_string, sort_value,
-                         recursive_value, file_types, types_given)
+        self.logger.info(
+            'Sorter operations initiated. Values: %s', tuple(kwargs.items()))
 
         if self.db_helper.initialise_db():
-            report = self.operations.initiate_operation(
-                src=src, dst=dst,
-                send_message=self.interface_helper.message_user,
-                search_string=search_string, sort_folders=sort_value,
-                recursive=recursive_value,
-                file_types=file_types, types_given=types_given)
+            report = self.operations.start(**kwargs)
 
             try:
                 ops_length = str(len(report))
@@ -520,7 +526,7 @@ class TkGui(Tk):
                 ops_length = 0
             self.logger.info('%s operations done.', ops_length)
 
-            if report:
+            if ops_length:
                 self._show_report(report)
         else:
             self.logger.info('DB initialisation failed.')
@@ -591,8 +597,7 @@ class TkGui(Tk):
         def reverse_action(origin, current_path, added_at, button_index):
             """Undo the conducted Sorter operation."""
 
-            original = Folder(os.path.dirname(origin))
-            original.recreate()
+            os.makedirs(os.path.dirname(origin), exist_ok=True)
             try:
                 shutil.move(current_path, origin)
             except FileNotFoundError:
@@ -603,6 +608,7 @@ class TkGui(Tk):
                 alter_value = {'accepted': False}
                 self.db_helper.alter_path(alter_value, finders)
                 buttons[button_index].config(state='disabled')
+                self.update_idletasks()
                 del buttons[button_index]
 
         def reverse_all(report):

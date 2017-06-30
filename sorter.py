@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # Initialise logger
     logging.basicConfig(filename=LOG_FILE,
                         format='%(asctime)s %(message)s', level=logging.INFO)
-    logging.info('Logger ready')
+    logging.info('Logger ready at %s', LOG_FILE)
 
     sorter_loader = Loader(logger=logging)
 

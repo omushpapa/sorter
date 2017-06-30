@@ -22,13 +22,20 @@ def has_signore_file(path, filename=SORTER_IGNORE_FILENAME):
         return True
 
 
-def write_identity_file(path):
+def write_identity_file(path, ignore_file=False):
     """Create a SORTER_FOLDER_IDENTITY_FILENAME file in path."""
+    files = []
     identity_file = os.path.join(path, SORTER_FOLDER_IDENTITY_FILENAME)
     open(identity_file, 'w+').close()
+    files.append(identity_file)
+    if ignore_file:
+        ignore_file_path = os.path.join(path, SORTER_IGNORE_FILENAME)
+        open(ignore_file_path, 'w+').close()
+        files.append(ignore_file_path)
     if os.name == 'nt':
         # Hide file - Windows
-        ctypes.windll.kernel32.SetFileAttributesW(identity_file, 2)
+        for file_ in files:
+            ctypes.windll.kernel32.SetFileAttributesW(file_, 2)
 
 
 class RelativePathError(ValueError):
@@ -254,15 +261,15 @@ class File(Directory):
         """
         if group:
             if group_folder_name is None:
-                final_dst, go_back = self._set_category_filename_dst(
+                final_dst, go_back, ignore_file = self._set_category_filename_dst(
                     dst_root_path, by_extension)
-            elif not group_folder_name:
+            elif not group_folder_name.strip():
                 raise EmptyNameError('blank name not allowed')
             else:
-                final_dst, go_back = self._set_group_folder_dst(
-                    dst_root_path, by_extension, group_folder_name)
+                final_dst, go_back, ignore_file = self._set_group_folder_dst(
+                    dst_root_path, by_extension, group_folder_name.strip())
         else:
-            final_dst, go_back = self._set_extension_filename_dst(
+            final_dst, go_back, ignore_file = self._set_extension_filename_dst(
                 dst_root_path)
 
         final_dir = os.path.dirname(final_dst)
@@ -276,10 +283,10 @@ class File(Directory):
             else:
                 if go_back == 2:
                     write_identity_file(os.path.dirname(
-                        os.path.dirname(final_dst)))
+                        os.path.dirname(final_dst)), ignore_file=ignore_file)
                     write_identity_file(os.path.dirname(final_dst))
                 if go_back == 1:
-                    write_identity_file(os.path.dirname(final_dst))
+                    write_identity_file(os.path.dirname(final_dst), ignore_file=ignore_file)
                 self.path = final_dst
 
     def _set_group_folder_dst(self, root_path, by_extension, group_folder_name):
@@ -287,25 +294,30 @@ class File(Directory):
             group_folder_dst = os.path.join(
                 root_path, group_folder_name, self.extension.upper())
             go_back = 2
+            ignore_file = True
         else:
             group_folder_dst = os.path.join(root_path, group_folder_name)
             go_back = 1
-        return self._set_final_destination(group_folder_dst), go_back
+            ignore_file = True
+        return self._set_final_destination(group_folder_dst), go_back, ignore_file
 
     def _set_category_filename_dst(self, root_path, by_extension):
         if by_extension:
             category_dst = os.path.join(
                 root_path, self.category, self.extension.upper())
             go_back = 2
+            ignore_file = True
         else:
             category_dst = os.path.join(root_path, self.category)
             go_back = 1
-        return self._set_final_destination(category_dst), go_back
+            ignore_file = True
+        return self._set_final_destination(category_dst), go_back, ignore_file
 
     def _set_extension_filename_dst(self, root_path):
         extension_dst = os.path.join(root_path, self.extension.upper())
         go_back = 1
-        return self._set_final_destination(extension_dst), go_back
+        ignore_file = False
+        return self._set_final_destination(extension_dst), go_back, ignore_file
 
     def _set_final_destination(self, parent_path):
         dst = os.path.join(parent_path, self.name)

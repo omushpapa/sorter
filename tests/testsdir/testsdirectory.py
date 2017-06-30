@@ -24,7 +24,7 @@ class TestDirectoryTestCase(unittest.TestCase):
         self.assertRaises(RelativePathError, Directory, '.')
 
     @unittest.skipIf(os.name == 'nt', 'Test meant to work on UNIX systems')
-    def test_returns_false_if_path_provided_is_not_unix_style(self):
+    def test_returns_false_if_path_provided_is_not_windows_style(self):
         self.assertRaises(RelativePathError, Directory, 'C:/users/')
 
     @unittest.skipIf(os.name != 'nt', 'Test meant to work on Windows systems')

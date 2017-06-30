@@ -3,8 +3,6 @@
 import unittest
 import os
 import hashlib
-from sqlite3 import OperationalError
-from django.db.utils import OperationalError as DjangoOperationalError
 from slib.operations import SorterOps
 from slib.helpers import DatabaseHelper
 from testfixtures import compare, TempDirectory
@@ -85,16 +83,10 @@ class TestOperationsTestCase(unittest.TestCase):
 
     def test_returns_false_if_files_not_sorted(self):
         dir_1 = self.temp.makedir('one/two')
-        paths = self.add_files_to_path(dir_1)
+        self.add_files_to_path(dir_1)
         self.operations.src = dir_1
-        # self.operations.dst =
-        # self.operations.search_string =
-        # self.operations.glob_pattern =
         self.operations.group = False
         self.operations.recursive = False
-        # self.operations.file_types =
-        # self.operations.status =
-        # self.operations.parser =
         with self.subTest(1):
             compare(os.path.join(self.tempdir, 'one', 'two'), dir_1)
         self.operations.sort_files()
@@ -134,7 +126,7 @@ class TestOperationsTestCase(unittest.TestCase):
 
     def test_returns_false_if_files_not_sorted_by_category_with_extension(self):
         dir_1 = self.temp.makedir('one/two')
-        paths = self.add_files_to_path(dir_1)
+        self.add_files_to_path(dir_1)
         self.operations.src = dir_1
         # self.operations.dst =
         # self.operations.search_string =
@@ -220,7 +212,7 @@ class TestOperationsTestCase(unittest.TestCase):
 
     def test_returns_false_if_files_not_sorted_by_category_without_extension(self):
         dir_1 = self.temp.makedir('one/two')
-        paths = self.add_files_to_path(dir_1)
+        self.add_files_to_path(dir_1)
         self.operations.src = dir_1
         # self.operations.dst =
         # self.operations.search_string =
@@ -262,7 +254,7 @@ class TestOperationsTestCase(unittest.TestCase):
     def test_returns_false_if_database_insert_fails(self):
         path = self.temp.write('one/three/abc.txt', '')
         hash_path = hashlib.md5(path.encode('utf-8')).hexdigest()
-        db_ready = self.operations.db_helper.initialise_db(test=True)
+        self.operations.db_helper.initialise_db(test=True)
         obj = self.operations.db_helper.db_file_objects.create(
             filename='abc.txt', filepath_hash=hash_path,
             last_modified=datetime.now(), added_at=datetime.now())
@@ -310,7 +302,7 @@ class TestOperationsTestCase(unittest.TestCase):
             pass
         dir_1 = self.temp.makedir('one/two')
         dir_2 = self.temp.makedir('three/two')
-        paths = self.add_files_to_path(dir_1, 'many')
+        self.add_files_to_path(dir_1, 'many')
         self.operations.src = dir_1
         self.operations.group = False
         self.operations.recursive = False
@@ -349,8 +341,8 @@ class TestOperationsTestCase(unittest.TestCase):
             pass
         dir_1 = self.temp.makedir('one/two')
         dir_2 = self.temp.makedir('three/two')
-        dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
-        paths = self.add_files_to_path(dir_1, 'many')
+        self.temp.makedir('one/two/new whatsapp images folder')
+        self.add_files_to_path(dir_1, 'many')
         self.operations.src = dir_1
         self.operations.group = False
         self.operations.recursive = False
@@ -393,9 +385,9 @@ class TestOperationsTestCase(unittest.TestCase):
         dir_2 = self.temp.makedir('one/two')
         dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
         dir_4 = self.temp.makedir('one/two/new whatsapp images folder/last')
-        files_1 = self.add_files_to_path(dir_2, 'few', start=0, end=3)
-        files_2 = self.add_files_to_path(dir_3, 'few', start=3, end=6)
-        files_3 = self.add_files_to_path(dir_4, 'few', start=6)
+        self.add_files_to_path(dir_2, 'few', start=0, end=3)
+        self.add_files_to_path(dir_3, 'few', start=3, end=6)
+        self.add_files_to_path(dir_4, 'few', start=6)
         with self.subTest(1):
             compare([True, True, True, True], [os.path.isdir(dir_1),
                                                os.path.isdir(

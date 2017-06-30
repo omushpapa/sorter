@@ -2,8 +2,6 @@
 
 import unittest
 import os
-import ctypes
-import shutil
 from testfixtures import TempDirectory, compare
 from slib.sdir import Folder
 from data.settings import SORTER_FOLDER_IDENTITY_FILENAME, SORTER_IGNORE_FILENAME
@@ -238,8 +236,7 @@ class TestFolderTestCase(unittest.TestCase):
         dir_ = self.tempdir.makedir('one/two')
         self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')
-        file_2 = write(
-            'abc/for/PDF/somefolder/another/and another/JPEG/abc.jpeg')
+        write('abc/for/PDF/somefolder/another/and another/JPEG/abc.jpeg')
 
         dir_1 = Folder(os.path.dirname(file_1))
         dir_1.move_to(dir_)

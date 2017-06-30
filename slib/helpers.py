@@ -119,8 +119,7 @@ class DatabaseHelper(object):
             start_value = self.db_file_objects.last().id
         except (AttributeError, DjangoOperationalError):
             start_value = 0
-        finally:
-            return start_value
+        return start_value
 
     def get_report(self, start_value):
         """Return the objects created by the current operations."""
@@ -137,8 +136,6 @@ class DatabaseHelper(object):
     def update(self, database_dict):
         """Insert values of the current operations into the database."""
         now = datetime.now()
-        item_count = len(database_dict)
-
         run_list = []
         for filename in database_dict.keys():
             filename_dict = database_dict[filename]
@@ -168,5 +165,4 @@ class DatabaseHelper(object):
                 '-pk').select_related().filter(filename_path__accepted=True)[:count]
         except (DjangoOperationalError, sqlite3.OperationalError):
             files = ''
-        finally:
-            return files
+        return files

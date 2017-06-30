@@ -1,13 +1,10 @@
 #! /usr/bin/env python3
 
 import os
-import sqlite3
 import hashlib
 import django
 from glob import iglob
 from slib.sdir import File, Folder, has_signore_file
-from slib.helpers import DatabaseHelper
-from data.filegroups import typeGroups
 from datetime import datetime
 
 
@@ -32,7 +29,7 @@ class SorterOps(object):
             will be group by their extensions too
         group_folder_name - name of the final folder to which the files
             will be moved to
-        status - an instance of a tkinter status bar, for interfacing 
+        status - an instance of a tkinter status bar, for interfacing
             with the user
         database_dict - contains the values to be inserted into and/or
             retrieved from the database tables after operations

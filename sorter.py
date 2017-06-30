@@ -1,6 +1,5 @@
 #! /usr/bin/env python3.4
 
-import os
 import logging
 from gui.tkgui import TkGui
 from gui.loader import Loader

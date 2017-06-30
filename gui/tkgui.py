@@ -3,7 +3,6 @@
 import base64
 import os
 import shutil
-import sqlite3
 import json
 import urllib.request
 from .icons import icon_string
@@ -376,7 +375,7 @@ class TkGui(Tk):
             messagebox.showwarning(title='Error', message=error_msg)
             self.logger.warning('Error clearing database:: %s', error_msg)
         finally:
-            db_ready = self.db_helper.initialise_db()
+            self.db_helper.initialise_db()
 
     def _enable_search_entry(self, entry_widget, value):
         if bool(value.get()):

@@ -2,8 +2,6 @@
 
 import unittest
 import os
-import ctypes
-import shutil
 from testfixtures import TempDirectory, compare
 from slib.sdir import File, RelativePathError, EmptyNameError
 
@@ -106,8 +104,7 @@ class TestFileTestCase(unittest.TestCase):
             os.path.join(dir_1, 'my awesome cat.txt'), '')
         file_2 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_3 = self.tempdir.write(
-            os.path.join(dir_1, '1.jpeg'), '')
+        self.tempdir.write(os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)
         f1.move_to(dst_root_path=dir_2, group=False, by_extension=False,

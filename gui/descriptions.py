@@ -6,8 +6,10 @@ TYPES_DESCRIPTION = "\SELECT FILE TYPES (optional)\nSelect the specific file typ
 SEARCH_DESCRIPTION = "SEARCH FOR (optional)\nDirects Sorter to search and only group files with names containing this value. If this is enabled then, by default, Sort Folders option is enabled to enable the sorted files to be moved to a folder whose name will be the value provided here."
 GROUP_FOLDER_DESCRIPTION = "GROUP INTO FOLDER (optional)\nMoves all files (and folders) fitting the search descriptions into a folder named by the value provided in this option."
 BY_EXTENSION_DESCRIPTION = "GROUP BY FILE TYPE (optional)\nGroups files in the destination and according to their file type. That is, all JPGs different from PDFs different from DOCXs."
+CLEANUP_DESCRIPTION = "PERFORM CLEANUP (optional)\nLooks into the child folders of the source folder and removes those which are empty."
 HELP_MESSAGE = "How it Works \n" + SHORT_DESCRIPTION + "\n\n" + SOURCE_DESCRIPTION + "\n\n" + DESTINATION_DESCRIPTION + \
     "\n\n" + SEARCH_DESCRIPTION + "\n\n" + RECURSIVE_DESCRIPTION + \
-    "\n\n" + TYPES_DESCRIPTION + "\n\n" + GROUP_FOLDER_DESCRIPTION + "\n\n" + BY_EXTENSION_DESCRIPTION
-COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nFor more information click"
+    "\n\n" + TYPES_DESCRIPTION + "\n\n" + \
+    GROUP_FOLDER_DESCRIPTION + "\n\n" + BY_EXTENSION_DESCRIPTION + "\n\n" + CLEANUP_DESCRIPTION
+COPYRIGHT_MESSAGE = "Copyright \u00a9 2017\n\nAswa Paul\nAll rights reserved.\n\nMore information on the"
 HOMEPAGE = "https://giantas.github.io/sorter"

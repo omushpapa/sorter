@@ -1,10 +1,12 @@
 #! /usr/bin/env python3
 
 import os
+import shutil
 import hashlib
 from glob import iglob
 from slib.sdir import File, Folder, has_signore_file
 from datetime import datetime
+from data.settings import SORTER_IGNORE_FILENAME, SORTER_FOLDER_IDENTITY_FILENAME
 
 
 class SorterOps(object):
@@ -35,6 +37,7 @@ class SorterOps(object):
 
     class methods:
         is_writable
+        perform_cleanup
 
     instance methods:
         form_search_pattern
@@ -81,6 +84,41 @@ class SorterOps(object):
             return '[{0}{1}]'.format(c.lower(), c.upper()) if c.isalpha() else c
         return ''.join(map(either, string))
 
+    @classmethod
+    def perform_cleanup(cls, path):
+        """Walks through the subdirectories and removes any empty subdirectory.
+
+        Empty subdirectories include those which contain only the SORTER_IGNORE_FILENAME
+        and/or SORTER_FOLDER_IDENTITY_FILENAME files.
+        """
+        sorter_files = [SORTER_IGNORE_FILENAME,
+                        SORTER_FOLDER_IDENTITY_FILENAME]
+        if os.name != 'nt':
+            sorter_files.append('.directory')
+
+        def has_other_files(files):
+            count = 0
+            len_sorter_files = len(sorter_files)
+            for file_ in files:
+                count += 1
+                if count > len_sorter_files:
+                    break
+                if file_ not in sorter_files:
+                    return True
+            return False
+
+        def has_existent_dirs(root, dirs):
+            for dir_ in dirs:
+                if os.path.isdir(os.path.join(root, dir_)):
+                    return True
+            return False
+
+        for root, dirs, files in os.walk(path, topdown=False):
+            if not has_existent_dirs(root, dirs):
+                keep = has_other_files(files)
+                if not keep:
+                    shutil.rmtree(root)
+
     def form_search_pattern(self, search_string):
         """Return a search pattern if search_string is provided.
 
@@ -100,7 +138,10 @@ class SorterOps(object):
             return search_string_pattern
 
     def sort_files(self, src=None):
-        """Move files in relation to their extensions and categories."""
+        """Move files in relation to their extensions and categories.
+
+        This function runs according to the patterns of the sdir module.
+        """
         source_path = src or self.src
         destination_path = self.dst or source_path
         search_string = self.search_string

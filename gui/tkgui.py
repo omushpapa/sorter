@@ -138,6 +138,7 @@ class TkGui(Tk):
         types_value = IntVar()
         self.file_types = ['*']
         self.by_extension = IntVar()
+        self.cleanup = IntVar()
 
         # Configure Options frame
         options_frame = LabelFrame(self.mid_frame, text='Options')
@@ -195,6 +196,10 @@ class TkGui(Tk):
                                         variable=types_value,
                                         command=lambda: self._show_types_window(types_value))
         self.items_option.grid(row=2, column=0, sticky=W, pady=3)
+        cleanup_option = Checkbutton(frame_right, text='Perform cleanup',
+                                     variable=self.cleanup)
+        cleanup_option.grid(row=3, column=0, sticky=W, pady=3)
+        cleanup_option.select()
 
         # Configure action buttons
         self.run_button = ttk.Button(self.bottom_frame,
@@ -469,8 +474,8 @@ class TkGui(Tk):
         msg.config(pady=5, padx=10, font='Helvetica 9')
         msg.pack(side=TOP, fill=X)
         link_label = Label(frame, justify=CENTER, foreground='blue',
-                           text='here', font='Helvetica 9', cursor="hand2")
-        link_label.pack(side=BOTTOM, fill=X, ipady=5, ipadx=10)
+                           text='Official Website (click)', font='Helvetica 9', cursor="hand2")
+        link_label.pack(side=BOTTOM, fill=X, ipady=2, ipadx=10)
         underlined_font = font.Font(link_label, link_label.cget("font"))
         underlined_font.configure(underline=True)
         link_label.configure(font=underlined_font)
@@ -501,6 +506,7 @@ class TkGui(Tk):
         kwargs['dst'] = self.dst_entry.get()
         kwargs['file_types'] = self.file_types
         kwargs['by_extension'] = bool(self.by_extension.get())
+        cleanup = bool(self.cleanup.get())
 
         search_string = self.search_string.get().strip()
         if bool(self.search_option_value.get()) and search_string and search_string != 'Enter name here':
@@ -528,9 +534,15 @@ class TkGui(Tk):
             self.logger.info('%s operations done.', ops_length)
 
             if ops_length:
-                self._show_report(report)
+                self._show_report(report, kwargs.get('src'), cleanup)
+
         else:
             self.logger.info('DB initialisation failed.')
+
+    def _call_cleanup(self, cleanup, path):
+        if cleanup:
+            self.logger.info('Performing cleanup')
+            self.operations.perform_cleanup(path)
 
     def _create_canvas(self, window):
         # Configure canvas
@@ -562,13 +574,12 @@ class TkGui(Tk):
         """Resize canvas to fit all contents"""
         canvas.configure(scrollregion=canvas.bbox('all'))
 
-    def _show_report(self, report):
-        def quit(window):
-            window.destroy()
-
+    def _show_report(self, report, source_path, cleanup):
         # Configure Report window
         window = self._create_window('Sorter Report')
         window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
+        window.bind('<Destroy>', lambda event=None, path=source_path,
+                    cleanup=cleanup: self._call_cleanup(cleanup, path))
 
         canvas = self._create_canvas(window)
 
@@ -660,7 +671,7 @@ class TkGui(Tk):
                            ipadx=IPADX, ipady=IPADY, sticky="nsew")
 
         accept_button = ttk.Button(
-            buttons_label, text='Accept', command=lambda: quit(window))
+            buttons_label, text='Accept', command=lambda window=window: window.destroy())
         accept_button.grid(row=0, column=0, padx=10, pady=40, sticky="ns")
         reverse_button = ttk.Button(
             buttons_label, text='Undo All', command=lambda report=report: reverse_all(report))

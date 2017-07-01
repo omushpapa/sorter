@@ -424,3 +424,62 @@ class TestOperationsTestCase(unittest.TestCase):
                 '{}/{}'.format('sample dir',
                                SORTER_IGNORE_FILENAME),
             ], path=dir_1)
+
+    def test_returns_false_if_cleanup_failed(self):
+        def messenger(*args, **kwargs):
+            pass
+        dir_1 = self.temp.makedir('three/two')
+        dir_2 = self.temp.makedir('one/two')
+        dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
+        dir_4 = self.temp.makedir('one/two/new whatsapp images folder/last')
+        self.add_files_to_path(dir_2, 'few', start=0, end=3)
+        self.add_files_to_path(dir_3, 'few', start=3, end=6)
+        self.add_files_to_path(dir_4, 'few', start=6)
+        with self.subTest(1):
+            compare([True, True, True, True], [os.path.isdir(dir_1),
+                                               os.path.isdir(
+                                                   dir_2), os.path.isdir(dir_3),
+                                               os.path.isdir(dir_4)])
+
+        kwargs = {
+            'group_folder_name': 'sample dir',
+            'group': True,
+            'recursive': True,
+        }
+        self.operations.start(src=dir_2, dst=dir_1,
+                              send_message=messenger, **kwargs)
+        self.operations.perform_cleanup(dir_2)
+        with self.subTest(2):
+            compare([False, False], [os.path.isdir(dir_3), os.path.isdir(dir_4)])
+
+    def test_returns_false_if_cleanup_failed_with_sorter_files(self):
+        def messenger(*args, **kwargs):
+            pass
+        dir_1 = self.temp.makedir('three/two')
+        dir_2 = self.temp.makedir('one/two')
+        dir_3 = self.temp.makedir('one/two/new whatsapp images folder')
+        dir_4 = self.temp.makedir('one/two/new whatsapp images folder/last')
+        dir_5 = self.temp.makedir('one/two/new/whatsapp/images/folder')
+        self.temp.write('one/two/new/whatsapp/%s' % SORTER_IGNORE_FILENAME, '')
+        self.temp.write('one/two/new/whatsapp/images/%s' %
+                        SORTER_FOLDER_IDENTITY_FILENAME, '')
+        self.add_files_to_path(dir_2, 'few', start=0, end=3)
+        self.add_files_to_path(dir_3, 'few', start=3, end=6)
+        self.add_files_to_path(dir_4, 'few', start=6)
+        with self.subTest(1):
+            compare([True, True, True, True, True], [os.path.isdir(dir_1),
+                                                     os.path.isdir(
+                dir_2), os.path.isdir(dir_3),
+                os.path.isdir(dir_4), os.path.isdir(dir_5)])
+
+        kwargs = {
+            'group_folder_name': 'sample dir',
+            'group': True,
+            'recursive': True,
+        }
+        self.operations.start(src=dir_2, dst=dir_1,
+                              send_message=messenger, **kwargs)
+        self.operations.perform_cleanup(dir_2)
+        with self.subTest(2):
+            compare([False, False, False], [os.path.isdir(dir_3),
+                                            os.path.isdir(dir_4), os.path.isdir(dir_5)])

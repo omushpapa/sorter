@@ -5,7 +5,7 @@
 [![Travis-CI](https://img.shields.io/travis/giantas/sorter.svg?maxAge=2592000)](https://travis-ci.org/giantas/sorter)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/cc39b46d83564cd687bb1278f7a942b4)](https://www.codacy.com/app/giantas/sorter?utm_source=github.com&utm_medium=referral&utm_content=giantas/sorter&utm_campaign=Badge_Coverage)
 
-Sorter uses a customised search pattern to help you organise files that contain similar characteristics into their own folder. You can put all letters documents into one folder, all images with the name home into another, all music by one artist in yet another folder, etc. 
+Sorter makes file organisation easier. It uses a customised search function to help you organise files that contain similar characteristics into a single folder. You can put all letters documents into one folder, all images with the word home into another, all music by one artist in yet another folder, etc. 
 
 Sorter organises these files into folders which are grouped according to one or more of the following patterns:
 
@@ -38,23 +38,15 @@ Open terminal
 
 *Do*
 
-`git clone https://github.com/giantas/sorter.git`
-
-`cd sorter`
-
-then 
-
 ```
+git clone https://github.com/giantas/sorter.git`
+
+cd sorter
+
 python sorter.py
 ```
 
-or 
-
-```
-python3 sorter.py
-```
-
-### Compile executable
+### Compile executable DIY
 
 #### Install Prerequisites
 * Python 3.4
@@ -63,10 +55,11 @@ python3 sorter.py
 * [Django](https://www.djangoproject.com/download/) v1.8.x
 
 #### How to compile
-* Create and activate a [Virtual Environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/)
+* Create and activate a [Virtual Environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/) (optional but recommended)
 * Ensure prerequisites are available
 * Clone this repository
 * In terminal/cmd, run the command in [pybuild.sh](pybuild.sh)
+* Check into the `dist/` and copy the `sorter` folder to any location for use.
 
 
 ### Website
@@ -93,3 +86,7 @@ Thank you for your interest in contributing to the [Sorter](https://github.com/g
 [![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://github.com/giantas/sorter/issues/new)
 
 - Add search for files in history
+
+### Warning
+
+The coverage results exclude the GUI code. I will not write test for the GUI classes as most of the operations are separate.

@@ -5,6 +5,7 @@ import os
 import shutil
 import json
 import urllib.request
+from sys import executable
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
@@ -382,7 +383,8 @@ class TkGui(Tk):
             messagebox.showwarning(title='Error', message=error_msg)
             self.logger.warning('Error clearing database:: %s', error_msg)
         finally:
-            self.db_helper.initialise_db()
+            self.destroy()
+            os.execl('sorter.py', executable)
 
     def _enable_search_entry(self, entry_widget, value):
         if bool(value.get()):
@@ -528,7 +530,7 @@ class TkGui(Tk):
             report = self.operations.start(**kwargs)
 
             try:
-                ops_length = str(len(report))
+                ops_length = len(report)
             except TypeError:
                 ops_length = 0
             self.logger.info('%s operations done.', ops_length)

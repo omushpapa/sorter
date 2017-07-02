@@ -27,8 +27,9 @@ class TestFileTestCase(unittest.TestCase):
         d = File(self.tempdir.path)
         with self.subTest(1):
             compare(self.tempdir.path, d.path)
-        with self.subTest(2):
-            compare(False, d.hidden_path)
+        if os.name != 'nt':
+            with self.subTest(2):
+                compare(False, d.hidden_path)
         with self.subTest(3):
             compare('UNDEFINED', d.default_category)
 
@@ -41,8 +42,9 @@ class TestFileTestCase(unittest.TestCase):
         d = File(file_path)
         with self.subTest(1):
             compare(file_path, d.path)
-        with self.subTest(2):
-            compare(False, d.hidden_path)
+        if os.name != 'nt':
+            with self.subTest(2):
+                compare(False, d.hidden_path)
         with self.subTest(3):
             compare(os.path.basename(file_path), d.name)
         with self.subTest(4):
@@ -237,6 +239,7 @@ class TestFileTestCase(unittest.TestCase):
         dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
         dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
         dir_3 = os.path.join(temp_path, 'abc', 'fig')
+        self.tempdir.makedir(dir_1)
         file_1 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
 
@@ -259,6 +262,7 @@ class TestFileTestCase(unittest.TestCase):
         dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
         dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
         dir_3 = os.path.join(temp_path, 'abc', 'fig')
+        self.tempdir.makedir(dir_1)
         file_1 = self.tempdir.write(
             os.path.join(dir_1, '146 awesome street $# yea'), '')
 
@@ -282,6 +286,7 @@ class TestFileTestCase(unittest.TestCase):
         temp_path = self.tempdir.path
         dir_1 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two', 'three')
         dir_2 = os.path.join(temp_path, 'abc', 'fig', 'one', 'two')
+        self.tempdir.makedir(dir_1)
         file_1 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
 

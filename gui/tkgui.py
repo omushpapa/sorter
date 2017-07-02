@@ -373,18 +373,10 @@ class TkGui(Tk):
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
         db_name = os.path.basename(db_path)
-        try:
-            os.remove(db_path)
-            messagebox.showinfo(title='Success', message='Database refreshed!')
-            self.operations.db_ready = False
-        except FileNotFoundError:
-            error_msg = 'Could not locate "{0}". \n\nCheck application folder and delete "{1}"'.format(
-                db_path, db_name)
-            messagebox.showwarning(title='Error', message=error_msg)
-            self.logger.warning('Error clearing database:: %s', error_msg)
-        finally:
-            self.destroy()
-            os.execl('sorter.py', executable)
+        os.remove(db_path)
+        messagebox.showinfo(
+            title='Success', message='Database refreshed!\n\nRestart application to continue!')
+        self.destroy()
 
     def _enable_search_entry(self, entry_widget, value):
         if bool(value.get()):

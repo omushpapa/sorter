@@ -30,7 +30,7 @@ class TestDirectoryTestCase(unittest.TestCase):
     @unittest.skipIf(os.name != 'nt', 'Test meant to work on Windows systems')
     def test_returns_false_if_path_provided_is_not_unix_style(self):
         self.assertRaises(RelativePathError,
-                          Directory, '/home/User/helper/')
+                          Directory, '..')
 
     def test_returns_false_if_path_not_set(self):
         d = Directory(self.tempdir.path)
@@ -83,7 +83,7 @@ class TestDirectoryTestCase(unittest.TestCase):
 
         dir_1 = Directory(path_4)
         with self.subTest(1):
-            compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+            compare([dir_1.path, dir_1.hidden_path], [path_4, True])
 
         ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_4), 2)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
@@ -93,7 +93,7 @@ class TestDirectoryTestCase(unittest.TestCase):
         ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_4), 0)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
         with self.subTest(3):
-            compare([dir_1.path, dir_1.hidden_path], [path_4, False])
+            compare([dir_1.path, dir_1.hidden_path], [path_4, True])
 
         ctypes.windll.kernel32.SetFileAttributesW(os.path.dirname(path_2), 2)
         dir_1.path = dir_1.path    # Trigger re-evaluation of instance
@@ -149,6 +149,7 @@ class TestDirectoryTestCase(unittest.TestCase):
         with self.subTest(7):
             compare(os.path.dirname(new_path), d.parent)
 
+    @unittest.skipIf(os.name == 'nt', 'Temp directory is hidden on Windows systems.')
     def test_returns_false_if_path_change_is_relative(self):
         d = Directory(self.tempdir.path)
         with self.subTest(1):

@@ -485,7 +485,7 @@ class TkGui(Tk):
     def _show_help(self, info=None):
         help_window = self._create_window('Help')
         help_window.resizable(height=False, width=False)
-        help_window.geometry('+{0}+{1}'.format(240, 180))
+        help_window.geometry('+{0}+{1}'.format(240, 50))
         help_message = descriptions.HELP_MESSAGE
         msg = Message(help_window, text=help_message,
                       justify=LEFT, relief=RIDGE)

@@ -101,10 +101,10 @@ class SorterOps(object):
             len_sorter_files = len(sorter_files)
             for file_ in files:
                 count += 1
-                if count > len_sorter_files:
-                    break
                 if file_ not in sorter_files:
                     return True
+                if count > len_sorter_files:
+                    break
             return False
 
         def has_existent_dirs(root, dirs):
@@ -319,9 +319,6 @@ class SorterOps(object):
                 send_message(through='both', msg='75% - running...', value=75)
 
                 report = self.db_helper.get_report(start_value)
-
-                send_message(through='all', msg='Sorting done',
-                             weight=1, value=100)
 
                 self._set_defaults()
 

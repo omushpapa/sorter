@@ -388,9 +388,11 @@ class TkGui(Tk):
         except PermissionError:
             messagebox.showwarning(
                 title='Success', message='Error refreshing database!\nDelete file at "%s" once the program closes.' % db_path)
+            self.logger.warning('Error refreshing database file at %s', db_path)
         else:
             messagebox.showinfo(
                 title='Success', message='Database refreshed!\n\nRestart application to continue!')
+            self.logger.info('Database refreshed. Closing... %s', db_path)
         self.destroy()
 
     def _enable_search_entry(self, entry_widget, value):
@@ -536,14 +538,17 @@ class TkGui(Tk):
                 ops_length = 0
             self.logger.info('%s operations done.', ops_length)
 
-            if ops_length:
-                self.interface_helper.message_user(through='all', msg='Sorting finished',
-                                                   weight=1, value=100)
-                self._show_report(report, kwargs.get('src'), cleanup)
+            if report is None:
+                pass
             else:
-                self.interface_helper.message_user(
-                    through='all', msg='Files matching search options not found.')
-                self.interface_helper.message_user()
+                if ops_length:
+                    self.interface_helper.message_user(through='all', msg='Sorting finished',
+                                                       weight=1, value=100)
+                    self._show_report(report, kwargs.get('src'), cleanup)
+                else:
+                    self.interface_helper.message_user(
+                        through='all', msg='Files matching search options not found.')
+            self.interface_helper.message_user()
 
         else:
             self.logger.info('DB initialisation failed.')

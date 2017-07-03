@@ -277,11 +277,13 @@ class SorterOps(object):
 
         if not proceed:
             send_message(through='all', msg=msg, weight=2)
+            return None
         else:
             proceed, msg = self._check_dst_path(dst)
 
             if not proceed:
                 send_message(through='all', msg=msg, weight=2)
+                return None
             else:
                 self.search_string = kwargs.get('search_string', None)
                 self.search_string_pattern = self.form_search_pattern(

@@ -192,7 +192,7 @@ class SorterOps(object):
             return True, ''
 
     def _check_source_path(self, src):
-        self.src = src
+        self.src = os.path.abspath(src)
         if not src:
             msg = 'Source folder is NOT optional (required)'
             return False, msg

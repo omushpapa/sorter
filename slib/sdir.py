@@ -23,11 +23,17 @@ def write_identity_file(path, ignore_file=False):
     """Create a SORTER_FOLDER_IDENTITY_FILENAME file in path."""
     files = []
     identity_file = os.path.join(path, SORTER_FOLDER_IDENTITY_FILENAME)
-    open(identity_file, 'w+').close()
+    try:
+        open(identity_file, 'x').close()
+    except FileExistsError:
+        pass
     files.append(identity_file)
     if ignore_file:
         ignore_file_path = os.path.join(path, SORTER_IGNORE_FILENAME)
-        open(ignore_file_path, 'w+').close()
+        try:
+            open(ignore_file_path, 'x').close()
+        except FileExistsError:
+            pass
         files.append(ignore_file_path)
     if os.name == 'nt':
         # Hide file - Windows
@@ -65,7 +71,7 @@ class Directory(object):
     def __init__(self, path):
         if not os.path.isabs(path):
             raise RelativePathError('relative paths cannot be used')
-        self.Path = Path(path)
+        self.Path = Path(os.path.abspath(path))
         self._path = self.Path.absolute().__str__()
         self._parent = self.Path.parent.absolute().__str__()
         self._name = self.Path.name

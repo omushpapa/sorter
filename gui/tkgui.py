@@ -340,13 +340,13 @@ class TkGui(Tk):
         msg_widget = Message(update_window, justify=CENTER,
                              text=message)
         msg_widget.config(pady=10, padx=10, font='Helvetica 9')
-        msg_widget.pack(fill=Y)
+        msg_widget.pack(side=TOP, fill=X)
         msg_widget.update()
         sleep(2)
-        msg_widget.after(7, lambda msg_widget=msg_widget: self._github_connect(
-            msg_widget, user_checked))
+        msg_widget.after(7, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
+            msg_widget, user_checked, window))
 
-    def _github_connect(self, msg_widget, user_checked):
+    def _github_connect(self, msg_widget, user_checked, window):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
         try:
             with urllib.request.urlopen(link, timeout=5) as response:
@@ -362,13 +362,25 @@ class TkGui(Tk):
                 url = items.get('html_url')
                 body = items.get('body')
                 features = body.replace('*', '')
-                message = 'Update available!\n\nSorter {tag} found.\n\n{feat}\n\nDownload from {url}'.format(
-                    tag=latest_tag, url=url, feat=features)
-                msg_widget.config(text=message, relief=SUNKEN)
+                message = 'Update available!\n\nSorter {tag}.\n\n{feat} ....\n\nMore information on the'.format(
+                    tag=latest_tag, feat=features[:500])
+                msg_widget.config(text=message)
+                self._official_website_label(master=window, window=window)
             else:
                 if user_checked:
                     message = 'No update found.\n\nYou have the latest version installed. Always stay up-to-date with fixes and new features.\n\nStay tuned for more!'
                     msg_widget.config(text=message, relief=FLAT)
+
+    @classmethod
+    def _official_website_label(cls, master, window):
+        link_label = Label(master, justify=CENTER, foreground='blue',
+                           text='Official Website (click)', font='Helvetica 9', cursor="hand2")
+        link_label.pack(side=BOTTOM, fill=X, ipady=2, ipadx=10)
+        underlined_font = font.Font(link_label, link_label.cget("font"))
+        underlined_font.configure(underline=True)
+        link_label.configure(font=underlined_font)
+        link_label.bind('<Button-1>', lambda event=None, link=descriptions.HOMEPAGE,
+                        window=window: cls._open_homepage(link, event, window))
 
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
@@ -454,7 +466,8 @@ class TkGui(Tk):
             pass
         return toplevel_window
 
-    def _open_homepage(self, link, event=None, window=None):
+    @classmethod
+    def _open_homepage(cls, link, event=None, window=None):
         if window is not None:
             window.destroy()
         get().open(link)
@@ -472,14 +485,7 @@ class TkGui(Tk):
                       text=about_message)
         msg.config(pady=5, padx=10, font='Helvetica 9')
         msg.pack(side=TOP, fill=X)
-        link_label = Label(frame, justify=CENTER, foreground='blue',
-                           text='Official Website (click)', font='Helvetica 9', cursor="hand2")
-        link_label.pack(side=BOTTOM, fill=X, ipady=2, ipadx=10)
-        underlined_font = font.Font(link_label, link_label.cget("font"))
-        underlined_font.configure(underline=True)
-        link_label.configure(font=underlined_font)
-        link_label.bind('<Button-1>', lambda event=None, link=descriptions.HOMEPAGE,
-                        window=about_window: self._open_homepage(link, event, window))
+        self._official_website_label(master=frame, window=about_window)
 
     def _show_help(self, info=None):
         help_window = self._create_window('Help')

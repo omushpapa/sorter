@@ -338,7 +338,7 @@ class TkGui(Tk):
         update_window.resizable(height=False, width=False)
         update_window.geometry('+{0}+{1}'.format(310, 250))
         msg_widget = Message(update_window, justify=CENTER,
-                             text=message, relief=SUNKEN)
+                             text=message)
         msg_widget.config(pady=10, padx=10, font='Helvetica 9')
         msg_widget.pack(fill=Y)
         msg_widget.update()

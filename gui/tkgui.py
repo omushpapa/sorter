@@ -373,9 +373,14 @@ class TkGui(Tk):
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
         db_name = os.path.basename(db_path)
-        os.remove(db_path)
-        messagebox.showinfo(
-            title='Success', message='Database refreshed!\n\nRestart application to continue!')
+        try:
+            os.remove(db_path)
+        except PermissionError:
+            messagebox.showwarning(
+                title='Success', message='Error refreshing database!\nDelete file at "%s" once the program closes.' % db_path)
+        else:
+            messagebox.showinfo(
+                title='Success', message='Database refreshed!\n\nRestart application to continue!')
         self.destroy()
 
     def _enable_search_entry(self, entry_widget, value):

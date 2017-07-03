@@ -13,7 +13,6 @@ from tkinter import TclError
 from slib.helpers import InterfaceHelper
 from data.filegroups import typeGroups
 from webbrowser import get
-from time import sleep
 from tkinter import font
 from . import descriptions
 from data.version import SORTER_VERSION
@@ -341,9 +340,8 @@ class TkGui(Tk):
                              text=message)
         msg_widget.config(pady=10, padx=10, font='Helvetica 9')
         msg_widget.pack(side=TOP, fill=X)
-        msg_widget.update()
-        sleep(2)
-        msg_widget.after(7, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
+        self.update()
+        msg_widget.after(3, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
             msg_widget, user_checked, window))
 
     def _github_connect(self, msg_widget, user_checked, window):

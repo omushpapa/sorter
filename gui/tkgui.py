@@ -103,7 +103,7 @@ class TkGui(Tk):
                                   font='Helvetica 9', relief=FLAT)
         self.progress_text.pack(side=TOP, fill=X, pady=5, padx=5)
         self.progress_text.tag_config(
-            "hyperlink", foreground="blue", underline=1)
+            "hyperlink", foreground="#778899", underline=1)
         self.progress_text.tag_bind("hyperlink", "<Enter>", lambda event,
                                     widget=self.progress_text: widget.config(cursor="hand2"))
         self.progress_text.tag_bind("hyperlink", "<Leave>", lambda event,
@@ -749,13 +749,14 @@ class TkGui(Tk):
 
     def _show_diag(self, text):
         dir_ = filedialog.askdirectory()
-        if text == 'source':
-            self.source_entry.delete(0, END)
-            self.source_entry.insert(0, dir_)
-        if text == 'destination':
-            self.dst_entry.delete(0, END)
-            self.dst_entry.config(state='normal')
-            self.dst_entry.insert(0, dir_)
+        if dir_:
+            if text == 'source':
+                self.source_entry.delete(0, END)
+                self.source_entry.insert(0, dir_)
+            if text == 'destination':
+                self.dst_entry.delete(0, END)
+                self.dst_entry.config(state='normal')
+                self.dst_entry.insert(0, dir_)
 
     def tk_run(self):
         """Run the GUI."""

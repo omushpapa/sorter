@@ -82,6 +82,7 @@ class InterfaceHelper(object):
 
     def _use_progress_text(self, msg):
         self.progress_text.insert('end', '\n' + msg)
+        self.update_idletasks()
 
 
 class DatabaseHelper(object):

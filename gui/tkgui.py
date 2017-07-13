@@ -19,7 +19,7 @@ from data.version import SORTER_VERSION
 
 
 class TkGui(Tk):
-    """Sorter GUI class"""
+    """Sorter tkinter GUI class"""
 
     def __init__(self, operations, logger):
         super(TkGui, self).__init__()
@@ -33,7 +33,7 @@ class TkGui(Tk):
 
         # Configure main window
         self.resizable(width=False, height=False)
-        self.maxsize(550, 300)
+        self.maxsize(550, 380)
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.operations = operations
@@ -85,7 +85,7 @@ class TkGui(Tk):
             label='Help', command=self._show_help, accelerator='F1')
         usage_link = descriptions.HOMEPAGE + '#usage'
         help_menu.add_command(
-            label='Tutorial', command=lambda link=usage_link: self._open_homepage(link))
+            label='Tutorial', command=lambda link=usage_link: self._open_link(link))
         help_menu.add_command(label='Refresh', command=self._delete_db)
         help_menu.add_command(
             label='Update', command=lambda: self._check_for_update(user_checked=True))
@@ -99,6 +99,21 @@ class TkGui(Tk):
         self.top_frame.pack(side=TOP, expand=YES, fill=X)
         self.mid_frame = ttk.Frame(self, style='My.TFrame')
         self.mid_frame.pack(side=TOP, expand=YES, fill=BOTH)
+
+        self.progress_text = Text(self, height=1,
+                                  font='Helvetica 9', relief=FLAT)
+        self.progress_text.pack(side=TOP, fill=X, pady=5, padx=5)
+        self.progress_text.tag_config(
+            "hyperlink", foreground="blue", underline=1)
+        self.progress_text.tag_bind("hyperlink", "<Enter>", lambda event,
+                                    widget=self.progress_text: widget.config(cursor="hand2"))
+        self.progress_text.tag_bind("hyperlink", "<Leave>", lambda event,
+                                    widget=self.progress_text: widget.config(cursor=""))
+        self.progress_text.tag_bind("hyperlink", "<Button-1>",
+                                    lambda event: self._enable_progress_text())
+        self.progress_text.insert(END, 'show progress info', 'hyperlink')
+        self.progress_text.config(state=DISABLED)
+
         self.bottom_frame = ttk.Frame(self, style='My.TFrame')
         self.bottom_frame.pack(side=TOP, expand=YES, fill=X)
 
@@ -227,8 +242,15 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config,
-            messagebox=messagebox)
+            messagebox=messagebox, progress_text=self.progress_text)
         self.logger.info('Finished GUI initialisation. Waiting...')
+
+    def _enable_progress_text(self):
+        self.resizable(width=False, height=True)
+        self.geometry('{0}x{1}'.format(550, 370))
+        self.progress_text.config(state=NORMAL, height=4, background="#D3D3D3")
+        self.progress_text.delete('1.0', END)
+        self.resizable(width=False, height=False)
 
     def _on_mousewheel(self, event, canvas, count):
         canvas.yview_scroll(count, "units")
@@ -341,7 +363,7 @@ class TkGui(Tk):
         msg_widget.config(pady=10, padx=10, font='Helvetica 9')
         msg_widget.pack(side=TOP, fill=X)
         self.update()
-        msg_widget.after(3, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
+        msg_widget.after(0, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
             msg_widget, user_checked, window))
 
     def _github_connect(self, msg_widget, user_checked, window):
@@ -378,7 +400,7 @@ class TkGui(Tk):
         underlined_font.configure(underline=True)
         link_label.configure(font=underlined_font)
         link_label.bind('<Button-1>', lambda event=None, link=descriptions.HOMEPAGE,
-                        window=window: cls._open_homepage(link, event, window))
+                        window=window: cls._open_link(link, event, window))
 
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
@@ -388,7 +410,8 @@ class TkGui(Tk):
         except PermissionError:
             messagebox.showwarning(
                 title='Success', message='Error refreshing database!\nDelete file at "%s" once the program closes.' % db_path)
-            self.logger.warning('Error refreshing database file at %s', db_path)
+            self.logger.warning(
+                'Error refreshing database file at %s', db_path)
         else:
             messagebox.showinfo(
                 title='Success', message='Database refreshed!\n\nRestart application to continue!')
@@ -467,25 +490,54 @@ class TkGui(Tk):
         return toplevel_window
 
     @classmethod
-    def _open_homepage(cls, link, event=None, window=None):
+    def _open_link(cls, link, event=None, window=None):
         if window is not None:
             window.destroy()
         get().open(link)
 
     def _show_about(self):
-        about_window = self._create_window('About')
+        about_window = self._create_window('About Sorter')
         about_window.resizable(height=False, width=False)
         about_window.geometry('+{0}+{1}'.format(300, 150))
 
         frame = Frame(about_window, relief=SUNKEN)
-        frame.pack(fill=BOTH)
-        about_message = 'Sorter v' + SORTER_VERSION + \
-            '\n' + descriptions.COPYRIGHT_MESSAGE
-        msg = Message(frame, justify=CENTER,
-                      text=about_message)
-        msg.config(pady=5, padx=10, font='Helvetica 9')
-        msg.pack(side=TOP, fill=X)
-        self._official_website_label(master=frame, window=about_window)
+        frame.pack(side=LEFT, fill=Y)
+
+        about_text = Text(frame, background="white")
+        about_text.config(pady=5, padx=10, font='Helvetica 9')
+        about_text.pack(side=TOP, fill=X)
+        about_text.tag_configure("center", justify='center')
+        about_text.tag_configure('big', font=('Helvetica', 20, 'bold'))
+        about_text.tag_configure('medium', font=('Helvetica', 12, 'bold'))
+        about_text.tag_add("center", 1.0, "end")
+        about_text.tag_config("hyperlink", foreground="blue", underline=1)
+        about_text.tag_bind("hyperlink", "<Enter>", lambda event,
+                            widget=about_text: widget.config(cursor="hand2"))
+        about_text.tag_bind("hyperlink", "<Leave>", lambda event,
+                            widget=about_text: widget.config(cursor=""))
+        about_text.tag_bind("homepage", "<Button-1>", lambda event: self._open_link(
+            descriptions.HOMEPAGE, window=about_window))
+        about_text.tag_bind("source", "<Button-1>", lambda event: self._open_link(
+            descriptions.SOURCE_CODE, window=about_window))
+
+        about_text.insert(END, 'Sorter\n', 'center big')
+        about_text.image_create(END, image=self.icon)
+        about_text.insert(END, '\n\nv{}'.format(
+            SORTER_VERSION), 'center medium')
+        about_text.insert(END, '\n{}More information on '.format(
+            descriptions.COPYRIGHT_MESSAGE), 'center')
+        about_text.insert(END, '{}\n\n'.format(
+            descriptions.HOMEPAGE), 'center hyperlink homepage')
+        about_text.insert(END, 'Source code at ', 'center')
+        about_text.insert(END, '{}\n\n'.format(
+            descriptions.SOURCE_CODE), 'center hyperlink source')
+        about_text.insert(END, '{:-^40}\n\n'.format(''), 'center medium')
+        about_text.insert(END, descriptions.LICENSE)
+
+        scrollbar = ttk.Scrollbar(about_window)
+        scrollbar.pack(side=RIGHT, fill=Y)
+        scrollbar.config(command=about_text.yview)
+        about_text.config(yscrollcommand=scrollbar.set, state="disabled")
 
     def _show_help(self, info=None):
         help_window = self._create_window('Help')
@@ -528,6 +580,7 @@ class TkGui(Tk):
 
         self.logger.info(
             'Sorter operations initiated. Values: %s', tuple(kwargs.items()))
+        self.update()
 
         if self.db_helper.initialise_db():
             report = self.operations.start(**kwargs)
@@ -538,19 +591,19 @@ class TkGui(Tk):
                 ops_length = 0
             self.logger.info('%s operations done.', ops_length)
 
-            if report is None:
-                pass
-            else:
+            if report is not None:
                 if ops_length:
-                    self.interface_helper.message_user(through='all', msg='Sorting finished',
+                    self.interface_helper.message_user(through=['status', 'progress_bar', 'dialog'], msg='Sorting finished',
                                                        weight=1, value=100)
                     self._show_report(report, kwargs.get('src'), cleanup)
                 else:
                     self.interface_helper.message_user(
-                        through='all', msg='Files matching search options not found.')
+                        through=['status', 'progress_bar', 'dialog', 'progress_text'], msg='Files matching search options not found.')
             self.interface_helper.message_user()
 
         else:
+            self.interface_helper.message_user(
+                through=['status', 'dialog'], msg='Database initialisation failed.')
             self.logger.info('DB initialisation failed.')
 
     def _create_canvas(self, window):

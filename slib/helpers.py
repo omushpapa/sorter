@@ -15,31 +15,46 @@ from django.db.utils import OperationalError as DjangoOperationalError
 
 
 class InterfaceHelper(object):
-    """Handles the messaging to the user."""
+    """Handles the messaging to the user.
 
-    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox):
+    data attributes maps:
+        progress_bar - ttk.Progressbar instance
+        progress_var - IntVar() for progress_bar
+        update_idletasks - tkinter.update_idletasks
+        status_config - ttk.Label.config
+        messagebox - tkinter.messagebox
+        progress_text - tkinter.Text
+
+    methods:
+        message_user
+    """
+
+    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox, progress_text):
         progress_bar.configure(maximum=100)
         self.progress_bar = progress_bar
         self.progress_var = progress_var
         self.update_idletasks = update_idletasks
         self.status_config = status_config
         self.messagebox = messagebox
+        self.progress_text = progress_text
 
-    def message_user(self, through='status', msg='Ready', weight=0, value=100):
-        """Show a message to the user."""
-        if through == 'status':
+    def message_user(self, through=['status'], msg='Ready', weight=0, value=100):
+        """Show a message to the user.
+
+        Through:
+            status - status bar
+            progress_bar - progress bar
+            dialog - messagebox
+            progress_text - progress info text box
+        """
+        if 'status' in through:
             self._use_status(msg, weight)
-        if through == 'progress_bar':
+        if 'progress_bar' in through:
             self._use_progress_bar(weight, value)
-        if through == 'dialog':
+        if 'dialog' in through:
             self._use_messagebox(msg, weight)
-        if through == 'both':
-            self._use_status(msg, weight)
-            self._use_progress_bar(weight, value)
-        if through == 'all':
-            self._use_status(msg, weight)
-            self._use_progress_bar(weight, value)
-            self._use_messagebox(msg, weight)
+        if 'progress_text' in through:
+            self._use_progress_text(msg)
 
     def _use_status(self, msg, weight):
         if weight == 0:
@@ -64,6 +79,9 @@ class InterfaceHelper(object):
             self.messagebox.showwarning(title='Warning', message=msg)
         else:
             self.messagebox.showinfo(title='Info', message=msg)
+
+    def _use_progress_text(self, msg):
+        self.progress_text.insert('end', '\n' + msg)
 
 
 class DatabaseHelper(object):

@@ -5,7 +5,7 @@
 [![Travis-CI](https://img.shields.io/travis/giantas/sorter.svg?maxAge=2592000)](https://travis-ci.org/giantas/sorter)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/cc39b46d83564cd687bb1278f7a942b4)](https://www.codacy.com/app/giantas/sorter?utm_source=github.com&utm_medium=referral&utm_content=giantas/sorter&utm_campaign=Badge_Coverage)
 
-Sorter makes file organisation easier. It uses a customised search function to help you organise files that contain similar characteristics into a single folder. You can put all letters documents into one folder, all images with the word home into another, all music by one artist in yet another folder, etc. 
+Sorter makes file organisation easier. It simply helps you organise several files that contain similar characteristics into a single folder. You can put all letters documents into one folder, all images with the word home into another, all music by one artist in yet another folder, etc. 
 
 Sorter organises these files into folders which are grouped according to one or more of the following patterns:
 

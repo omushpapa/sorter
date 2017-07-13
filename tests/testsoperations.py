@@ -82,6 +82,8 @@ class TestOperationsTestCase(unittest.TestCase):
         return paths
 
     def test_returns_false_if_files_not_sorted(self):
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         self.add_files_to_path(dir_1)
         self.operations.src = dir_1
@@ -89,7 +91,7 @@ class TestOperationsTestCase(unittest.TestCase):
         self.operations.recursive = False
         with self.subTest(1):
             compare(os.path.join(self.tempdir, 'one', 'two'), dir_1)
-        self.operations.sort_files()
+        self.operations.sort_files(send_message=messenger)
         with self.subTest(2):
             self.temp.compare([
                 '{}/'.format('JPEG'),
@@ -125,6 +127,8 @@ class TestOperationsTestCase(unittest.TestCase):
             ], path=dir_1)
 
     def test_returns_false_if_files_not_sorted_by_category_with_extension(self):
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         self.add_files_to_path(dir_1)
         self.operations.src = dir_1
@@ -139,7 +143,7 @@ class TestOperationsTestCase(unittest.TestCase):
         # self.operations.parser =
         with self.subTest(1):
             compare(os.path.join(self.tempdir, 'one', 'two'), dir_1)
-        self.operations.sort_files()
+        self.operations.sort_files(send_message=messenger)
         with self.subTest(2):
             self.temp.compare([
                 '{}/'.format('image'),
@@ -211,6 +215,8 @@ class TestOperationsTestCase(unittest.TestCase):
             ], path=dir_1)
 
     def test_returns_false_if_files_not_sorted_by_category_without_extension(self):
+        def messenger(*args, **kwargs):
+            pass
         dir_1 = self.temp.makedir('one/two')
         self.add_files_to_path(dir_1)
         self.operations.src = dir_1
@@ -226,7 +232,7 @@ class TestOperationsTestCase(unittest.TestCase):
         self.by_extension = False
         with self.subTest(1):
             compare(os.path.join(self.tempdir, 'one', 'two'), dir_1)
-        self.operations.sort_files()
+        self.operations.sort_files(send_message=messenger)
         with self.subTest(2):
             self.temp.compare([
                 '{}/'.format('sample dir'),

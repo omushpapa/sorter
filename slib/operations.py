@@ -137,7 +137,7 @@ class SorterOps(object):
                     '?'.join(insensitive_string.split())
             return search_string_pattern
 
-    def sort_files(self, src=None):
+    def sort_files(self, src=None, send_message=None):
         """Move files in relation to their extensions and categories.
 
         This function runs according to the patterns of the sdir module.
@@ -154,6 +154,8 @@ class SorterOps(object):
 
         glob_files = (i for item in file_types for i in iglob(os.path.join(
             source_path, string_glob_pattern + item)) if os.path.isfile(i))
+        send_message(through=['status', 'progress_text'],
+                     msg='Searching for files...', weight=1)
 
         for file_ in glob_files:
             file_instance = File(os.path.join(source_path, file_))
@@ -166,6 +168,9 @@ class SorterOps(object):
                                   group_folder_name=group_folder_name, by_extension=self.by_extension)
             new_path = file_instance.path
             if initial_path != new_path:
+                msg = 'Moving {} to {}'.format(file_instance.name, new_path)
+                send_message(
+                    through=['status', 'progress_text'], msg=msg, weight=1)
                 # Write to DB
                 hash_path = hashlib.md5(
                     initial_path.encode('utf-8')).hexdigest()
@@ -213,17 +218,23 @@ class SorterOps(object):
             self.glob_pattern = '*.'
         return self.glob_pattern
 
-    def _recursive_operation(self):
+    def _recursive_operation(self, send_message):
         source_path = self.src
         for root, dirs, files in os.walk(source_path):
-            self.sort_files(root)
+            msg = 'Checking directory {}'.format(root)
+            send_message(
+                through=['status', 'progress_text'], msg=msg, weight=1)
+            self.sort_files(root, send_message=send_message)
             if not dirs and not files:
                 try:
                     os.rmdir(root)
                 except PermissionError:
-                    pass
+                    msg = 'Could not delete {}. May have hidden files.'.format(
+                        root)
+                    send_message(
+                        through=['status', 'progress_text'], msg=msg, weight=1)
 
-    def _sort_folders_operation(self):
+    def _sort_folders_operation(self, send_message):
         source_path = self.src
         destination_path = self.dst or self.src
         search_string_pattern = self.search_string_pattern
@@ -233,10 +244,16 @@ class SorterOps(object):
             source_path, search_string_pattern + '*'))
         folders = (folder for folder in folder_list_matching_pattern if os.path.isdir(
             folder) and not has_signore_file(folder))
+        send_message(through=['status', 'progress_text'],
+                     msg='Searching for folders...', weight=1)
 
         for folder in folders:
             folder_path = os.path.join(source_path, folder)
             folder_instance = Folder(folder_path)
+            msg = 'Moving {} to {}'.format(
+                folder_instance.path, destination_path)
+            send_message(
+                through=['status', 'progress_text'], msg=msg, weight=1)
             folder_instance.move_to(
                 destination_path, group_folder_name=search_string)
 
@@ -276,13 +293,15 @@ class SorterOps(object):
         proceed, msg = self._check_source_path(src)
 
         if not proceed:
-            send_message(through='all', msg=msg, weight=2)
+            send_message(through=['status', 'progress_bar',
+                                  'dialog'], msg=msg, weight=2)
             return None
         else:
             proceed, msg = self._check_dst_path(dst)
 
             if not proceed:
-                send_message(through='all', msg=msg, weight=2)
+                send_message(
+                    through=['status', 'progress_bar', 'dialog'], msg=msg, weight=2)
                 return None
             else:
                 self.search_string = kwargs.get('search_string', None)
@@ -296,29 +315,36 @@ class SorterOps(object):
                 self.group_folder_name = self._set_group_folder_name(
                     kwargs.get('group_folder_name', None))
 
-                send_message(through='both', msg='10% - running...', value=10)
+                send_message(through=['status', 'progress_bar'],
+                             msg='10% - running...', value=10)
 
                 # Get last row in database
                 start_value = self.db_helper.get_start_value()
 
-                send_message(through='both', msg='25% - running...', value=25)
+                send_message(through=['status', 'progress_bar'],
+                             msg='25% - running...', value=25)
 
                 if self.recursive:
-                    self._recursive_operation()
+                    self._recursive_operation(send_message=send_message)
                 else:
-                    self.sort_files()
+                    self.sort_files(send_message=send_message)
 
-                send_message(through='both', msg='40% - running...', value=50)
+                send_message(through=['status', 'progress_bar'],
+                             msg='40% - running...', value=50)
 
                 # Call database helper
+                send_message(through=['status'],
+                             msg='Saving data to database...', weight=1)
                 self.db_helper.update(self.database_dict)
 
-                send_message(through='both', msg='60% - running...', value=50)
+                send_message(through=['status', 'progress_bar'],
+                             msg='60% - running...', value=50)
 
                 if self.search_string:
-                    self._sort_folders_operation()
+                    self._sort_folders_operation(send_message=send_message)
 
-                send_message(through='both', msg='75% - running...', value=75)
+                send_message(through=['status', 'progress_bar'],
+                             msg='75% - running...', value=75)
 
                 report = self.db_helper.get_report(start_value)
 

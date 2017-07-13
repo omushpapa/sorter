@@ -132,15 +132,9 @@ class TestOperationsTestCase(unittest.TestCase):
         dir_1 = self.temp.makedir('one/two')
         self.add_files_to_path(dir_1)
         self.operations.src = dir_1
-        # self.operations.dst =
-        # self.operations.search_string =
-        # self.operations.glob_pattern =
         self.operations.group = True
         self.operations.recursive = False
         self.operations.by_extension = True
-        # self.operations.file_types =
-        # self.operations.status =
-        # self.operations.parser =
         with self.subTest(1):
             compare(os.path.join(self.tempdir, 'one', 'two'), dir_1)
         self.operations.sort_files(send_message=messenger)
@@ -220,14 +214,8 @@ class TestOperationsTestCase(unittest.TestCase):
         dir_1 = self.temp.makedir('one/two')
         self.add_files_to_path(dir_1)
         self.operations.src = dir_1
-        # self.operations.dst =
-        # self.operations.search_string =
-        # self.operations.glob_pattern =
         self.operations.group = True
         self.operations.recursive = False
-        # self.operations.file_types =
-        # self.operations.status =
-        # self.operations.parser =
         self.operations.group_folder_name = 'sample dir'
         self.by_extension = False
         with self.subTest(1):

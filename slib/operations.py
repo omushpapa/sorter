@@ -144,7 +144,6 @@ class SorterOps(object):
         """
         source_path = src or self.src
         destination_path = self.dst or source_path
-        search_string = self.search_string
         string_pattern = self.search_string_pattern
         file_types = self.file_types
         glob_pattern = self.glob_pattern

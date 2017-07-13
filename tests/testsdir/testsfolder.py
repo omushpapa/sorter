@@ -98,7 +98,6 @@ class TestFolderTestCase(unittest.TestCase):
             compare(os.path.join(dir_, 'FOLDERS', 'last'), d3.path)
 
     def test_folder_grouping_with_files(self):
-        temp_path = self.tempdir.path
         write = lambda path: self.tempdir.write(path, '')
         isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
@@ -260,7 +259,6 @@ class TestFolderTestCase(unittest.TestCase):
     def test_returns_false_if_folder_relocation_with_ignore_file_succeeds(self):
         temp_path = self.tempdir.path
         write = lambda path: self.tempdir.write(path, '')
-        isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
         self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')
@@ -290,7 +288,7 @@ class TestFolderTestCase(unittest.TestCase):
         write = lambda path: self.tempdir.write(path, '')
         isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
-        dir_2 = self.tempdir.makedir('one/two/document/PDF/')
+        self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')
 
         dir_1 = Folder(os.path.dirname(file_1))

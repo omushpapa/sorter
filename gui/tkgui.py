@@ -5,7 +5,6 @@ import os
 import shutil
 import json
 import urllib.request
-from sys import executable
 from .icons import icon_string
 from tkinter import *
 from tkinter import filedialog, messagebox, ttk
@@ -379,7 +378,7 @@ class TkGui(Tk):
             items = json.loads(html.decode('utf-8'))
             latest_tag = items.get('tag_name')
             if latest_tag.strip('v') > SORTER_VERSION:
-                url = items.get('html_url')
+                items.get('html_url')
                 body = items.get('body')
                 features = body.replace('*', '')
                 message = 'Update available!\n\nSorter {tag}.\n\n{feat} ....\n\nMore information on the'.format(
@@ -404,7 +403,6 @@ class TkGui(Tk):
 
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
-        db_name = os.path.basename(db_path)
         try:
             os.remove(db_path)
         except PermissionError:

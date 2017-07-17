@@ -1,0 +1,31 @@
+.toTop {
+	width:3em;
+	height:3em;
+	padding:10px; 
+	text-align:center; 
+	background: transparent;
+	font-weight: bold;
+	color: #e85151;
+	text-decoration: none;
+	position:fixed;
+	top:75px;
+	right:40px;
+	display:none;
+	background: url('img/ic_arrow_drop_up_black.png') no-repeat 0px 20px;
+}
+.toTop:hover {
+	text-decoration:none;
+	background-color: #3D4143;
+}
+.list {
+	display: inline-block;
+	width: 75vw;
+	position: relative;
+	left: 3em;
+	font-size: 1.5em;
+	line-height: 1.5em;
+	letter-spacing: 0.02em;
+}
+.highlight {
+	color: #e85151;
+}

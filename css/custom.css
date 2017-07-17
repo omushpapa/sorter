@@ -11,7 +11,7 @@
 	top:75px;
 	right:40px;
 	display:none;
-	background: url('img/ic_arrow_drop_up_black.png') no-repeat 0px 20px;
+	background: url('img/arrow.png') no-repeat 0px 20px;
 }
 .toTop:hover {
 	text-decoration:none;
@@ -26,6 +26,19 @@
 	line-height: 1.5em;
 	letter-spacing: 0.02em;
 }
+.inline-list {
+	display: inline-block;
+	width: 33vw;
+	position: relative;
+	left: 3em;
+	font-size: 0.9em;
+	line-height: 1.3em;
+	letter-spacing: 0.02em;
+}
 .highlight {
 	color: #e85151;
+	font-weight: bold;
+}
+.noline {
+	border-bottom-color: transparent;
 }

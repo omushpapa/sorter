@@ -168,17 +168,20 @@ class DatabaseHelper(object):
     def update(self, database_dict):
         """Insert values of the current operations into the database."""
         now = datetime.now()
-        run_list = []
+        file_list = []
         for filename in database_dict.keys():
             filename_dict = database_dict[filename]
-            this_file = DB_FILE(added_at=now, **filename_dict['file'])
-            run_list.append(this_file)
-        self.db_file_objects.bulk_create(run_list)
+            this_filename = DB_FILE(added_at=now, **filename_dict['file'])
+            file_list.append(this_filename)
+        self.db_file_objects.bulk_create(file_list)
 
         file_objects = DB_FILE.objects.filter(added_at=now)
+        path_list = []
         for file_ in file_objects:
-            self.db_path_objects.create(
+            this_file = DB_PATH(
                 filename=file_, added_at=now, **database_dict[file_.filename]['path'])
+            path_list.append(this_file)
+        self.db_path_objects.bulk_create(path_list)
 
     def alter_path(self, alter_value, finders):
         """Alter the value of db_file_objects instance in the database.

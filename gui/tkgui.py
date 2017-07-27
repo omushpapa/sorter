@@ -638,8 +638,17 @@ class TkGui(Tk):
         # Configure Report window
         window = self._create_window('Sorter Report')
         window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
-        window.protocol("WM_DELETE_WINDOW", lambda: messagebox.showwarning(
-            parent=window, message='Press Accept button'))
+
+        def _after_destroy():
+            """Destroy window then do some cleanup."""
+            window.destroy()
+            if cleanup:
+                self.interface_helper.message_user(
+                    msg='Performing cleanup...', weight=1)
+                self.operations.perform_cleanup(source_path)
+                self.interface_helper.message_user()
+
+        window.protocol("WM_DELETE_WINDOW", _after_destroy)
 
         canvas = self._create_canvas(window)
 
@@ -729,15 +738,6 @@ class TkGui(Tk):
             frame, width=400, relief=RAISED, anchor=W, background=self.bg, borderwidth=0)
         buttons_label.grid(row=last_row, column=0, columnspan=5, padx=0, pady=0,
                            ipadx=IPADX, ipady=IPADY, sticky="nsew")
-
-        def _after_destroy():
-            """Destroy window then do some cleanup."""
-            window.destroy()
-            if cleanup:
-                self.interface_helper.message_user(
-                    msg='Performing cleanup...', weight=1)
-                self.operations.perform_cleanup(source_path)
-                self.interface_helper.message_user()
 
         accept_button = ttk.Button(
             buttons_label, text='Accept', command=_after_destroy)

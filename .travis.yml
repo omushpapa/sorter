@@ -3,8 +3,10 @@ python:
   - "3.4"
 cache: pip
 install:
-  - pip install Django==1.8 testfixtures==5.0.0 coverage==4.4.1 codacy-coverage==1.3.6 
+  - pip install pipenv
+  - export VENV_HOME_DIR=$(pipenv --venv)
+  - pipenv sync
 script:
-  - python -m unittest discover
+  - pipenv run python -m unittest discover
 after_script:
   - bash code_coverage.sh

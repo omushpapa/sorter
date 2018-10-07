@@ -154,12 +154,12 @@ class TestFileTestCase(unittest.TestCase):
     def test_returns_false_if_grouping_fails_by_extension_true_group_folder_name_given(self):
         dir_1 = self.tempdir.makedir('abc/fig/')
         dir_2 = self.tempdir.makedir('one/twp/')
-        dir_3 = self.tempdir.makedir('some/dir/')
+        self.tempdir.makedir('some/dir/')
         file_1 = self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_2 = self.tempdir.write(
+        self.tempdir.write(
             os.path.join(dir_1, 'my awesome cat.txt'), '')
-        file_3 = self.tempdir.write(
+        self.tempdir.write(
             os.path.join(dir_1, '1.jpeg'), '')
 
         f1 = File(file_1)

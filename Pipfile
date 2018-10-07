@@ -11,6 +11,8 @@ pyconfigreader = "*"
 pyinstaller = "*"
 bumpversion = "*"
 testfixtures = "*"
+coverage = "*"
+codacy-coverage = "*"
 
 [requires]
 python_version = "3.4"

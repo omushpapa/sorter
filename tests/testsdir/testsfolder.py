@@ -228,7 +228,6 @@ class TestFolderTestCase(unittest.TestCase):
             compare(False, os.path.exists(os.path.dirname(file_1)))
 
     def test_retuns_false_folder_with_multiple_subfolders_relocation_failse(self):
-        temp_path = self.tempdir.path
         write = lambda path: self.tempdir.write(path, '')
         dir_ = self.tempdir.makedir('one/two')
         self.tempdir.makedir('one/two/document/PDF/')
@@ -286,7 +285,6 @@ class TestFolderTestCase(unittest.TestCase):
     def test_returns_false_if_original_folder_exists(self):
         temp_path = self.tempdir.path
         write = lambda path: self.tempdir.write(path, '')
-        isfile = os.path.isfile
         dir_ = self.tempdir.makedir('one/two')
         self.tempdir.makedir('one/two/document/PDF/')
         file_1 = write('abc/for/PDF/this long name.pdf')

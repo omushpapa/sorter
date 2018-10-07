@@ -1,2 +1,4 @@
 Django==1.8
-testfixtures==5.0.0
+testfixtures==6.3.0
+pyconfigreader==0.3.3
+bumpversion==0.5.3

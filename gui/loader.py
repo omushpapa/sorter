@@ -1,5 +1,6 @@
 #! /usr/bin/env python3.4
 
+import logging
 import base64
 from tkinter import *
 from tkinter import ttk
@@ -7,16 +8,15 @@ try:
     from .icons import icon_100
 except SystemError:
     from icons import icon_100
+    
+logger = logging.getLogger(__name__)
 
 
 class Loader(Tk):
 
-    def __init__(self, logger):
+    def __init__(self):
         super(Loader, self).__init__()
         self.overrideredirect(True)
-
-        # Set logger
-        self.logger = logger
 
         # Configure default theme
         style = ttk.Style(self)
@@ -73,8 +73,8 @@ class Loader(Tk):
 
     def report_progress(self, value, msg):
         self.progress_label.config(text=msg)
-        self.logger.info(msg)
-        if value == 100:
+        logger.info(msg)
+        if value > 99:
             self.destroy()
         else:
             self.progress_var.set(value)

@@ -5,17 +5,21 @@ from gui.tkgui import TkGui
 from gui.loader import Loader
 from slib.operations import SorterOps
 from slib.helpers import DatabaseHelper
-from data.settings import DATABASES, LOG_FILE
+from data.settings import DATABASES, LOG_FILE, DEBUG, SETTINGS
+from data.version import SORTER_VERSION
+
+__version__ = SORTER_VERSION
 
 DB_NAME = DATABASES['default']['NAME']
 
 if __name__ == '__main__':
     # Initialise logger
     logging.basicConfig(filename=LOG_FILE,
-                        format='%(asctime)s %(message)s', level=logging.INFO)
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        level=logging.DEBUG if DEBUG else logging.INFO)
     logging.info('Logger ready at %s', LOG_FILE)
 
-    sorter_loader = Loader(logger=logging)
+    sorter_loader = Loader()
 
     # Load database helper
     sorter_loader.report_progress(
@@ -40,7 +44,7 @@ if __name__ == '__main__':
     sorter_loader.tk_run()
 
     # Initialise GUI
-    app = TkGui(operations=operations, logger=logging)
+    app = TkGui(operations=operations, settings=SETTINGS)
 
     # Show window
     app.tk_run()

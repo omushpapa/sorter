@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import logging
 import base64
 import os
 import shutil
@@ -15,13 +16,118 @@ from webbrowser import get
 from tkinter import font
 from . import descriptions
 from data.version import SORTER_VERSION
+from datetime import datetime
+
+
+logger = logging.getLogger(__name__)
+
+
+class TextWithVar(Text):
+    """A Text widget that accepts a 'textvariable' option
+
+    Has no scrollbar but is scrollable
+
+    Thanks to https://stackoverflow.com/q/21507178/6735826
+    and https://stackoverflow.com/a/21565476/6735826
+    """
+
+    def __init__(self, parent, *args, **kwargs):
+        self._textvariable = kwargs.pop("textvariable", None)
+        self.autoscroll = kwargs.pop('autoscroll', True)
+
+        super().__init__(parent, *args, **kwargs)
+
+        # if the variable has data in it, use it to initialize
+        # the widget
+        if self._textvariable is not None:
+            self.insert("1.0", self._textvariable.get())
+
+        # this defines an internal proxy which generates a
+        # virtual event whenever text is inserted or deleted
+        self.tk.eval('''
+            proc widget_proxy {widget widget_command args} {
+
+                # call the real tk widget command with the real args
+                set result [uplevel [linsert $args 0 $widget_command]]
+
+                # if the contents changed, generate an event we can bind to
+                if {([lindex $args 0] in {insert replace delete})} {
+                    event generate $widget <<Change>> -when tail
+                }
+                # return the result from the real widget command
+                return $result
+            }
+            ''')
+
+        # this replaces the underlying widget with the proxy
+        self.tk.eval('''
+            rename {widget} _{widget}
+            interp alias {{}} ::{widget} {{}} widget_proxy {widget} _{widget}
+        '''.format(widget=str(self)))
+
+        # set up a binding to update the variable whenever
+        # the widget changes
+        self.bind("<<Change>>", self._on_widget_change)
+
+        # set up a trace to update the text widget when the
+        # variable changes
+        if self._textvariable is not None:
+            self._textvariable.trace("wu", self._on_var_change)
+
+    def _on_var_change(self, *args):
+        """Change the text widget when the associated textvariable changes"""
+
+        # only change the widget if something actually
+        # changed, otherwise we'll get into an endless
+        # loop
+        try:
+            text_current = self.get("1.0", "end-1c")
+        except TclError:
+            pass
+        else:
+            var_current = self._textvariable.get()
+            if text_current != var_current:
+                self.delete("1.0", "end")
+                self.insert("1.0", var_current)
+                if self.autoscroll:
+                    self.see(END)
+
+    def _on_widget_change(self, event=None):
+        """Change the variable when the widget changes"""
+        if self._textvariable is not None:
+            self._textvariable.set(self.get("1.0", "end-1c"))
+
+
+class TextFrame(Frame):
+    """Text widget in a scrollable Frame which accepts textvariable"""
+
+    def __init__(self, master, *args, **kwargs):
+        self.textvariable = kwargs.pop('textvariable', None)
+        self.autoscroll = kwargs.pop('autoscroll', True)
+        if self.textvariable is not None:
+            if not isinstance(self.textvariable, Variable):
+                raise TypeError("tkinter.Variable type expected, {} given.".format(type(self.textvariable)))
+
+        super().__init__(master, *args, **kwargs)
+
+        self.yscrollbar = ttk.Scrollbar(self, orient=VERTICAL)
+
+        self.text_widget = TextWithVar(self, textvariable=self.textvariable,
+                                       autoscroll=self.autoscroll,
+                                       yscrollcommand=self.yscrollbar.set)
+        self.yscrollbar.config(command=self.text_widget.yview)
+        self.yscrollbar.pack(side=RIGHT, fill=Y)
+
+        self.text_widget.pack(side=LEFT, fill=BOTH, expand=1)
 
 
 class TkGui(Tk):
     """Sorter tkinter GUI class"""
 
-    def __init__(self, operations, logger):
+    def __init__(self, operations, settings):
         super(TkGui, self).__init__()
+        self.settings = settings
+        self.debug = True if logger.getEffectiveLevel() == logging.DEBUG else False
         self.title('Sorter')
         self.protocol("WM_DELETE_WINDOW", self._show_exit_dialog)
 
@@ -36,7 +142,6 @@ class TkGui(Tk):
         self.minsize(550, 200)
         self.geometry('{0}x{1}+{2}+{3}'.format(550, 300, 200, 200))
         self.operations = operations
-        self.logger = logger
         self.db_helper = self.operations.db_helper
         self._init_ui()
 
@@ -45,7 +150,7 @@ class TkGui(Tk):
         style = ttk.Style(self)
         style.theme_use('clam')
         style.map("TEntry", fieldbackground=[
-                  ("active", "white"), ("disabled", "#DCDCDC")])
+            ("active", "white"), ("disabled", "#DCDCDC")])
         self.bg = self.cget('bg')
         style.configure('My.TFrame', background=self.bg)
         style.configure("blue.Horizontal.TProgressbar",
@@ -98,21 +203,6 @@ class TkGui(Tk):
         self.top_frame.pack(side=TOP, expand=YES, fill=X)
         self.mid_frame = ttk.Frame(self, style='My.TFrame')
         self.mid_frame.pack(side=TOP, expand=YES, fill=BOTH)
-
-        self.progress_text = Text(self, height=1,
-                                  font='Helvetica 9', relief=FLAT)
-        self.progress_text.pack(side=TOP, fill=X, pady=5, padx=5)
-        self.progress_text.tag_config(
-            "hyperlink", foreground="#778899", underline=1)
-        self.progress_text.tag_bind("hyperlink", "<Enter>", lambda event,
-                                    widget=self.progress_text: widget.config(cursor="hand2"))
-        self.progress_text.tag_bind("hyperlink", "<Leave>", lambda event,
-                                    widget=self.progress_text: widget.config(cursor=""))
-        self.progress_text.tag_bind("hyperlink", "<Button-1>",
-                                    lambda event: self._enable_progress_text())
-        self.progress_text.insert(END, 'show progress info', 'hyperlink')
-        self.progress_text.config(state=DISABLED)
-
         self.bottom_frame = ttk.Frame(self, style='My.TFrame')
         self.bottom_frame.pack(side=TOP, expand=YES, fill=X)
 
@@ -152,7 +242,8 @@ class TkGui(Tk):
         types_value = IntVar()
         self.file_types = ['*']
         self.by_extension = IntVar()
-        self.cleanup = IntVar()
+        self.progress_info = StringVar()
+        self.show_logs = IntVar()
 
         # Configure Options frame
         options_frame = LabelFrame(self.mid_frame, text='Options')
@@ -210,10 +301,10 @@ class TkGui(Tk):
                                         variable=types_value,
                                         command=lambda: self._show_types_window(types_value))
         self.items_option.grid(row=2, column=0, sticky=W, pady=3)
-        cleanup_option = Checkbutton(frame_right, text='Perform cleanup',
-                                     variable=self.cleanup)
-        cleanup_option.grid(row=3, column=0, sticky=W, pady=3)
-        cleanup_option.select()
+        self.logs_option = Checkbutton(frame_right, text='Show logs',
+                                       variable=self.show_logs,
+                                       command=self._show_progress)
+        self.logs_option.grid(row=3, column=0, sticky=W, pady=3)
 
         # Configure action buttons
         self.run_button = ttk.Button(self.bottom_frame,
@@ -241,25 +332,23 @@ class TkGui(Tk):
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
             update_idletasks=self.update_idletasks, status_config=self.status_bar.config,
-            messagebox=messagebox, progress_text=self.progress_text)
-        self.logger.info('Finished GUI initialisation. Waiting...')
-
-    def _enable_progress_text(self):
-        self.resizable(width=False, height=True)
-        self.geometry('{0}x{1}'.format(550, 370))
-        self.progress_text.config(state=NORMAL, height=4, background="#D3D3D3")
-        self.progress_text.delete('1.0', END)
-        self.resizable(width=False, height=False)
+            messagebox=messagebox, progress_info=self.progress_info)
+        logger.info('Finished GUI initialisation. Waiting...')
+        self.progress_info.set('{}  Ready.\n'.format(datetime.now()))
 
     def _on_mousewheel(self, event, canvas, count):
-        canvas.yview_scroll(count, "units")
+        try:
+            canvas.yview_scroll(count, "units")
+        except TclError:
+            pass
 
     def _evaluate(self, event, entry_widget, window):
         count = entry_widget.get()
+        num = 10
         try:
             num = int(count)
         except ValueError:
-            num = 10
+            pass
         else:
             num = num or 10
         finally:
@@ -283,9 +372,13 @@ class TkGui(Tk):
                               background=self.bg, foreground="#C0C0C0", anchor=CENTER, justify='center')
         help_text.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
         history_window.bind('<Return>',
-                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event, entry_widget, window))
+                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event,
+                                                                                                            entry_widget,
+                                                                                                            window))
         history_window.bind('<KP_Enter>',
-                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event, entry_widget, window))
+                            lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event,
+                                                                                                            entry_widget,
+                                                                                                            window))
 
     def _get_history(self, count):
         files = self.db_helper.get_history(count)
@@ -293,7 +386,7 @@ class TkGui(Tk):
         if not files:
             error_msg = 'No data found!'
             messagebox.showwarning(title='Warning', message=error_msg)
-            self.logger.warning('Error accessing history:: %s', error_msg)
+            logger.warning('Error accessing history:: %s', error_msg)
         else:
             history_window = self._create_window('History')
             history_window.geometry(
@@ -373,7 +466,7 @@ class TkGui(Tk):
         except urllib.request.URLError:
             message = 'Update check failed. Could not connect to the Internet.'
             msg_widget.config(text=message, relief=SUNKEN)
-            self.logger.warning(message)
+            logger.warning(message)
         else:
             items = json.loads(html.decode('utf-8'))
             latest_tag = items.get('tag_name')
@@ -399,7 +492,7 @@ class TkGui(Tk):
         underlined_font.configure(underline=True)
         link_label.configure(font=underlined_font)
         link_label.bind('<Button-1>', lambda event=None, link=descriptions.HOMEPAGE,
-                        window=window: cls._open_link(link, event, window))
+                                             window=window: cls._open_link(link, event, window))
 
     def _delete_db(self):
         db_path = os.path.abspath(self.db_helper.DB_NAME)
@@ -407,13 +500,14 @@ class TkGui(Tk):
             os.remove(db_path)
         except PermissionError:
             messagebox.showwarning(
-                title='Success', message='Error refreshing database!\nDelete file at "%s" once the program closes.' % db_path)
-            self.logger.warning(
+                title='Success',
+                message='Error refreshing database!\nDelete file at "%s" once the program closes.' % db_path)
+            logger.error(
                 'Error refreshing database file at %s', db_path)
         else:
             messagebox.showinfo(
                 title='Success', message='Database refreshed!\n\nRestart application to continue!')
-            self.logger.info('Database refreshed. Closing... %s', db_path)
+            logger.info('Database refreshed. Closing... %s', db_path)
         self.destroy()
 
     def _enable_search_entry(self, entry_widget, value):
@@ -510,9 +604,9 @@ class TkGui(Tk):
         about_text.tag_add("center", 1.0, "end")
         about_text.tag_config("hyperlink", foreground="blue", underline=1)
         about_text.tag_bind("hyperlink", "<Enter>", lambda event,
-                            widget=about_text: widget.config(cursor="hand2"))
+                                                           widget=about_text: widget.config(cursor="hand2"))
         about_text.tag_bind("hyperlink", "<Leave>", lambda event,
-                            widget=about_text: widget.config(cursor=""))
+                                                           widget=about_text: widget.config(cursor=""))
         about_text.tag_bind("homepage", "<Button-1>", lambda event: self._open_link(
             descriptions.HOMEPAGE, window=about_window))
         about_text.tag_bind("source", "<Button-1>", lambda event: self._open_link(
@@ -537,7 +631,59 @@ class TkGui(Tk):
         scrollbar.config(command=about_text.yview)
         about_text.config(yscrollcommand=scrollbar.set, state="disabled")
 
-    def _show_help(self, info=None):
+    def _on_progress_window_closing(self, event=None):
+        try:
+            self.logs_option.deselect()
+            self.logs_option.config(state=NORMAL)
+        except TclError:
+            pass
+
+    def _get_progress_window(self):
+        progress_window = Toplevel(self)
+        progress_window.wm_title('Logs...')
+        progress_window.tk.call(
+            'wm', 'iconphoto', progress_window._w, self.icon)
+        progress_window.lift()
+
+        progress_window.geometry('{0}x{1}+{2}+{3}'.format(500, 350, 500, 20))
+        progress_window.resizable(height=False, width=False)
+        progress_window.bind('<Destroy>', self._on_progress_window_closing)
+        return progress_window
+
+    def _show_progress_textwithnoscrollbar(self):
+        progress_window = self._get_progress_window()
+
+        frame = Frame(progress_window, relief=SUNKEN)
+        frame.pack(side=LEFT, fill=Y)
+
+        widget = TextWithVar(frame, background=self.bg,
+                             textvariable=self.progress_info,
+                             autoscroll=self.settings.get('autoscroll'),
+                             relief=SUNKEN, borderwidth=2)
+        widget.config(pady=5, padx=10, font='Helvetica 9')
+        widget.pack(side=TOP, fill=BOTH)
+
+    def _show_progress_textwithscrollbar(self):
+        progress_window = self._get_progress_window()
+
+        frame = TextFrame(progress_window,
+                          autoscroll=self.settings.get('autoscroll'),
+                          textvariable=self.progress_info)
+        frame.text_widget.config(relief=SUNKEN, pady=5, padx=10, font='Helvetica 9')
+        frame.pack(side=LEFT, fill=Y)
+
+    def _show_progress(self):
+        if bool(self.show_logs.get()):
+            self.logs_option.config(state=DISABLED)
+            if self.settings.get('scrollbar', False):
+                self._show_progress_textwithscrollbar()
+            else:
+                self._show_progress_textwithnoscrollbar()
+
+        else:
+            self._on_progress_window_closing()
+
+    def _show_help(self):
         help_window = self._create_window('Help')
         help_window.resizable(height=False, width=False)
         help_window.geometry('+{0}+{1}'.format(240, 50))
@@ -547,21 +693,31 @@ class TkGui(Tk):
         msg.config(pady=10, padx=10, font='Helvetica 10')
         msg.pack(fill=BOTH)
 
+    def _exit(self):
+        logger.info('Exiting...')
+        self.destroy()
+
     def _show_exit_dialog(self):
-        answer = messagebox.askyesno(title='Leave',
-                                     message='Do you really want to quit?')
-        if answer:
-            self.logger.info('Exiting...')
-            self.destroy()
+        if self.debug:
+            self._exit()
+
+        else:
+            answer = messagebox.askyesno(title='Leave',
+                                         message='Do you really want to quit?')
+            if answer:
+                self._exit()
 
     def _run_sorter(self):
         """Call Sorter operations on the provided values."""
-        kwargs = {'send_message': self.interface_helper.message_user}
-        kwargs['src'] = self.source_entry.get()
-        kwargs['dst'] = self.dst_entry.get()
-        kwargs['file_types'] = self.file_types
-        kwargs['by_extension'] = bool(self.by_extension.get())
-        cleanup = bool(self.cleanup.get())
+        logger.info('Running sorter')
+        kwargs = {
+            'send_message': self.interface_helper.message_user,
+            'src': self.source_entry.get(),
+            'dst': self.dst_entry.get(),
+            'file_types': self.file_types,
+            'by_extension': bool(self.by_extension.get())
+        }
+        cleanup = bool(self.settings.get('cleanup'))
 
         search_string = self.search_string.get().strip()
         if bool(self.search_option_value.get()) and search_string and search_string != 'Enter name here':
@@ -576,7 +732,7 @@ class TkGui(Tk):
         if any([kwargs.get('group_folder_name'), kwargs.get('search_string'), kwargs.get('by_extension')]):
             kwargs['group'] = True
 
-        self.logger.info(
+        logger.info(
             'Sorter operations initiated. Values: %s', tuple(kwargs.items()))
         self.update()
 
@@ -587,22 +743,24 @@ class TkGui(Tk):
                 ops_length = len(report)
             except TypeError:
                 ops_length = 0
-            self.logger.info('%s operations done.', ops_length)
+            logger.info('%s operations done.', ops_length)
 
             if report is not None:
                 if ops_length:
-                    self.interface_helper.message_user(through=['status', 'progress_bar', 'dialog'], msg='Sorting finished',
+                    self.interface_helper.message_user(through=['status', 'progress_bar', 'dialog'],
+                                                       msg='Sorting finished',
                                                        weight=1, value=100)
                     self._show_report(report, kwargs.get('src'), cleanup)
                 else:
                     self.interface_helper.message_user(
-                        through=['status', 'progress_bar', 'dialog', 'progress_text'], msg='Files matching search options not found.')
+                        through=['status', 'progress_bar', 'dialog', 'progress_text'],
+                        msg='Files matching search options not found.')
             self.interface_helper.message_user()
 
         else:
             self.interface_helper.message_user(
                 through=['status', 'dialog'], msg='Database initialisation failed.')
-            self.logger.info('DB initialisation failed.')
+            logger.info('DB initialisation failed.')
 
     def _create_canvas(self, window):
         # Configure canvas
@@ -618,15 +776,15 @@ class TkGui(Tk):
         window.grid_rowconfigure(0, weight=1)
         window.grid_columnconfigure(0, weight=1)
 
-        canvas.configure(scrollregion=(0, 0, 1250, 10000))
+        canvas.configure(scrollregion=(0, 0, self.winfo_screenheight(), self.winfo_screenwidth()))
         canvas.bind('<Configure>', lambda event,
-                    canvas=canvas: self._resize_canvas(event, canvas))
+                                          canvas=canvas: self._resize_canvas(event, canvas))
         canvas.bind_all("<Button-4>", lambda event, count=-1,
-                        canvas=canvas: self._on_mousewheel(event, canvas, count))
+                                             canvas=canvas: self._on_mousewheel(event, canvas, count))
         canvas.bind_all("<Button-5>", lambda event, count=1,
-                        canvas=canvas: self._on_mousewheel(event, canvas, count))
+                                             canvas=canvas: self._on_mousewheel(event, canvas, count))
         canvas.bind_all("<MouseWheel>", lambda event, count=1,
-                        canvas=canvas: self._on_mousewheel(event, canvas, count))
+                                               canvas=canvas: self._on_mousewheel(event, canvas, count))
 
         return canvas
 
@@ -679,29 +837,67 @@ class TkGui(Tk):
             """Undo the conducted Sorter operation."""
 
             os.makedirs(os.path.dirname(origin), exist_ok=True)
+            self.interface_helper.message_user(through=['status'],
+                                               msg='Reversing: {} to {}'.format(
+                                                   current_path, origin
+                                               ))
             try:
                 shutil.move(current_path, origin)
             except FileNotFoundError:
+                self.interface_helper.message_user(through=['status'],
+                                                   msg='Could NOT reverse {}. File not found.'.format(
+                                                       os.path.basename(current_path)
+                                                   ))
                 return
+
+            except shutil.Error:
+                files = ((file_, os.path.join(current_path, file_)) for file_ in os.listdir(current_path))
+                for record in files:
+                    _src = record[1]
+                    _dst = os.path.join(origin, record[0])
+                    try:
+                        shutil.move(_src, _dst)
+                    except Exception as err:
+                        error = str(err)
+                        logger.error(error)
+                        self.interface_helper.message_user(through=['status'],
+                                                           msg='Error "{}" while reversing: {} to {}'.format(
+                                                               error, _src, _dst
+                                                           ))
+
             else:
-                finders = {'source': origin,
-                           'destination': current_path, 'added_at': added_at}
+                finders = {
+                    'source': origin,
+                    'destination': current_path,
+                    'added_at': added_at
+                }
                 alter_value = {'accepted': False}
                 self.db_helper.alter_path(alter_value, finders)
                 buttons[button_index].config(state='disabled')
                 self.update_idletasks()
                 del buttons[button_index]
+                self.interface_helper.message_user(through=['status'],
+                                                   msg='Reversal of {} successful'.format(
+                                                       os.path.basename(current_path)
+                                                   ))
 
-        def reverse_all(report):
+        def reverse_all(report, button):
             """Undo all the conducted Sorter operations in the current instance."""
             if buttons:
                 try:
                     ops_length = str(len(report))
                 except TypeError:
                     ops_length = 0
-                self.logger.info('Reversing %s operations.', ops_length)
+                msg = 'Reversing {} operations.'.format(ops_length)
+                logger.info(msg)
+
+                button.config(text='Running...', state=DISABLED)
+                self.interface_helper.message_user(through=['status', 'progress_text'], msg=msg)
                 for count, value in enumerate(report, ROW_COUNT):
+                    button.config(text='Running ({})...'.format(count))
                     reverse_action(value[1], value[2], value[3], count)
+
+                button.config(text='Done.')
 
         for count, value in enumerate(report, ROW_COUNT):
             button_label = ttk.Label(
@@ -709,7 +905,8 @@ class TkGui(Tk):
             button_label.grid(row=count, column=0, padx=0, pady=0,
                               ipadx=IPADX, ipady=IPADY, sticky="nsew")
             buttons[count] = ttk.Button(button_label, text='Undo',
-                                        command=lambda origin=value[1], current_path=value[2], added_at=value[3], i=count: reverse_action(
+                                        command=lambda origin=value[1], current_path=value[2], added_at=value[3],
+                                                       i=count: reverse_action(
                                             origin, current_path, added_at, i))
             buttons[count].grid(padx=5, pady=5, sticky="ns")
 
@@ -744,7 +941,9 @@ class TkGui(Tk):
         accept_button.grid(row=0, column=0, padx=10, pady=40, sticky="ns")
 
         reverse_button = ttk.Button(
-            buttons_label, text='Undo All', command=lambda report=report: reverse_all(report))
+            buttons_label, text='Undo All')
+        reverse_button.config(command=lambda report=report,
+                                             button=reverse_button: reverse_all(report, button))
         reverse_button.grid(row=0, column=1, padx=10, pady=40, sticky="ns")
 
     def _show_diag(self, text):

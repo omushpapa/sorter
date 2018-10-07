@@ -1,8 +1,11 @@
 #! /usr/bin/env python3.4
 
 import os
+import logging
 import sqlite3
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "data.settings")
 
@@ -23,22 +26,23 @@ class InterfaceHelper(object):
         update_idletasks - tkinter.update_idletasks
         status_config - ttk.Label.config
         messagebox - tkinter.messagebox
-        progress_text - tkinter.Text
+        progress_text - tkinter.text_widget
+        progress_info - StringVar() for progress logs
 
     methods:
         message_user
     """
 
-    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox, progress_text):
+    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox, progress_info):
         progress_bar.configure(maximum=100)
         self.progress_bar = progress_bar
         self.progress_var = progress_var
         self.update_idletasks = update_idletasks
         self.status_config = status_config
         self.messagebox = messagebox
-        self.progress_text = progress_text
+        self.progress_info = progress_info
 
-    def message_user(self, through=['status'], msg='Ready', weight=0, value=100):
+    def message_user(self, through=None, msg='Ready', weight=0, value=100):
         """Show a message to the user.
 
         Through:
@@ -47,6 +51,8 @@ class InterfaceHelper(object):
             dialog - messagebox
             progress_text - progress info text box
         """
+        through = through or ['status']
+
         if 'status' in through:
             self._use_status(msg, weight)
         if 'progress_bar' in through:
@@ -54,16 +60,25 @@ class InterfaceHelper(object):
         if 'dialog' in through:
             self._use_messagebox(msg, weight)
         if 'progress_text' in through:
-            self._use_progress_text(msg)
+            self._update_progress_window(str(msg))
+
+    def _update_progress_window(self, msg):
+        prev_text = self.progress_info.get()
+        _text = '{}{}  {}\n'.format(prev_text, str(datetime.now()), msg)
+        logger.debug(_text)
+        self.progress_info.set(_text)
+        self.update_idletasks()
 
     def _use_status(self, msg, weight):
+        _msg = str(msg)[:50]
         if weight == 0:
-            self.status_config(foreground='black', text=' {}'.format(str(msg)))
+            self.status_config(foreground='black', text=' {}'.format(_msg))
         if weight == 1:
-            self.status_config(foreground='blue', text=' {}'.format(str(msg)))
+            self.status_config(foreground='blue', text=' {}'.format(_msg))
         if weight == 2:
             self.status_config(foreground='red',
-                               text=' {}'.format(str(msg)))
+                               text=' {}'.format(_msg))
+        self._update_progress_window(str(msg))
 
     def _use_progress_bar(self, weight, value):
         color = 'blue'
@@ -79,10 +94,6 @@ class InterfaceHelper(object):
             self.messagebox.showwarning(title='Warning', message=msg)
         else:
             self.messagebox.showinfo(title='Info', message=msg)
-
-    def _use_progress_text(self, msg):
-        self.progress_text.insert('end', '\n' + msg)
-        self.update_idletasks()
 
 
 class DatabaseHelper(object):

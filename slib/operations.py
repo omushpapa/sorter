@@ -153,7 +153,7 @@ class SorterOps(object):
 
         glob_files = (i for item in file_types for i in iglob(os.path.join(
             source_path, string_glob_pattern + item)) if os.path.isfile(i))
-        send_message(through=['status', 'progress_text'],
+        send_message(through=['status'],
                      msg='Searching for files...', weight=1)
 
         for file_ in glob_files:
@@ -167,9 +167,8 @@ class SorterOps(object):
                                   group_folder_name=group_folder_name, by_extension=self.by_extension)
             new_path = file_instance.path
             if initial_path != new_path:
-                msg = 'Moving {} to {}'.format(file_instance.name, new_path)
-                send_message(
-                    through=['status', 'progress_text'], msg=msg, weight=1)
+                msg = 'Moved {} to {}'.format(file_instance.name, new_path)
+                send_message(through=['status'], msg=msg, weight=1)
                 # Write to DB
                 hash_path = hashlib.md5(
                     initial_path.encode('utf-8')).hexdigest()
@@ -222,7 +221,7 @@ class SorterOps(object):
         for root, dirs, files in os.walk(source_path):
             msg = 'Checking directory {}'.format(root)
             send_message(
-                through=['status', 'progress_text'], msg=msg, weight=1)
+                through=['status'], msg=msg, weight=1)
             self.sort_files(root, send_message=send_message)
             if not dirs and not files:
                 try:
@@ -231,7 +230,7 @@ class SorterOps(object):
                     msg = 'Could not delete {}. May have hidden files.'.format(
                         root)
                     send_message(
-                        through=['status', 'progress_text'], msg=msg, weight=1)
+                        through=['status'], msg=msg, weight=1)
 
     def _sort_folders_operation(self, send_message):
         source_path = self.src
@@ -243,18 +242,40 @@ class SorterOps(object):
             source_path, search_string_pattern + '*'))
         folders = (folder for folder in folder_list_matching_pattern if os.path.isdir(
             folder) and not has_signore_file(folder))
-        send_message(through=['status', 'progress_text'],
+        send_message(through=['status'],
                      msg='Searching for folders...', weight=1)
 
         for folder in folders:
             folder_path = os.path.join(source_path, folder)
             folder_instance = Folder(folder_path)
+
+            initial_path = folder_instance.path
+            initial_name = folder_instance.name
+            last_modified = os.path.getmtime(initial_path)
+
             msg = 'Moving {} to {}'.format(
                 folder_instance.path, destination_path)
-            send_message(
-                through=['status', 'progress_text'], msg=msg, weight=1)
+            send_message(through=['status'], msg=msg, weight=1)
             folder_instance.move_to(
                 destination_path, group_folder_name=search_string)
+
+            new_path = folder_instance.path
+            if initial_path != new_path:
+                msg = 'Moved {} to {}'.format(folder_instance.name, new_path)
+                send_message(through=['status'], msg=msg, weight=1)
+                # Write to DB
+                hash_path = hashlib.md5(
+                    initial_path.encode('utf-8')).hexdigest()
+
+                file_dict = {'filename': initial_name, 'filepath_hash': hash_path,
+                             'last_modified': datetime.fromtimestamp(last_modified)}
+                path_dict = {'source': initial_path,
+                             'destination': new_path}
+
+                this_file_dict = {initial_name: {
+                    'file': file_dict, 'path': path_dict}}
+
+                self.database_dict.update(this_file_dict)
 
     def _set_group_folder_name(self, group_folder_name):
         if group_folder_name:
@@ -340,7 +361,9 @@ class SorterOps(object):
                              msg='60% - running...', value=50)
 
                 if self.search_string:
+                    self.database_dict = {}
                     self._sort_folders_operation(send_message=send_message)
+                    self.db_helper.update(self.database_dict)
 
                 send_message(through=['status', 'progress_bar'],
                              msg='75% - running...', value=75)

@@ -223,6 +223,12 @@ class TkGui(Tk):
         self.source_entry.pack(ipady=2.5, pady=5, side=TOP, expand=YES)
         self.dst_entry = ttk.Entry(entry_frame, width=50, state='disabled')
         self.dst_entry.pack(ipady=2.5, pady=5, side=BOTTOM, expand=YES)
+        self.dst_entry.bind('<FocusIn>', lambda event,
+                                              widget=self.dst_entry,
+                                              variable=self.dst_entry: self._clear_entry_help(widget, variable))
+        self.dst_entry.bind('<FocusOut>', lambda event,
+                                               widget=self.dst_entry,
+                                               variable=self.dst_entry: self._show_entry_help(widget, variable))
 
         # Configure frame for dialog buttons
         diag_frame = ttk.Frame(self.top_frame, style='My.TFrame')
@@ -258,17 +264,23 @@ class TkGui(Tk):
         # For frame_right
         group_separator = ttk.Separator(frame_left)
         group_separator.grid(row=0, column=0, pady=1)
-
+        
         self.search_string = StringVar()
         search_entry = ttk.Entry(
             frame_left, width=15, state='disabled', textvariable=self.search_string)
         search_entry.grid(row=1, column=1, padx=5, pady=2)
+        search_entry.bind('<FocusIn>', lambda event,
+                                              widget=search_entry,
+                                              variable=self.search_string: self._clear_entry_help(widget, variable))
+        search_entry.bind('<FocusOut>', lambda event,
+                                               widget=search_entry,
+                                               variable=self.search_string: self._show_entry_help(widget, variable))
 
         self.search_option_value = IntVar()
         search_option = Checkbutton(
             frame_left, text='Search for:',
             variable=self.search_option_value, anchor=E,
-            command=lambda: self._enable_search_entry(search_entry,
+            command=lambda: self._enable_entry_widget(search_entry,
                                                       self.search_option_value))
         search_option.grid(row=1, column=0, pady=3, sticky=W, padx=5)
 
@@ -276,12 +288,18 @@ class TkGui(Tk):
         group_folder_entry = ttk.Entry(
             frame_left, width=15, state='disabled', textvariable=self.group_folder_name)
         group_folder_entry.grid(row=2, column=1, padx=5, pady=2, sticky=S)
+        group_folder_entry.bind('<FocusIn>', lambda event,
+                                                    widget=group_folder_entry,
+                                                    variable=self.group_folder_name: self._clear_entry_help(widget, variable))
+        group_folder_entry.bind('<FocusOut>', lambda event,
+                                                     widget=group_folder_entry,
+                                                     variable=self.group_folder_name: self._show_entry_help(widget, variable))
 
         self.group_folder_value = IntVar()
         group_folder_option = Checkbutton(
             frame_left, text='Group into folder',
             variable=self.group_folder_value,
-            command=lambda: self._enable_search_entry(group_folder_entry, self.group_folder_value))
+            command=lambda: self._enable_entry_widget(group_folder_entry, self.group_folder_value))
         group_folder_option.grid(row=2, column=0, pady=3, sticky=W, padx=5)
 
         extension_button = Checkbutton(
@@ -510,10 +528,23 @@ class TkGui(Tk):
             logger.info('Database refreshed. Closing... %s', db_path)
         self.destroy()
 
-    def _enable_search_entry(self, entry_widget, value):
+    def _clear_entry_help(self, widget, variable):
+        value = variable.get()
+        if not value.strip() or value.strip() == 'Enter value here':
+            widget.delete('0', END)
+            widget.insert('0', '')
+            widget.config(foreground='black')
+
+    def _show_entry_help(self, widget, variable):
+        value = variable.get()
+        if not value.strip():
+            widget.insert('0', 'Enter value here')
+            widget.config(foreground='grey')
+
+    def _enable_entry_widget(self, entry_widget, value):
         if bool(value.get()):
-            entry_widget.config(state='normal')
-            entry_widget.insert(0, 'Enter name here')
+            entry_widget.config(state='normal', foreground='grey')
+            entry_widget.insert(0, 'Enter value here')
         else:
             entry_widget.delete(0, END)
             entry_widget.config(state='disabled')
@@ -750,11 +781,11 @@ class TkGui(Tk):
                     self.interface_helper.message_user(through=['status', 'progress_bar', 'dialog'],
                                                        msg='Sorting finished',
                                                        weight=1, value=100)
-                    self._show_report(report, kwargs.get('src'), cleanup)
+                    self._show_report(report, kwargs.get('src'), kwargs.get('dst'), cleanup)
                 else:
                     self.interface_helper.message_user(
-                        through=['status', 'progress_bar', 'dialog', 'progress_text'],
-                        msg='Files matching search options not found.')
+                        through=['status', 'progress_bar', 'dialog'],
+                        msg='Nothing done. Consider refining your search.')
             self.interface_helper.message_user()
 
         else:
@@ -792,7 +823,7 @@ class TkGui(Tk):
         """Resize canvas to fit all contents"""
         canvas.configure(scrollregion=canvas.bbox('all'))
 
-    def _show_report(self, report, source_path, cleanup):
+    def _show_report(self, report, source_path, dst_path, cleanup):
         # Configure Report window
         window = self._create_window('Sorter Report')
         window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
@@ -892,11 +923,13 @@ class TkGui(Tk):
                 logger.info(msg)
 
                 button.config(text='Running...', state=DISABLED)
-                self.interface_helper.message_user(through=['status', 'progress_text'], msg=msg)
+                self.interface_helper.message_user(through=['status'], msg=msg)
+                len_report = len(report) + ROW_COUNT
                 for count, value in enumerate(report, ROW_COUNT):
-                    button.config(text='Running ({})...'.format(count))
+                    button.config(text='Running ({})...'.format(len_report - count))
                     reverse_action(value[1], value[2], value[3], count)
 
+                self.operations.perform_cleanup(dst_path)
                 button.config(text='Done.')
 
         for count, value in enumerate(report, ROW_COUNT):
@@ -954,7 +987,7 @@ class TkGui(Tk):
                 self.source_entry.insert(0, dir_)
             if text == 'destination':
                 self.dst_entry.delete(0, END)
-                self.dst_entry.config(state='normal')
+                self.dst_entry.config(state='normal', foreground='black')
                 self.dst_entry.insert(0, dir_)
 
     def tk_run(self):

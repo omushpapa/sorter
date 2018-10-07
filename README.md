@@ -5,7 +5,7 @@
 [![Travis-CI](https://img.shields.io/travis/giantas/sorter.svg?maxAge=2592000)](https://travis-ci.org/giantas/sorter)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/cc39b46d83564cd687bb1278f7a942b4)](https://www.codacy.com/app/giantas/sorter?utm_source=github.com&utm_medium=referral&utm_content=giantas/sorter&utm_campaign=Badge_Coverage)
 
-Sorter makes file organisation easier. It simply helps you organise several files that contain similar characteristics into a single folder. You can put all letters documents into one folder, all images with the word home into another, all music by one artist in yet another folder, etc. 
+Sorter makes file organisation easier. It simply helps you organise several files that contain similar characteristics into a single folder. You can put all letter documents into one folder, all images with the word home into another, all music by one artist in yet another folder, etc. 
 
 Sorter organises these files into folders which are grouped according to one or more of the following patterns:
 
@@ -28,11 +28,11 @@ Visit [Sorter](http://giantas.github.io/sorter) for features, download and usage
 ## Clone
 
 ### Prerequisites 
-* Python 3.4
+* [Python 3.4](https://www.python.org/)
 * [sqlite3](http://www.sqlite.org/download.html)
 * [TestFixtures](https://testfixtures.readthedocs.io/en/latest/index.html) (for tests)
 
-**NB**: View [requirements.txt](requirements.txt) for detailed requirements
+**NB**: View the [requirements](Pipfile) for detailed requirements
 
 Open terminal
 
@@ -49,10 +49,13 @@ python sorter.py
 ### Compile executable DIY
 
 #### Install Prerequisites
-* Python 3.4
+* [Python 3.4](https://www.python.org/)
 * [Pyinstaller](http://www.pyinstaller.org/) (tested with v3.2.1)
 * [sqlite3](http://www.sqlite.org/download.html)
 * [Django](https://www.djangoproject.com/download/) v1.8.x
+
+**NB**: View the [requirements](Pipfile) for detailed requirements
+
 
 #### How to compile
 * Create and activate a [Virtual Environment](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/) (optional but recommended)
@@ -60,6 +63,20 @@ python sorter.py
 * Clone this repository
 * In terminal/cmd, run the command in [pybuild.sh](pybuild.sh)
 * Check into the `dist/` and copy the `sorter` folder to any location for use.
+
+In terminal:
+
+```bash
+pip install --user pipenv
+git clone https://github.com/giantas/sorter.git
+cd sorter
+pipenv sync
+bash pybuild.sh
+mkdir ~/apps/
+cp -R dist/sorter ~/apps
+cd ~/apps/sorter
+./sorter
+```
 
 
 ### Website
@@ -85,7 +102,7 @@ Thank you for your interest in contributing to the [Sorter](https://github.com/g
 
 [![Suggest new Feature](https://img.shields.io/badge/suggest-new-brightgreen.svg)](https://github.com/giantas/sorter/issues/new)
 
-- Add search for files in history
+- Add support for customised file grouping
 
 ### Warning
 

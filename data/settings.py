@@ -14,6 +14,14 @@ with ConfigReader(settings_ini) as config:
         'scrollbar': config.get('scrollbar', default='False', section='progress'),
     }
 
+if os.name == 'nt':
+    app_data = os.getenv('APPDATA')
+    PROJECT_ROOT = os.path.join(app_data, 'Sorter')
+    try:
+        os.mkdir(PROJECT_ROOT)
+    except FileExistsError:
+        pass
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

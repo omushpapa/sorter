@@ -1,6 +1,6 @@
 # Sorter
 
-[![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2591001)](https://github.com/giantas/sorter/releases/latest)
+[![Latest Release](https://img.shields.io/github/release/giantas/sorter.svg?maxAge=2591002)](https://github.com/giantas/sorter/releases/latest)
 [![Issues](https://img.shields.io/github/issues-raw/giantas/sorter/website.svg)](https://github.com/giantas/sorter/issues)
 [![Travis-CI](https://img.shields.io/travis/giantas/sorter.svg?maxAge=2592000)](https://travis-ci.org/giantas/sorter)
 [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/cc39b46d83564cd687bb1278f7a942b4)](https://www.codacy.com/app/giantas/sorter?utm_source=github.com&utm_medium=referral&utm_content=giantas/sorter&utm_campaign=Badge_Coverage)

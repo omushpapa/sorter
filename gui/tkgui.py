@@ -661,7 +661,7 @@ class TkGui(Tk):
 
         self._set_window_attributes(about_window, 'About Sorter')
 
-    def _set_window_attributes(self, window, title, escape_close=True):
+    def _set_window_attributes(self, window, title, escape_close=True, take_focus=True):
         """Always set these attributes after populating the window.
 
         This prevents a fleeting flicker while opening
@@ -669,10 +669,12 @@ class TkGui(Tk):
         window.wm_title(title)
         window.tk.call(
             'wm', 'iconphoto', window._w, self.icon)
-        try:
-            window.grab_set()
-        except TclError:
-            pass
+        if take_focus:
+            try:
+                window.grab_set()
+            except TclError:
+                pass
+        
         if escape_close:
             window.bind('<Escape>', lambda event,
                                            window=window: window.destroy())
@@ -688,11 +690,6 @@ class TkGui(Tk):
 
     def _get_progress_window(self):
         progress_window = Toplevel(self)
-        progress_window.wm_title('Logs...')
-        progress_window.tk.call(
-            'wm', 'iconphoto', progress_window._w, self.icon)
-        progress_window.lift()
-
         progress_window.geometry('{0}x{1}+{2}+{3}'.format(500, 350, 500, 20))
         progress_window.resizable(height=False, width=False)
         progress_window.bind('<Destroy>', self._on_progress_window_closing)
@@ -710,6 +707,7 @@ class TkGui(Tk):
                              relief=SUNKEN, borderwidth=2)
         widget.config(pady=5, padx=10, font='Helvetica 9')
         widget.pack(side=TOP, fill=BOTH)
+        self._set_window_attributes(progress_window, 'Logs...', take_focus=False)
 
     def _show_progress_textwithscrollbar(self):
         progress_window = self._get_progress_window()
@@ -719,6 +717,7 @@ class TkGui(Tk):
                           textvariable=self.progress_info)
         frame.text_widget.config(relief=SUNKEN, pady=5, padx=10, font='Helvetica 9')
         frame.pack(side=LEFT, fill=Y)
+        self._set_window_attributes(progress_window, 'Logs...', take_focus=False)
 
     def _show_progress(self):
         if bool(self.show_logs.get()):

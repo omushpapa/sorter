@@ -33,12 +33,11 @@ class InterfaceHelper(object):
         message_user
     """
 
-    def __init__(self, progress_bar, progress_var, update_idletasks, status_config, messagebox, progress_info):
+    def __init__(self, progress_bar, progress_var, status, messagebox, progress_info):
         progress_bar.configure(maximum=100)
         self.progress_bar = progress_bar
         self.progress_var = progress_var
-        self.update_idletasks = update_idletasks
-        self.status_config = status_config
+        self.status = status
         self.messagebox = messagebox
         self.progress_info = progress_info
 
@@ -67,17 +66,17 @@ class InterfaceHelper(object):
         _text = '{}{}  {}\n'.format(prev_text, str(datetime.now()), msg)
         logger.debug(_text)
         self.progress_info.set(_text)
-        self.update_idletasks()
 
     def _use_status(self, msg, weight):
         _msg = str(msg)[:50]
         if weight == 0:
-            self.status_config(foreground='black', text=' {}'.format(_msg))
+            self.status.config(foreground='black', text=' {}'.format(_msg))
         if weight == 1:
-            self.status_config(foreground='blue', text=' {}'.format(_msg))
+            self.status.config(foreground='blue', text=' {}'.format(_msg))
         if weight == 2:
-            self.status_config(foreground='red',
+            self.status.config(foreground='red',
                                text=' {}'.format(_msg))
+        self.status.update()
         self._update_progress_window(str(msg))
 
     def _use_progress_bar(self, weight, value):
@@ -87,7 +86,7 @@ class InterfaceHelper(object):
         self.progress_var.set(value)
         self.progress_bar.configure(
             style="{}.Horizontal.TProgressbar".format(color))
-        self.update_idletasks()
+        self.progress_bar.update()
 
     def _use_messagebox(self, msg, weight):
         if weight == 2:

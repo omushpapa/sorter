@@ -18,7 +18,6 @@ from . import descriptions
 from data.version import SORTER_VERSION
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -125,7 +124,7 @@ class TkGui(Tk):
     """Sorter tkinter GUI class"""
 
     def __init__(self, operations, settings):
-        super(TkGui, self).__init__()
+        super().__init__()
         self.settings = settings
         self.debug = True if logger.getEffectiveLevel() == logging.DEBUG else False
         self.title('Sorter')
@@ -224,11 +223,11 @@ class TkGui(Tk):
         self.dst_entry = ttk.Entry(entry_frame, width=50, state='disabled')
         self.dst_entry.pack(ipady=2.5, pady=5, side=BOTTOM, expand=YES)
         self.dst_entry.bind('<FocusIn>', lambda event,
-                                              widget=self.dst_entry,
-                                              variable=self.dst_entry: self._clear_entry_help(widget, variable))
+                                                widget=self.dst_entry,
+                                                variable=self.dst_entry: self._clear_entry_help(widget, variable))
         self.dst_entry.bind('<FocusOut>', lambda event,
-                                               widget=self.dst_entry,
-                                               variable=self.dst_entry: self._show_entry_help(widget, variable))
+                                                 widget=self.dst_entry,
+                                                 variable=self.dst_entry: self._show_entry_help(widget, variable))
 
         # Configure frame for dialog buttons
         diag_frame = ttk.Frame(self.top_frame, style='My.TFrame')
@@ -264,7 +263,7 @@ class TkGui(Tk):
         # For frame_right
         group_separator = ttk.Separator(frame_left)
         group_separator.grid(row=0, column=0, pady=1)
-        
+
         self.search_string = StringVar()
         search_entry = ttk.Entry(
             frame_left, width=15, state='disabled', textvariable=self.search_string)
@@ -290,10 +289,12 @@ class TkGui(Tk):
         group_folder_entry.grid(row=2, column=1, padx=5, pady=2, sticky=S)
         group_folder_entry.bind('<FocusIn>', lambda event,
                                                     widget=group_folder_entry,
-                                                    variable=self.group_folder_name: self._clear_entry_help(widget, variable))
+                                                    variable=self.group_folder_name: self._clear_entry_help(widget,
+                                                                                                            variable))
         group_folder_entry.bind('<FocusOut>', lambda event,
                                                      widget=group_folder_entry,
-                                                     variable=self.group_folder_name: self._show_entry_help(widget, variable))
+                                                     variable=self.group_folder_name: self._show_entry_help(widget,
+                                                                                                            variable))
 
         self.group_folder_value = IntVar()
         group_folder_option = Checkbutton(
@@ -349,8 +350,7 @@ class TkGui(Tk):
 
         self.interface_helper = InterfaceHelper(
             progress_bar=self.progress_bar, progress_var=self.progress_var,
-            update_idletasks=self.update_idletasks, status_config=self.status_bar.config,
-            messagebox=messagebox, progress_info=self.progress_info)
+            status=self.status_bar, messagebox=messagebox, progress_info=self.progress_info)
         logger.info('Finished GUI initialisation. Waiting...')
         self.progress_info.set('{}  Ready.\n'.format(datetime.now()))
 
@@ -374,7 +374,7 @@ class TkGui(Tk):
             self._get_history(num)
 
     def _show_history(self):
-        history_window = self._create_window('History')
+        history_window = Toplevel(self)
         history_window.resizable(height=False, width=False)
         history_window.geometry('{0}x{1}+{2}+{3}'.format(200, 90, 300, 150))
 
@@ -397,6 +397,7 @@ class TkGui(Tk):
                             lambda event, entry_widget=history_entry, window=history_window: self._evaluate(event,
                                                                                                             entry_widget,
                                                                                                             window))
+        self._set_window_attributes(history_window, 'History')
 
     def _get_history(self, count):
         files = self.db_helper.get_history(count)
@@ -406,7 +407,7 @@ class TkGui(Tk):
             messagebox.showwarning(title='Warning', message=error_msg)
             logger.warning('Error accessing history:: %s', error_msg)
         else:
-            history_window = self._create_window('History')
+            history_window = Toplevel(self)
             history_window.geometry(
                 '{0}x{1}+{2}+{3}'.format(500, 400, 300, 150))
             canvas = self._create_canvas(history_window)
@@ -463,18 +464,23 @@ class TkGui(Tk):
                 h = canvas.winfo_height()
                 canvas.configure(height=h + 1)
 
+            self._set_window_attributes(history_window, 'History')
+
     def _check_for_update(self, user_checked=False):
         message = 'Checking for updates...'
-        update_window = self._create_window('Update!')
+        update_window = Toplevel(self)
         update_window.resizable(height=False, width=False)
         update_window.geometry('+{0}+{1}'.format(310, 250))
         msg_widget = Message(update_window, justify=CENTER,
                              text=message)
         msg_widget.config(pady=10, padx=10, font='Helvetica 9')
         msg_widget.pack(side=TOP, fill=X)
-        self.update()
-        msg_widget.after(0, lambda msg_widget=msg_widget, window=update_window: self._github_connect(
-            msg_widget, user_checked, window))
+
+        update_window.after(250, lambda msg_widget=msg_widget,
+                                        window=update_window: self._github_connect(msg_widget,
+                                                                                   user_checked,
+                                                                                   window))
+        self._set_window_attributes(update_window, 'Update!')
 
     def _github_connect(self, msg_widget, user_checked, window):
         link = 'https://api.github.com/repos/giantas/sorter/releases/latest'
@@ -566,7 +572,7 @@ class TkGui(Tk):
         if bool(button_value.get()):
             self.file_types = []
             # Create new window
-            types_window = self._create_window('Types')
+            types_window = Toplevel(self)
             types_window.geometry('{0}x{1}+0+0'.format(
                 types_window.winfo_screenwidth() - 3, types_window.winfo_screenheight() - 3))
             types_window.bind('<Destroy>', self._on_closing)
@@ -597,20 +603,10 @@ class TkGui(Tk):
                 h = canvas.winfo_height()
                 canvas.configure(height=h + 1)
 
+            self._set_window_attributes(types_window, 'File Types')
+
         else:
             self._on_closing()
-
-    def _create_window(self, title):
-        toplevel_window = Toplevel(self)
-        toplevel_window.wm_title(title)
-        toplevel_window.tk.call(
-            'wm', 'iconphoto', toplevel_window._w, self.icon)
-        toplevel_window.lift()
-        try:
-            toplevel_window.grab_set()
-        except TclError:
-            pass
-        return toplevel_window
 
     @classmethod
     def _open_link(cls, link, event=None, window=None):
@@ -619,7 +615,8 @@ class TkGui(Tk):
         get().open(link)
 
     def _show_about(self):
-        about_window = self._create_window('About Sorter')
+        # Create Window
+        about_window = Toplevel(self)
         about_window.resizable(height=False, width=False)
         about_window.geometry('+{0}+{1}'.format(300, 150))
 
@@ -661,6 +658,26 @@ class TkGui(Tk):
         scrollbar.pack(side=RIGHT, fill=Y)
         scrollbar.config(command=about_text.yview)
         about_text.config(yscrollcommand=scrollbar.set, state="disabled")
+
+        self._set_window_attributes(about_window, 'About Sorter')
+
+    def _set_window_attributes(self, window, title, escape_close=True):
+        """Always set these attributes after populating the window.
+
+        This prevents a fleeting flicker while opening
+        """
+        window.wm_title(title)
+        window.tk.call(
+            'wm', 'iconphoto', window._w, self.icon)
+        try:
+            window.grab_set()
+        except TclError:
+            pass
+        if escape_close:
+            window.bind('<Escape>', lambda event,
+                                           window=window: window.destroy())
+        window.update()
+        window.after(500, window.lift)
 
     def _on_progress_window_closing(self, event=None):
         try:
@@ -715,7 +732,7 @@ class TkGui(Tk):
             self._on_progress_window_closing()
 
     def _show_help(self):
-        help_window = self._create_window('Help')
+        help_window = Toplevel(self)
         help_window.resizable(height=False, width=False)
         help_window.geometry('+{0}+{1}'.format(240, 50))
         help_message = descriptions.HELP_MESSAGE
@@ -723,6 +740,7 @@ class TkGui(Tk):
                       justify=LEFT, relief=RIDGE)
         msg.config(pady=10, padx=10, font='Helvetica 10')
         msg.pack(fill=BOTH)
+        self._set_window_attributes(help_window, 'Help')
 
     def _exit(self):
         logger.info('Exiting...')
@@ -825,21 +843,21 @@ class TkGui(Tk):
 
     def _show_report(self, report, source_path, dst_path, cleanup):
         # Configure Report window
-        window = self._create_window('Sorter Report')
-        window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
+        report_window = Toplevel(self)
+        report_window.geometry('{0}x{1}+{2}+{3}'.format(900, 600, 100, 80))
 
         def _after_destroy():
             """Destroy window then do some cleanup."""
-            window.destroy()
+            report_window.destroy()
             if cleanup:
                 self.interface_helper.message_user(
                     msg='Performing cleanup...', weight=1)
                 self.operations.perform_cleanup(source_path)
                 self.interface_helper.message_user()
 
-        window.protocol("WM_DELETE_WINDOW", _after_destroy)
+        report_window.protocol("WM_DELETE_WINDOW", _after_destroy)
 
-        canvas = self._create_canvas(window)
+        canvas = self._create_canvas(report_window)
 
         frame = Frame(canvas, background="#C0C0C0")
         frame.pack(side=LEFT)
@@ -905,7 +923,7 @@ class TkGui(Tk):
                 alter_value = {'accepted': False}
                 self.db_helper.alter_path(alter_value, finders)
                 buttons[button_index].config(state='disabled')
-                self.update_idletasks()
+                report_window.update()
                 del buttons[button_index]
                 self.interface_helper.message_user(through=['status'],
                                                    msg='Reversal of {} successful'.format(
@@ -978,6 +996,8 @@ class TkGui(Tk):
         reverse_button.config(command=lambda report=report,
                                              button=reverse_button: reverse_all(report, button))
         reverse_button.grid(row=0, column=1, padx=10, pady=40, sticky="ns")
+
+        self._set_window_attributes(report_window, 'Sorting Report', escape_close=False)
 
     def _show_diag(self, text):
         dir_ = filedialog.askdirectory()
